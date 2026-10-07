@@ -1,8 +1,15 @@
 # Llamafiles
 
-A [llamafile](https://docs.mozilla.ai/llamafile) is Mozilla's single-file, self-contained LLM server: one Cosmopolitan executable that runs on **linux amd64 and aarch64** and serves an OpenAI-compatible `/v1` API. Mode A uses it as a sidecar for a fully offline LLM — no API key, no network calls, nothing spent per document.
+A [llamafile](https://docs.mozilla.ai/llamafile) is an LLM server in one executable file, from Mozilla. The file runs on **linux amd64 and aarch64** and serves an OpenAI-compatible `/v1` API. Mode A uses a llamafile as a sidecar container for a fully offline LLM. It needs no API key, makes no network calls and costs nothing per document.
 
-Two upstream files own it:
+**Llamafile or Ollama?** Both serve Mode A.
+
+* **Use a llamafile** when you want one pinned binary and one GGUF file, with no model registry. All agents share the one model.
+* **Use Ollama** when you want to pull several models by tag and let Ollama unload idle models.
+
+The full comparison is on [Local models](../local-models.md).
+
+Three upstream files control the sidecar:
 
 * [`deploy/llamafile/Dockerfile`](https://github.com/Exios66/llm-mailroom/blob/main/deploy/llamafile/Dockerfile) — the sidecar image
 * [`deploy/llamafile/entrypoint.sh`](https://github.com/Exios66/llm-mailroom/blob/main/deploy/llamafile/entrypoint.sh) — server flags

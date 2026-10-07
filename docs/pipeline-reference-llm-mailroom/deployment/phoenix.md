@@ -1,6 +1,10 @@
 # Apache Phoenix
 
-Arize Phoenix is the **local, cost-free default fallback** in the tracing chain. When no cloud backend is keyed, `auto` resolves to Phoenix instead of switching tracing off, so every LLM call stays traced with zero spend on top of the API calls. It is a single local process with SQLite/in-memory storage that you can delete when a batch is done — a *pour-in, poke-around, discard* workflow.
+Arize Phoenix is the **local, no-cost fallback** in the tracing chain. If no cloud backend has a key, `auto` selects Phoenix. Tracing does not stop, and Phoenix adds no cost to the API calls.
+
+Phoenix is one local process with SQLite or in-memory storage. Use it to inspect a batch, then delete its data.
+
+**Use Phoenix when** you want to see LLM calls (prompt, response, tokens, latency) on a laptop with no account. **Use [Langfuse](langfuse.md) when** you need one span for each graph node, scores on the trace, or shared access.
 
 Implementation: [`src/observability/phoenix_setup.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/phoenix_setup.py). Backend selection happens in [`src/observability/tracing.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/tracing.py).
 
@@ -35,7 +39,7 @@ if on_railway and local_only:
     return "none"
 ```
 
-Railway has no local `phoenix serve`, so defaulting to Phoenix there would only burn memory against a port nothing is listening on. Set `PHOENIX_ENDPOINT` to a real collector to re-enable it. See [Deployment — Railway](README.md#railway).
+Railway has no local `phoenix serve`. A default to Phoenix there only uses memory to send spans to a closed port. To enable Phoenix on Railway, set `PHOENIX_ENDPOINT` to a real collector. See [Deployment — Railway](README.md#railway).
 
 ## Run it standalone
 
@@ -75,7 +79,7 @@ The app declares `depends_on: phoenix: {condition: service_healthy, required: fa
 `PHOENIX_IMAGE` defaults to `arizephoenix/phoenix:latest` — an **unpinned** tag, unlike the rest of the Mode G stack where Postgres, LiteLLM and the base image are all pinned. A new upstream release can change behaviour without a commit here. Pin it explicitly in `.env` if you rely on Phoenix in production.
 {% endhint %}
 
-Because the port binds to `127.0.0.1`, Phoenix is reachable from the host but **not** from other machines. Keep it that way: traces contain document content. To expose it, front it with a reverse proxy that terminates auth — do not publish `6006` directly.
+The port binds to `127.0.0.1`. Thus the host can reach Phoenix, but other machines **cannot**. Keep this setting, because traces contain document content. If other users need access, put a reverse proxy with authentication in front of Phoenix. Do not publish port `6006` directly.
 
 ## Graceful degradation
 
