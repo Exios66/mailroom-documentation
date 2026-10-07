@@ -1,6 +1,6 @@
 # Agents
 
-This page is the specification for every agent in the pipeline: what triggers it, what it reads, what it returns, and which design rule it enforces. Read the roster below first to find the agent you care about; the sections after it are written to be read independently.
+This page is the specification for every agent in the pipeline. For each agent it gives the trigger, the input, the output, and the design rule it enforces. Read the roster below first to find your agent. Each section after the roster stands alone.
 
 ## The roster at a glance
 
@@ -56,10 +56,10 @@ class BaseAgent(ABC):
 Key design points:
 
 * `self.client` and `self.model` are resolved from `config/taxonomy.yaml` → `llm/providers.py` → `llm/client.py`
-* `system_prompt()` fetches the **Langfuse-managed prompt** (`mailroom-<agent_name>`, production label) via `llm/prompts.py:get_managed_prompt`, falling back to the identical template shipped in code when Langfuse is unavailable — behavior never depends on the observability backend being up. Sync templates with `scripts/sync_prompts.py`.
-* `_call_structured()` uses `response_format={"type": "json_object"}` and appends boilerplate that guarantees the literal token `json` in the messages (some providers reject requests without it) and embeds the JSON schema in the prompt.
+* `system_prompt()` fetches the **Langfuse-managed prompt** (`mailroom-<agent_name>`, production label) via `llm/prompts.py:get_managed_prompt`. If Langfuse is unavailable, it falls back to the identical template shipped in code. Behavior never depends on the observability backend. Sync templates with `scripts/sync_prompts.py`.
+* `_call_structured()` uses `response_format={"type": "json_object"}` and embeds the JSON schema in the prompt. It also appends boilerplate that puts the literal token `json` in the messages, because some providers reject requests without it.
 * Every LLM call goes through `llm/retry.py:retry_chat_completion` (transient failures only: connection errors, timeouts, 429, 5xx) and a `max_tokens` cap from the agent's `taxonomy.yaml` entry.
-* When a managed prompt is active, the client passes it to the OpenAI call as `langfuse_prompt=`, linking each generation to its exact prompt version in the trace UI.
+* When a managed prompt is active, the client passes it to the OpenAI call as `langfuse_prompt=`. This links each generation to its exact prompt version in the trace UI.
 * Every agent has a distinct system prompt ("personality") aligned with its role
 
 ### Vendored agents and which prompt runs in production
@@ -74,7 +74,7 @@ The most common confusion is the difference between *prompt history* and *produc
 * **Classify in production** uses **`sorter_v14`**: the V12 CUAD-subtype lineage plus mailroom pipeline doctrine, and the strongest sorter this pipeline has. V13 remains a frozen insurance-class experiment derived from V0.
 * **Extract in production** uses the sandbox and eval-environment **frozen v1** stems for all five specialists. The text is served from the llm-dojo-scoring `production_prompts` catalog, pinned in `pyproject.toml`. `src/llm/frozen_v1/lineage.json` records the sha256 and length of each prompt, so a prompt cannot drift unnoticed. The `.txt` files in `src/llm/frozen_v1/` are superseded and not packaged. `contracts_specialist_v33` is eval-only.
 
-Mailroom wrappers (`agents/sorter.py`, `agents/contracts_specialist.py`, `agents/merger_agreement_specialist.py`, and the native `BaseAgent` specialists) resolve these templates through `get_managed_prompt` (`mailroom-<agent>`, `production` label), so the LangGraph `classify` and `extract` nodes share one Langfuse surface. Sync with `scripts/sync_prompts.py`. All other agents follow the `BaseAgent` contract above.
+The Mailroom wrappers resolve these templates through `get_managed_prompt` (`mailroom-<agent>`, `production` label). The wrappers are `agents/sorter.py`, `agents/contracts_specialist.py`, `agents/merger_agreement_specialist.py`, and the native `BaseAgent` specialists. So the LangGraph `classify` and `extract` nodes share one Langfuse surface. Sync with `scripts/sync_prompts.py`. All other agents follow the `BaseAgent` contract above.
 
 ***
 
@@ -92,11 +92,25 @@ Mailroom wrappers (`agents/sorter.py`, `agents/contracts_specialist.py`, `agents
 
 **System prompt seed:** "You are a fast, decisive legal document classifier operating in a transactional/corporate law firm's mailroom."
 
-The shared five-class doctrine in the classification prompts describes `merger_agreement` and `contract` by what they are, without naming the MAUD or CUAD corpora (llm-mailroom#102, as of 2026-10-07).
+The shared five-class doctrine in the classification prompts describes `merger_agreement` and `contract` by what they are. It does not name the MAUD or CUAD corpora (llm-mailroom#102, as of 2026-10-07).
 
 The Sorter is the first LLM call in the pipeline. It reads the document text and determines which of the configured document classes it belongs to. The list of available classes is dynamically read from `config/taxonomy.yaml`, so adding a new document type automatically expands the Sorter's options.
 
-The Sorter is a **vendored LangChain agent** (`agents/sorter.py` re-exports `langchain_agents.sorter_agent.SorterAgent`): it classifies via `with_structured_output` against the `SORTER_SCHEMA`, uses the production `sorter_v14` prompt (V12 CUAD-subtype lineage + mailroom pipeline doctrine), and adds a **contract-subtype dimension** — for contracts it assigns one of 25 CUAD agreement families (affiliate, license, distributor, franchise, …) plus `other` (`CONTRACT_SUBTYPE_KEYS`, normalized via `normalize_subtype`; non-contracts carry `contract_subtype=None`). `classify()` returns a 4-tuple `(doc_type, contract_subtype, confidence, reasoning)`; the subtype flows into state, the classification guard, the extraction handoff context, the report, and the catalog. **No-truncation doctrine (HUB-038):** the mailroom subclass bypasses the upstream HEAD+TAIL truncation — documents past the input budget are classified in overlapping sliding windows (every character read) and merged deterministically (plurality vote among non-unknown classes, mean confidence of agreeing windows, first non-null subtype/subclass, joined reasoning; `WINDOW i OF n` markers per call). The advisory intake read rides every window as a labeled prior; page images attach to the first window only.
+The Sorter is a **vendored LangChain agent**: `agents/sorter.py` re-exports `langchain_agents.sorter_agent.SorterAgent`. It works as follows:
+
+* It classifies via `with_structured_output` against the `SORTER_SCHEMA`.
+* It uses the production `sorter_v14` prompt (V12 CUAD-subtype lineage + mailroom pipeline doctrine).
+* It adds a **contract-subtype dimension**. For contracts it assigns one of 25 CUAD agreement families (affiliate, license, distributor, franchise, …) or `other`. The keys are `CONTRACT_SUBTYPE_KEYS`, normalized via `normalize_subtype`. Non-contracts carry `contract_subtype=None`.
+* `classify()` returns a 4-tuple `(doc_type, contract_subtype, confidence, reasoning)`. The subtype flows into state, the classification guard, the extraction handoff context, the report, and the catalog.
+
+**No-truncation doctrine (HUB-038):** the mailroom subclass bypasses the upstream HEAD+TAIL truncation. It classifies documents past the input budget in overlapping sliding windows, so it reads every character. Each call carries `WINDOW i OF n` markers. The window results merge deterministically:
+
+* plurality vote among non-unknown classes;
+* mean confidence of the agreeing windows;
+* first non-null subtype and subclass;
+* joined reasoning.
+
+The advisory intake read rides every window as a labeled prior. Page images attach to the first window only.
 
 ***
 
@@ -138,7 +152,11 @@ Fires only where the pipeline previously sent the document to a human. Independe
 | `cuad_family`    | `str \| None` | CUAD agreement family                              |
 | `cuad_clauses`   | `list[str]`   | Present CUAD categories as `"<label>: <evidence>"` |
 
-The Contracts Specialist is also a **vendored LangChain agent** (`agents/contracts_specialist.py` re-exports `langchain_agents.specialist_agents.ContractsSpecialist`): production prompt is the sandbox / eval-environment **frozen v1** stem (served from the dojo `production_prompts` catalog; Langfuse `mailroom-contracts_specialist`), not entity-extraction `contracts_specialist_v33`. `normalize_extraction` guarantees every schema field is present, and a missing `confidence` is derived from the share of fields actually found. It extracts CUAD `contract` only. MAUD `merger_agreement` has its own specialist and `MergerAgreementExtraction` schema — the two labels are not interchangeable. It accepts a **`handoff_context`** — the chained-eval pattern: the graph passes the sorter's classification (`doc_type` + `contract_subtype` + confidence) into the extraction call so the specialist extracts with the expected clause set of that agreement family in mind. Every live specialist accepts the same optional `handoff_context` parameter.
+The Contracts Specialist is also a **vendored LangChain agent**: `agents/contracts_specialist.py` re-exports `langchain_agents.specialist_agents.ContractsSpecialist`. Its production prompt is the sandbox / eval-environment **frozen v1** stem. The dojo `production_prompts` catalog serves it (Langfuse `mailroom-contracts_specialist`). It is not entity-extraction `contracts_specialist_v33`.
+
+`normalize_extraction` guarantees every schema field is present. If `confidence` is missing, it is derived from the share of fields actually found. The specialist extracts CUAD `contract` only. MAUD `merger_agreement` has its own specialist and `MergerAgreementExtraction` schema. The two labels are not interchangeable.
+
+It accepts a **`handoff_context`**, which is the chained-eval pattern. The graph passes the sorter's classification (`doc_type` + `contract_subtype` + confidence) into the extraction call. The specialist then extracts with the expected clause set of that agreement family in mind. Every live specialist accepts the same optional `handoff_context` parameter.
 
 ***
 
@@ -195,7 +213,9 @@ The Contracts Specialist is also a **vendored LangChain agent** (`agents/contrac
 | `jurisdiction`   | `str \| None` | State/country of incorporation                                                                                                          |
 | `filing_number`  | `str \| None` | Official filing reference                                                                                                               |
 
-**Honest gap (dojo v0.21.0):** there is **no external extraction benchmark** for this class (nothing CUAD/MAUD-shaped). The published `mailroom-dataset` set has **450** `corporate_record` rows with record-type subclasses (v9 expanded this class from 39 legacy S-1 rows by +411 EDGAR exhibits — see [SEC corporate records](../mailroom-dataset/source-corpora/edgar-corporate-records.md)); Hub extract inventory stays the five tokens above — do not treat those rows as clause-level gold. Mailroom scores a **local extraction pack** (`observability.local_eval_packs`, mock/check only) with schema-complete `expected_fields` (entity\_name, subject\_matter, keywords, signatories, …) from committed fixtures. Extra Hub `ground_truth` columns are joined when present, never invented.
+**Honest gap (dojo v0.21.0):** there is **no external extraction benchmark** for this class (nothing CUAD/MAUD-shaped). The published `mailroom-dataset` set has **450** `corporate_record` rows with record-type subclasses. Dataset v9 expanded this class from 39 legacy S-1 rows by +411 EDGAR exhibits (see [SEC corporate records](../mailroom-dataset/source-corpora/edgar-corporate-records.md)). The Hub extract inventory stays the five tokens above. Do not treat those rows as clause-level gold.
+
+Mailroom scores a **local extraction pack** (`observability.local_eval_packs`, mock/check only) built from committed fixtures. Its `expected_fields` are schema-complete (entity\_name, subject\_matter, keywords, signatories, …). Extra Hub `ground_truth` columns are joined when present, never invented.
 
 ***
 
@@ -230,7 +250,7 @@ The Contracts Specialist is also a **vendored LangChain agent** (`agents/contrac
 
 ### 5. Compliance specialist (removed 2026-09-15)
 
-Removed in commit `59c47401` (2026-09-15), which deleted the docclass arm: the compliance specialist module, its extraction schema, its prompts, and its eval fixtures were all removed — nothing is retained as inert machinery for local eval packs. The five-class taxonomy is final (`contract`, `corporate_record`, `correspondence`, `merger_agreement`, `insurance_claim`), with `unknown` (human review) for everything else; documents of the retired compliance-filing type route as `unknown`. Do not recreate this specialist or its schema.
+Removed in commit `59c47401` (2026-09-15), which deleted the docclass arm. That commit removed the compliance specialist module, its extraction schema, its prompts, and its eval fixtures. Nothing is retained as inert machinery for local eval packs. The five-class taxonomy is final: `contract`, `corporate_record`, `correspondence`, `merger_agreement`, `insurance_claim`. Everything else is `unknown` (human review). Documents of the retired compliance-filing type route as `unknown`. Do not recreate this specialist or its schema.
 
 ***
 
@@ -267,9 +287,11 @@ Removed in commit `59c47401` (2026-09-15), which deleted the docclass arm: the c
 | `claim_checklist`        | `list[str]`     | Present claim categories as `"<Category>: <evidence>"`                                                                                                            |
 | `confidence`             | `float`         | Extraction confidence (evidence-derived)                                                                                                                          |
 
-A first-class document class (added in mailroom v0.4.0 / KANBAN-067): schema registry, taxonomy doc\_class + agent block, graph dispatch node, classifier vocabulary, and sorter prompt coverage.
+A first-class document class, added in mailroom v0.4.0 / KANBAN-067. It has a schema registry entry, a taxonomy doc\_class and agent block, a graph dispatch node, classifier vocabulary, and sorter prompt coverage.
 
-**Honest gap (dojo v0.21.0):** Hub rows are CMS DE-SynPUF source tables (`carrier`/`inpatient`/`outpatient`/`pde`). Typed extraction plus field-micro P/R/F1/F2 are scored. **`determination_consistency` and `amount_exactness` are registered scorers**; CMS GT is homogeneous (all `coverage_determination=approved` with empty `denial_reasons`), so Hub `determination_consistency` is **gated** (not a quality KPI on GT-shaped rows). A local contrast pack (approved / denied / partial) exercises the scorer off that tautology. The same three determinations also live on the pilot manifest as synthetic mock-only PDFs (`insurance_01` approved / `insurance_02` denied / `insurance_03` partial, rendered from `docs/examples/sources/insurance/` by `prepare_samples.py`) so `--mock` pilots cover `insurance_claim` end-to-end; `--real` refuses them via `is_real_sample`. Mailroom still records a local field invariant on traces. Candidate corpus EDA lives in [`claims-data-eda`](https://github.com/Exios66/claims-data-eda).
+**Honest gap (dojo v0.21.0):** Hub rows are CMS DE-SynPUF source tables (`carrier`/`inpatient`/`outpatient`/`pde`). Typed extraction plus field-micro P/R/F1/F2 are scored. **`determination_consistency` and `amount_exactness` are registered scorers.** CMS GT is homogeneous: every row has `coverage_determination=approved` and empty `denial_reasons`. So Hub `determination_consistency` is **gated**; it is not a quality KPI on GT-shaped rows. A local contrast pack (approved / denied / partial) exercises the scorer off that tautology.
+
+The same three determinations also live on the pilot manifest as synthetic mock-only PDFs: `insurance_01` approved, `insurance_02` denied, `insurance_03` partial. `prepare_samples.py` renders them from `docs/examples/sources/insurance/`. So `--mock` pilots cover `insurance_claim` end-to-end, and `--real` refuses them via `is_real_sample`. Mailroom still records a local field invariant on traces. Candidate corpus EDA lives in [`claims-data-eda`](https://github.com/Exios66/claims-data-eda).
 
 ***
 
@@ -321,15 +343,21 @@ The Archivist is NOT an LLM agent. It is a procedural function that:
 | **Output**      | cleaned text + stats (`messy`, `changed`, hyphen unwraps, collapsed blanks); LLM pass: advisory triage read + section map + optional structural cleaning   |
 | **Personality** | the intake clerk — first agent in the pipeline, one fused TRIAGE + CLEAN + PREPARE pass                                                                    |
 
-The deterministic clerk (dojo `llm_dojo_scoring.intake` gold, re-exported byte-compatible) is the MANDATORY baseline and never skipped: Unicode NFC, newline/NBSP/zero-width/C0 cleanup, hyphen unwrap, blank collapse, trim, `looks_messy`. The-Mailroom mirrors `deterministic_normalize` / `looks_messy` in `mailroom_ui/intake_normalize.py` and reads the span on every `document-pipeline` trace; Hugging Face pilots depend on it.
+The deterministic clerk is the MANDATORY baseline and never skipped. It is dojo `llm_dojo_scoring.intake` gold, re-exported byte-compatible. It applies Unicode NFC, newline/NBSP/zero-width/C0 cleanup, hyphen unwrap, blank collapse, trim, and `looks_messy`. The-Mailroom mirrors `deterministic_normalize` / `looks_messy` in `mailroom_ui/intake_normalize.py`. It reads the span on every `document-pipeline` trace, and Hugging Face pilots depend on it.
 
 **LLM-assisted pass (HUB-038).** On top of the clerk, an LLM pass (ONE fused call per window) TRIAGES, CLEANS, and PREPARES the document for the classification and extraction agents:
 
-* **Triage** — an advisory first read (primary doc class + subclass + confidence + gist + keywords), the same vocabulary-clamped shape as the free triage team's `validate_triage`. It rides the terminal manifest's `intake.triage`, the completion echo's INTAKE TRIAGE section, and is fed to the sorter as a labeled prior — the sorter re-classifies independently; intake NEVER overrules it.
+* **Triage** — an advisory first read: primary doc class + subclass + confidence + gist + keywords. It has the same vocabulary-clamped shape as the free triage team's `validate_triage`. It rides the terminal manifest's `intake.triage` and the completion echo's INTAKE TRIAGE section. The sorter gets it as a labeled prior and re-classifies independently. Intake NEVER overrules the sorter.
 * **Clean** — structural repair of messy OCR-ish text (join run-together lines, drop repeated header/footer artifacts; never alters facts). The model's output is re-run through the deterministic clerk so `prep_invariants` hold; the dojo scores it as `method: llm` against the clerk gold (`score_intake`).
 * **Prepare** — a section map (heading + role + document-absolute char offsets, deterministically validated: in-bounds, monotonic, catalog roles) so downstream routing can see document structure.
 
-**No-truncation doctrine (human directive 2026-09-03).** Documents are NEVER truncated. Anything past an input budget is processed in overlapping sliding windows (`agents.intake.sliding_windows` — paragraph-boundary, 15% overlap, mirroring the extraction chunker) and merged deterministically: per-window triage reads vote (plurality among non-unknown classes, ties on confidence), section offsets are translated to document-absolute positions and overlap-deduped, and partial-window cleaning is never spliced back. The same doctrine governs the sorter: `agents/sorter.py` bypasses the vendored HEAD+TAIL truncation — over-budget documents are classified window-by-window and the reads merge (plurality vote, mean confidence of the agreeing windows, first non-null subtype, joined reasoning; `WINDOW i OF n` markers on every call).
+**No-truncation doctrine (human directive 2026-09-03).** Documents are NEVER truncated. Anything past an input budget is processed in overlapping sliding windows (`agents.intake.sliding_windows`). The windows break on paragraphs and overlap by 15%, mirroring the extraction chunker. The window results merge deterministically:
+
+* Per-window triage reads vote: plurality among non-unknown classes, ties broken on confidence.
+* Section offsets are translated to document-absolute positions and overlap-deduped.
+* Partial-window cleaning is never spliced back.
+
+The same doctrine governs the sorter. `agents/sorter.py` bypasses the vendored HEAD+TAIL truncation and classifies over-budget documents window-by-window. The reads merge by plurality vote, mean confidence of the agreeing windows, first non-null subtype, and joined reasoning. Every call carries `WINDOW i OF n` markers.
 
 **Gate + cost.** The LLM pass fires ONLY for documents that need it (`looks_messy`, or longer than the sorter's input budget — clean short documents pay zero). One fused call per window on the cheapest paid model (`qwen3.7-flash`; the free tier stays the Gmail triage lane's privilege). `MAILROOM_LLM_INTAKE=0` disables the LLM pass entirely; every failure fails soft to the deterministic clerk output — intake never blocks a run.
 
@@ -434,9 +462,18 @@ The lane runs on the **free OpenRouter triage team** (`openrouter/free`, the Fre
 
 > The end-to-end operator manual for the Gmail intake route — enabling the channel, the upload/subject-line format contract, all pathways from Gmail into the pipeline, and troubleshooting — is [`docs/gmail-intake.md`](gmail-intake.md).
 
-**Capability pre-check + honest handoff.** Before the lane runs, a deterministic, LLM-free check (`pipeline/watcher.py:_triage_capability_check`) verifies the free team can actually handle the single document — no doomed runs. Documents beyond the free models' reach are handed off to the full paid pipeline: image-only inputs (`image_requires_vision`), scanned PDFs with no direct text (`scanned_pdf_requires_transcription`), unreadable inputs, or a deterministic text length above the `gmail_triage` `max_input_chars` budget (`exceeds_free_budget:N>M`) — **merger agreements are typically excessively long and almost always exceed the free models' classification capability**. The handoff reason rides `intake.triage_handoff` onto the terminal manifest and the completion echo ("triage handoff: … — handled by the full pipeline"). Every canonical doc type — contract, merger\_agreement, insurance\_claim, corporate\_record, correspondence — is validated through the lane (test matrix) and accepted when within the free capability envelope.
+**Capability pre-check + honest handoff.** Before the lane runs, a deterministic, LLM-free check (`pipeline/watcher.py:_triage_capability_check`) verifies that the free team can handle the single document. This prevents doomed runs. Documents beyond the free models' reach go to the full paid pipeline:
 
-The triage read is **advisory by design** and never overrules the pipeline agents (it is only dispatched on single-document Gmail instances, where no pipeline run happens — the overrule guard is the standing invariant). Audit entries use their own namespaced section (`triage_ingested` / `triage_classified` / `triage_archived`) so the stored audits are never conflated with the pipeline's `ingested`/`classified`/`extracted`/`archived` vocabulary. Fails soft: no `OPENROUTER_API_KEY`, rate limit, or provider error ever blocks intake (logged; the document parks in `review/` with reason `triage_llm_unavailable`). Output is clamped to the live taxonomy vocabulary by `validate_triage` (unknown class → `unknown`, confidence 0.0–1.0, ≤6 keywords, 300-char gist). Registration: `llm/prompts.py:prompt_templates()` (synced with `scripts/sync_prompts.py`), agent config in `config/taxonomy.yaml`.
+* image-only inputs (`image_requires_vision`);
+* scanned PDFs with no direct text (`scanned_pdf_requires_transcription`);
+* unreadable inputs;
+* a deterministic text length above the `gmail_triage` `max_input_chars` budget (`exceeds_free_budget:N>M`).
+
+**Merger agreements are typically excessively long and almost always exceed the free models' classification capability.** The handoff reason rides `intake.triage_handoff` onto the terminal manifest and the completion echo ("triage handoff: … — handled by the full pipeline"). The lane's test matrix validates every canonical doc type: contract, merger\_agreement, insurance\_claim, corporate\_record, correspondence. Each is accepted when it is within the free capability envelope.
+
+The triage read is **advisory by design** and never overrules the pipeline agents. It is only dispatched on single-document Gmail instances, where no pipeline run happens. The overrule guard is the standing invariant. Audit entries use their own namespaced section (`triage_ingested` / `triage_classified` / `triage_archived`). So the stored audits are never conflated with the pipeline's `ingested`/`classified`/`extracted`/`archived` vocabulary.
+
+It fails soft. A missing `OPENROUTER_API_KEY`, a rate limit, or a provider error never blocks intake. The failure is logged, and the document parks in `review/` with reason `triage_llm_unavailable`. `validate_triage` clamps the output to the live taxonomy vocabulary: unknown class → `unknown`, confidence 0.0–1.0, ≤6 keywords, 300-char gist. Registration: `llm/prompts.py:prompt_templates()` (synced with `scripts/sync_prompts.py`), agent config in `config/taxonomy.yaml`.
 
 ***
 
@@ -450,11 +487,34 @@ The triage read is **advisory by design** and never overrules the pipeline agent
 | **Output**      | typed, scored edges (`relation_edges`) + hash-chained ledger entries (`relation_log`) + advisory RELATED context for agents/echo + knowledge-graph exports                                                                                                                                                                                                         |
 | **Personality** | the mailroom's research clerk — files everything near everything it relates to, records the relationship itself                                                                                                                                                                                                                                                    |
 
-The **relations layer** links associated topics, documents, and matters across the archive — the lawyer's research methodology as infrastructure. Deterministic signals (all free): `same_matter`, keyword Jaccard (`topic_overlap`), shared parties (`party_overlap`), embedding cosine via the dojo's sentence-transformers model (`semantic_similarity` — embeddings computed ONCE per document and cached in `relation_embeddings`), and a temporal evidence boost. Edges live in `relation_edges` (canonical endpoints, closed six-type vocabulary, per-document cap); every scan and every new edge is an entry in the **own hash-chained ledger** (`relation_log`, `__relations__` scope — same tamper-evident law as the document audit; `python -m pipeline.relations_scan --verify-ledger`), and each document's own audit chain gains a `relations_linked` event.
+The **relations layer** links associated topics, documents, and matters across the archive. It is the lawyer's research methodology as infrastructure. Its deterministic signals are all free:
 
-The **LLM judgment pass** (`RelationsAgent.judge`, WIRED in HUB-051) reviews the scanner's top-`top_k_llm_candidates` **ambiguous-band** pairs — signals that suggest but do not clear a deterministic threshold (the near-miss set collected during the same scan) — and returns typed judgments + rationale. Confidence-gated (`llm_confidence_gate`, default 0.55) `llm_asserted` edges join the same upsert + ledger path as the deterministic ones; the scanner re-validates the agent's output against its OWN proposed pairs (closed vocabulary, pair normalization, unproposed-pair refusal — applied twice, so nothing unvalidated ever reaches the ledger). `relations.llm: false` keeps the pilot deterministic-only (free-tier guardrail compatible); flipping it on in production is a taxonomy edit — or one command: `python -m pipeline.relations_mode live [--model <name>] [--restart-watcher]`, or the API's `POST /api/relations/mode` (HUB-052; the embedded watcher picks the flip up with no restart). Registered as `mailroom-relations` in `llm/prompts.py`.
+* `same_matter`;
+* keyword Jaccard (`topic_overlap`);
+* shared parties (`party_overlap`);
+* embedding cosine via the dojo's sentence-transformers model (`semantic_similarity`), computed ONCE per document and cached in `relation_embeddings`;
+* a temporal evidence boost.
 
-**Consumption** (the longitudinal loop): a bounded, labeled advisory `RELATED` block rides the sorter/specialist handoff context and the Gmail completion echo — later documents inherit everything the archive already knows. **Knowledge graphs** (`python -m pipeline.relations_graph`): matter graphs (typed doc nodes + related-matter bridges), the global inter-matter graph (edges aggregated to pair weights), and document ego-graphs, exported as GraphJSON + GraphML (stdlib, always) and Plotly HTML + PNG (optional deps, graceful skip) under `<base>/relations/graphs/`, with `relations_graph_rendered` ledger events. Fails soft everywhere; the document path never waits on it.
+Edges live in `relation_edges`, with canonical endpoints, a closed six-type vocabulary, and a per-document cap. Every scan and every new edge is an entry in the layer's **own hash-chained ledger** (`relation_log`, `__relations__` scope). It follows the same tamper-evident law as the document audit; verify it with `python -m pipeline.relations_scan --verify-ledger`. Each document's own audit chain gains a `relations_linked` event.
+
+The **LLM judgment pass** (`RelationsAgent.judge`, WIRED in HUB-051) reviews the scanner's top-`top_k_llm_candidates` **ambiguous-band** pairs. These are signals that suggest but do not clear a deterministic threshold: the near-miss set from the same scan. The pass returns typed judgments + rationale. A confidence gate (`llm_confidence_gate`, default 0.55) admits `llm_asserted` edges into the same upsert + ledger path as the deterministic ones. The scanner re-validates the agent's output against its OWN proposed pairs: closed vocabulary, pair normalization, and unproposed-pair refusal. It applies these checks twice, so nothing unvalidated reaches the ledger.
+
+`relations.llm: false` keeps the pilot deterministic-only, which is compatible with the free-tier guardrail. To turn it on in production, edit the taxonomy, or use one of these:
+
+* `python -m pipeline.relations_mode live [--model <name>] [--restart-watcher]`;
+* the API's `POST /api/relations/mode` (HUB-052). The embedded watcher picks the flip up with no restart.
+
+It is registered as `mailroom-relations` in `llm/prompts.py`.
+
+**Consumption** (the longitudinal loop): a bounded, labeled advisory `RELATED` block rides the sorter/specialist handoff context and the Gmail completion echo. Later documents inherit everything the archive already knows.
+
+**Knowledge graphs** (`python -m pipeline.relations_graph`) come in three kinds:
+
+* matter graphs (typed doc nodes + related-matter bridges);
+* the global inter-matter graph (edges aggregated to pair weights);
+* document ego-graphs.
+
+They export as GraphJSON + GraphML (stdlib, always) and Plotly HTML + PNG (optional deps, graceful skip) under `<base>/relations/graphs/`. Each export writes a `relations_graph_rendered` ledger event. The layer fails soft everywhere, and the document path never waits on it.
 
 ***
 
@@ -469,7 +529,7 @@ PYTHONPATH=src python src/scripts/run_agent_eval.py --agent insurance_claims_spe
 PYTHONPATH=src python src/scripts/run_agent_eval.py --agent all --mock --n 1 --self-check
 ```
 
-`observability/agent_eval.py` loads labeled cases from test fixtures, local eval packs, and the live manifest; invokes a single agent; and scores with the same deterministic classifiers / field scorers the pipeline uses. `--real` is gated by `prepare_samples.is_real_sample` (CUAD / LegalBench only) — synthetic insurance / corporate / correspondence samples are mock-only, matching `run_pilot.py`.
+`observability/agent_eval.py` loads labeled cases from test fixtures, local eval packs, and the live manifest. It invokes a single agent and scores it with the same deterministic classifiers and field scorers the pipeline uses. `prepare_samples.is_real_sample` gates `--real` (CUAD / LegalBench only). Synthetic insurance / corporate / correspondence samples are mock-only, matching `run_pilot.py`.
 
 This is the methodology for iterating on a single specialist or the sorter without paying for a full document-pipeline run. It does **not** replace the live `mailroom-pipeline-judge` / `mailroom-pipeline-quality` evaluators.
 
