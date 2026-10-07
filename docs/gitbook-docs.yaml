@@ -1,0 +1,12 @@
+$schema: https://api.gitbook.com/gitbook-docs.yaml
+site:
+  title: The Digital Mailroom
+  structure:
+    - type: space
+      key: mailroom-docs
+      title: The Digital Mailroom
+      path: /
+      default: true
+      content:
+        directory: ./
+        language: en
