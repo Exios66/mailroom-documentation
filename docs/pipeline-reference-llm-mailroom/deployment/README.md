@@ -28,7 +28,7 @@ OPENROUTER_API_KEY=sk-or-v1-your-key-here
 # Database — SQLite by default (no server needed).
 # The file is created automatically at {MAILROOM_BASE_DIR}/mailroom.db.
 # To use Postgres instead, uncomment:
-# DATABASE_URL=postgresql+asyncpg://mailroom:mailroom@localhost:5432/mailroom
+# DATABASE_URL=postgresql+psycopg://mailroom:mailroom@localhost:5432/mailroom
 
 # Observability (optional) — Langfuse cloud, Langfuse self-hosted, Braintrust,
 # or the local cost-free Arize Phoenix backend.
