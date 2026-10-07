@@ -670,7 +670,7 @@ llm-mailroom v0.3.0, released 2026-08-19.
 {% update date="2026-08-18" tags="feature,improvement,fix" %}
 ## Released backlog — v0.4.0 → v0.6.0 era
 
-llm-mailroom Released backlog — v0.4.0 → v0.6.0 era, released 2026-08-18.
+llm-mailroom Released backlog — v0.4.0 → v0.6.0 era (undated catch-up entry in `CHANGELOG.md`).
 
 ### Added
 - **Braintrust + OpenRouter skills for all agents**: `braintrust`

@@ -13,7 +13,7 @@ This GitBook Changelog space is generated from the repository
 pages. To regenerate them, follow "Changelog" in the Maintaining this site page.
 {% endhint %}
 
-Released 2026-08-18. Canonical source: [`CHANGELOG.md`](https://github.com/Exios66/llm-mailroom/blob/main/CHANGELOG.md).
+Undated catch-up entry in `CHANGELOG.md`. Canonical source: [`CHANGELOG.md`](https://github.com/Exios66/llm-mailroom/blob/main/CHANGELOG.md).
 
 ### Added
 - **Braintrust + OpenRouter skills for all agents**: `braintrust`
