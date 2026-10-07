@@ -97,7 +97,7 @@ The PR copied `docs/changelog/` from llm-mailroom's generated pages, which lag `
   ```
 
 - [ ] **Step 5: Update repo law**
-  - `AGENTS.md`: delete the §6 DO NOT bullet about `docs/changelog/`; rewrite the §9 Changelog bullet to: the site has a Changelog section under `docs/changelog/`, generated from llm-mailroom `CHANGELOG.md`, never hand-edited except the two fixes in `maintaining.md#changelog`; add a §5 table row `docs/changelog/` → "Generated release notes; regenerate, never hand-edit".
+  - `AGENTS.md`: delete the §6 DO NOT bullet about `docs/changelog/`; rewrite the §9 Changelog bullet to: the site has a Changelog section under `docs/changelog/`, generated from llm-mailroom `CHANGELOG.md`, never hand-edited except the two fixes in `docs/about-this-site/maintaining.md#changelog`; add a §5 table row `docs/changelog/` → "Generated release notes; regenerate, never hand-edit".
   - `docs/about-this-site/maintaining.md`: replace the "no Changelog section" paragraph with a `## Changelog` section holding Steps 1–3 above as the recipe (worktree at the llm-mailroom `main` commit being mirrored, generate, copy without `SUMMARY.md`/`.gitbook*`, apply the two fixes, update the SUMMARY Changelog block when a release page is added). Add `changelog/` to the section-folders list. Change the "`CHANGELOG.md` changes" row to "Regenerate the Changelog section (see Changelog)".
   - `README.md`: rule 6 links the recipe in `docs/about-this-site/maintaining.md#changelog`; the "Regenerate the Changelog" row states the same recipe in one line, not "In llm-mailroom: …".
 
@@ -238,7 +238,7 @@ Source: `578db29:src/config/taxonomy.yaml` (`free_quota:` block), `src/llm/quota
 
 - [ ] **Step 1: Relative-link check** — for every `](relative.md#anchor)` in changed files, confirm the file exists and the anchor matches a heading.
   ```bash
-  git diff --name-only origin/main...HEAD -- docs | grep '\.md$' | xargs python3 -c 'import re,os,sys; bad=[(f,m) for f in sys.argv[1:] for m in re.findall(r"\]\(([^)#\s]+\.md)(?:#[^)]*)?\)", open(f,encoding="utf-8").read()) if not m.startswith("http") and not os.path.exists(os.path.normpath(os.path.join(os.path.dirname(f),m)))]; [print(f,"->",m) for f,m in bad]; sys.exit(1 if bad else 0)'
+  git diff --name-only origin/main...HEAD -- docs README.md | grep '\.md$' | xargs python3 -c 'import re,os,sys; bad=[(f,m) for f in sys.argv[1:] for m in re.findall(r"\]\(([^)#\s]+\.md)(?:#[^)]*)?\)", open(f,encoding="utf-8").read()) if not m.startswith("http") and not os.path.exists(os.path.normpath(os.path.join(os.path.dirname(f),m)))]; [print(f,"->",m) for f,m in bad]; sys.exit(1 if bad else 0)'
   ```
   Expected: exit 0, no output. Check `#anchor` targets by eye for links added in this plan.
 - [ ] **Step 2: Stale-claim sweep** — expect no output from each:
