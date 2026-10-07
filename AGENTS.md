@@ -74,7 +74,7 @@ git log --oneline -5 origin/main
 
 Then:
 
-1. Read `gitbook-docs.yaml` and `docs/.gitbook.yaml` before any structural change. Compare them with §3. They must match exactly.
+1. Read `gitbook-docs.yaml` and `docs/.gitbook.yaml` before any structural change. Compare `gitbook-docs.yaml` with §3.1 and `docs/.gitbook.yaml` with §3.2. Each file must match its example exactly.
 2. Run the checker once (§11) so you know the starting state.
 3. State which harness you run under (Claude Code, Codex, Cursor, OpenCode, …) and which checkout you treat as canonical.
 4. Use read-only inspection until you know what to change.
@@ -384,7 +384,7 @@ In short:
 curl -sL https://mailroom-inc.gitbook.io/the-digital-mailroom/<page-url> | grep -oE 'id="[^"]+"' | sort -u
 ```
 
-For a heading you add in this change, the id is not live yet. Write your best id from the rules above, then confirm it after the merge (§13). The checker marks such anchors `UNVERIFIED`.
+For a heading you add in this change, the id is not live yet. Write your best id from the rules above, then confirm it after the merge (§13). The checker marks such anchors `UNVERIFIED`, because the target page differs from `origin/main`.
 
 ---
 
@@ -555,13 +555,15 @@ It checks:
 1. `gitbook-docs.yaml` and `docs/.gitbook.yaml` parse, and the site keeps its shape (`section-1` → `mailroom-docs`, `path: /`, `./docs`).
 2. Every `SUMMARY.md` entry points at a file, and every page under `docs/` is listed (`docs/assets/` and `docs/.gitbook/` excepted).
 3. Every relative link and image (`src` and `srcset`) in a published page resolves to a file.
-4. Every `#anchor` exists as an id on the **live** page.
+4. Every `#anchor` exists as an id on the **live** page. A missing id on a page that is unchanged against `origin/main` is an `ERROR`.
 
 | Output | Meaning | Action |
 | --- | --- | --- |
 | `CHECK-OK` as the last line, exit code 0 | No errors | Continue |
 | `ERROR …` lines, exit code 1 | A real defect | Fix every one. Never push with an `ERROR`. |
-| `UNVERIFIED … anchor … is not on <url>` | The id is not on the live page | If the heading is new in this change, confirm it after the merge (§13). Otherwise the anchor is wrong: copy the real id (§7.3). |
+| `ERROR … anchor … is not on <url>, and the page is unchanged` | The target page is already live, and the id is not on it | The anchor is wrong. Copy the real id (§7.3). |
+| `UNVERIFIED … (page changed on this branch)` | The target page changed in your branch, so the heading may not be live yet | Confirm it after the merge (§13). |
+| `UNVERIFIED … could not fetch <url>` | The live page did not load (network, timeout, or HTTP error) | Run the checker again. If it persists, open the URL by hand. |
 
 `--offline` skips the network. All anchors then show as `UNVERIFIED`.
 
