@@ -12,7 +12,7 @@ One LangGraph state machine per document. Specialist LLM agents per document cla
 
 <table data-header-hidden><thead><tr><th valign="middle"></th><th valign="middle"></th></tr></thead><tbody><tr><td valign="middle"><img src=".gitbook/assets/fumi.gif" alt="Fumi, the llm-mailroom mascot: a chibi postal maid in a USPS-style uniform with a mail satchel and a little owl on her shoulder" data-size="original"></td><td valign="middle"><p>Postal Worker Fumi (文, "letter") on duty.</p><p>Specialist agents on a 13-node graph — Fumi minds the inbox while the pipeline files every letter.</p></td></tr></tbody></table>
 
-This is the published home of [Mailroom Inc. Docs](https://mailroom-inc.gitbook.io/mailroom-inc.-docs/). It matches the repository landing page in `landing/` (banner, title, badges, tags, install, pipeline walk-through, docs shelf). Fumi appears after the masthead as Postal Worker Fumi (文, "letter") on duty. GitBook strips scripts, so the idle mail-floor terminal stays on the static page. This page uses GitBook's own type — it does not load the landing page's display font.
+This is the published home of [The Digital Mailroom](https://mailroom-inc.gitbook.io/the-digital-mailroom/). It is the GitBook port of the static landing page (banner, title, badges, tags, install, pipeline walk-through, docs shelf). Fumi appears after the masthead as Postal Worker Fumi (文, "letter") on duty. GitBook strips scripts, so the idle mail-floor terminal stays on the static page. This page uses GitBook's own type — it does not load the landing page's display font.
 
 ```bash
 # clone, install, then start the API (it embeds the inbox watcher)
@@ -91,7 +91,7 @@ That system is spread across more than a dozen repositories: the pipeline itself
 
 ## The pipeline reference
 
-The pages below are the canonical documentation for the `llm-mailroom` pipeline package. They live in this repository's `docs/` folder and are also browsable locally with docmd (see the repository [README](https://github.com/Exios66/llm-mailroom#browsing-the-docs-locally)).
+The pages below are the canonical documentation for the `llm-mailroom` pipeline package. They live at the root of this documentation repository and are also browsable locally with docmd (see the pipeline repository [README](https://github.com/Exios66/llm-mailroom#browsing-the-docs-locally)).
 
 | Document                                                                          | Description                                                                 |
 | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -116,8 +116,9 @@ The pages below are the canonical documentation for the `llm-mailroom` pipeline 
 
 ## Related files
 
-* [`../README.md`](https://github.com/Exios66/llm-mailroom/blob/main/README.md) — package overview
-* [`../landing/`](https://github.com/Exios66/llm-mailroom/tree/main/landing/README.md) — standalone static landing page (idle mail-floor terminal; this GitBook home is the published port)
-* `wiki/` — GitHub-wiki-only pages (not part of this site)
-* `assets/` — images and diagrams
-* [`constellation/maintaining.md`](about-this-site/maintaining.md) — how this site is built and kept current
+* [`README.md`](https://github.com/Exios66/mailroom-documentation/blob/main/README.md) — this file; the site landing page
+* `SUMMARY.md` — the table of contents for this site
+* `gitbook-docs.yaml` — this site's GitBook configuration (live)
+* [`.gitbook/assets/`](https://github.com/Exios66/mailroom-documentation/tree/main/.gitbook/assets) — images and diagrams
+* [`about-this-site/maintaining.md`](about-this-site/maintaining.md) — how this site is built and kept current
+* [Exios66/llm-mailroom `README.md`](https://github.com/Exios66/llm-mailroom/blob/main/README.md) — the upstream pipeline repository's package overview
