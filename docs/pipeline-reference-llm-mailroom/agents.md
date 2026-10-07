@@ -1,8 +1,40 @@
 # Agents
 
+This page is the specification for every agent in the pipeline: what triggers it, what it reads, what it returns, and which design rule it enforces. Read the roster below first to find the agent you care about; the sections after it are written to be read independently.
+
+## The roster at a glance
+
+An *agent* here is any component that does one job on a document. Only some of them call a language model. The rest are deterministic code that follows the same contract, so the graph treats them uniformly.
+
+| Stage | Agent | Calls an LLM? | Model tier | One-line job |
+| --- | --- | --- | --- | --- |
+| Intake | Intake clerk | Deterministic core always; LLM pass only for messy or over-budget text | `fast` | Normalize text, optionally triage, clean and map sections |
+| Intake | PDF transcriber | Only for scanned or garbled PDFs | `vision` | Faithful text from a PDF |
+| Intake | Image extractor | Yes | `vision` | Faithful text from an image |
+| Classify | Sorter | Yes | `fast` | Assign document class, subclass and confidence |
+| Classify | Sorter reviewer (Lane A) | Yes | `fast` | Blind second opinion when the sorter is only moderately sure |
+| Extract | Five class specialists | Yes | `extract` | Fill the class schema (contracts, merger agreements, corporate records, correspondence, insurance claims) |
+| Verify | Judge (Lane B) | Yes, only in the ambiguous band | `extract` | Check the extraction for completeness |
+| Verify | Arbiter (Lane B) | Yes, only after a partial or incomplete verdict | `extract` | Rule: accept with caveats, re-extract, or send to a human |
+| Escalate | Boss | Yes | `extract` | Adjudicate conflicts and repeated low confidence |
+| File | Report assembler | No | none | Format the extraction into the report |
+| File | Archivist | No | none | Move the file, write the manifest, seal the audit entry |
+| Outside the graph | Gmail triage | Yes, on a free model | `fast` | Fast single-document lane for Gmail uploads |
+| Outside the graph | Relations agent | Deterministic scan; LLM judgment pass is off by default | `fast` | Link related documents and matters after archiving |
+
+Model tiers (`fast`, `extract`, `vision`) are set per agent in `config/taxonomy.yaml`, together with a `max_tokens` cap. The concrete model behind a tier is configuration and changes more often than this page; see [Configuration](configuration.md) for the current assignment.
+
+Three ideas recur in every entry below:
+
+* **Independence.** The sorter reviewer never sees the sorter's label, and the judge and arbiter are separate calls. Agreement is computed by the graph, so one model cannot grade its own work.
+* **No truncation.** No document is ever cut to fit a context window. Long text is processed in overlapping windows and the results are merged deterministically.
+* **Fail soft.** Optional or advisory components (LLM intake, Gmail triage, relations) degrade to deterministic behavior on any error. They never block a document.
+
+***
+
 ## Agent Architecture
 
-All agents inherit from `agents/base.py:BaseAgent` and share a common interface:
+Native agents inherit from `agents/base.py:BaseAgent` and share a common interface. The vendored Sorter, Contracts Specialist and Merger Agreement Specialist instead build a LangChain `ChatOpenAI` with structured output (see below):
 
 ```python
 class BaseAgent(ABC):
@@ -30,7 +62,19 @@ Key design points:
 * When a managed prompt is active, it's passed to the OpenAI call as `langfuse_prompt=`, linking each generation to its exact prompt version in the trace UI.
 * Every agent has a distinct system prompt ("personality") aligned with its role
 
-**The Sorter, Contracts Specialist, and Merger Agreement Specialist are vendored LangChain agents** (from `github.com/Exios66/llm-entity-extraction`, kept in sync with that repo's append-only prompt _history_ — re-vendored to the sibling's current HEAD on 2026-08-15), imported into `langchain_agents/` with mailroom plumbing adapted in (pages/vision, run-deadline checks, per-call usage accounting — each adaptation marked `MAILROOM PATCH`). They use `langchain-openai`'s `ChatOpenAI` + `with_structured_output` instead of the mailroom's `agents/base.py` plumbing. Eval loops still pin an explicit lineage key through `langchain_agents/prompts.py:PROMPT_VERSIONS` (`sorter_v0…v14`, `contracts_specialist_v1…v33`). **Production is not that history:** classify uses **`sorter_v14`** (V12 CUAD-subtype lineage + mailroom pipeline doctrine — the strongest sorter this pipeline has; V13 remains a frozen insurance-class experiment derived from V0). Extract uses the sandbox / eval-environment **frozen v1** stems in `src/llm/frozen_v1/` for all five specialists (sha256-locked; `contracts_specialist_v33` is eval-only). Mailroom wrappers (`agents/sorter.py`, `agents/contracts_specialist.py`, `agents/merger_agreement_specialist.py`, and the native BaseAgent specialists) resolve those templates through `get_managed_prompt` (`mailroom-<agent>`, `production` label) so the LangGraph `classify` / `extract` nodes share the same Langfuse surface. Sync with `scripts/sync_prompts.py`. All other agents follow the `BaseAgent` contract below.
+### Vendored agents and which prompt runs in production
+
+The Sorter, Contracts Specialist and Merger Agreement Specialist are **vendored LangChain agents**. Their code comes from `github.com/Exios66/llm-entity-extraction` and was re-vendored to that repository's current HEAD on 2026-08-15. It is imported into `langchain_agents/` with mailroom plumbing adapted in: page and vision handling, run-deadline checks and per-call usage accounting. Each adaptation is marked `MAILROOM PATCH`, so a re-vendor can find and re-apply them.
+
+These agents use `langchain-openai`'s `ChatOpenAI` with `with_structured_output` instead of `agents/base.py`. That difference matters when debugging: retries, token caps and prompt linking follow the vendored path, not the `BaseAgent` contract above.
+
+The most common confusion is the difference between *prompt history* and *production prompt*:
+
+* **History.** Eval loops pin an explicit lineage key through `langchain_agents/prompts.py:PROMPT_VERSIONS` (`sorter_v0…v14`, `contracts_specialist_v1…v33`). This is an append-only record of every version tried.
+* **Classify in production** uses **`sorter_v14`**: the V12 CUAD-subtype lineage plus mailroom pipeline doctrine, and the strongest sorter this pipeline has. V13 remains a frozen insurance-class experiment derived from V0.
+* **Extract in production** uses the sandbox and eval-environment **frozen v1** stems in `src/llm/frozen_v1/` for all five specialists. They are sha256-locked, so a prompt cannot drift unnoticed. `contracts_specialist_v33` is eval-only.
+
+Mailroom wrappers (`agents/sorter.py`, `agents/contracts_specialist.py`, `agents/merger_agreement_specialist.py`, and the native `BaseAgent` specialists) resolve these templates through `get_managed_prompt` (`mailroom-<agent>`, `production` label), so the LangGraph `classify` and `extract` nodes share one Langfuse surface. Sync with `scripts/sync_prompts.py`. All other agents follow the `BaseAgent` contract above.
 
 ***
 
@@ -384,13 +428,13 @@ When the completeness judge rejects an extraction, the arbiter — not the raw p
 | **Output**      | `intake.triage`: `primary_doc_class` + `doc_subclass` + `confidence` + `gist` + `keywords`; own `triage_*` audit section       |
 | **Personality** | Fast, grounded intake clerk — the accurate log, not the final word                                                             |
 
-The **free OpenRouter triage team** (`openrouter/free` — the Free Models Router, $0 in `cost_models`, rate-limited) — the free model is deliberate: single-document Gmail uploads must not rack up paid-agent spend. The lane performs the **core steps and functionalities of the full pipeline** — deterministic preparation, triage classification, auditable-hash archive with a terminal manifest, and the completion echo — without calling any paid agent. Emails with **two or more accepted attachments drop the triage approach** and run the FULL paid pipeline per document (`route: pipeline`; triage is never dispatched).
+The lane runs on the **free OpenRouter triage team** (`openrouter/free`, the Free Models Router: $0 in `cost_models`, rate-limited). Using a free model is deliberate, because single-document Gmail uploads must not accumulate paid-agent spend. The lane performs the **core steps and functionalities of the full pipeline** — deterministic preparation, triage classification, auditable-hash archive with a terminal manifest, and the completion echo — without calling any paid agent. Emails with **two or more accepted attachments drop the triage approach** and run the FULL paid pipeline per document (`route: pipeline`; triage is never dispatched).
 
 > The end-to-end operator manual for the Gmail intake route — enabling the channel, the upload/subject-line format contract, all pathways from Gmail into the pipeline, and troubleshooting — is [`docs/gmail-intake.md`](gmail-intake.md).
 
 **Capability pre-check + honest handoff.** Before the lane runs, a deterministic, LLM-free check (`pipeline/watcher.py:_triage_capability_check`) verifies the free team can actually handle the single document — no doomed runs. Documents beyond the free models' reach are handed off to the full paid pipeline: image-only inputs (`image_requires_vision`), scanned PDFs with no direct text (`scanned_pdf_requires_transcription`), unreadable inputs, or a deterministic text length above the `gmail_triage` `max_input_chars` budget (`exceeds_free_budget:N>M`) — **merger agreements are typically excessively long and almost always exceed the free models' classification capability**. The handoff reason rides `intake.triage_handoff` onto the terminal manifest and the completion echo ("triage handoff: … — handled by the full pipeline"). Every canonical doc type — contract, merger\_agreement, insurance\_claim, corporate\_record, correspondence — is validated through the lane (test matrix) and accepted when within the free capability envelope.
 
-The triage read is **advisory by design** and never overrules the pipeline agents (it is only dispatched on single-document Gmail instances, where no pipeline run happens — the overrule guard is the standing invariant). Audit entries use their own namespaced section (`triage_ingested` / `triage_classified` / `triage_archived`) so the stored audits are never conflated with the pipeline's `ingested`/`classified`/`extracted`/`archived` vocabulary. Fails soft: no `OPENROUTER_API_KEY`, rate limit, or provider error ever blocks intake (logged; the document parks to `failed/`). Output is clamped to the live taxonomy vocabulary by `validate_triage` (unknown class → `unknown`, confidence 0.0–1.0, ≤6 keywords, 300-char gist). Registration: `llm/prompts.py:prompt_templates()` (synced with `scripts/sync_prompts.py`), agent config in `config/taxonomy.yaml`.
+The triage read is **advisory by design** and never overrules the pipeline agents (it is only dispatched on single-document Gmail instances, where no pipeline run happens — the overrule guard is the standing invariant). Audit entries use their own namespaced section (`triage_ingested` / `triage_classified` / `triage_archived`) so the stored audits are never conflated with the pipeline's `ingested`/`classified`/`extracted`/`archived` vocabulary. Fails soft: no `OPENROUTER_API_KEY`, rate limit, or provider error ever blocks intake (logged; the document parks in `review/` with reason `triage_llm_unavailable`). Output is clamped to the live taxonomy vocabulary by `validate_triage` (unknown class → `unknown`, confidence 0.0–1.0, ≤6 keywords, 300-char gist). Registration: `llm/prompts.py:prompt_templates()` (synced with `scripts/sync_prompts.py`), agent config in `config/taxonomy.yaml`.
 
 ***
 

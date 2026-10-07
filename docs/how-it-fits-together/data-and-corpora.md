@@ -16,6 +16,8 @@ The full GitBook breakdown — 55 strata, configs, source cards, EDA reports, an
 | Pinned revision          | `670e8bc6` (tag v9.2)                                                                                                       |
 | Frozen parent            | [`mailroom-corpus`](https://huggingface.co/datasets/Lucius-Morningstar/mailroom-corpus) v8, 2,000 rows, revision `eafe1ab4` |
 
+The published pin is `v9.2`. As of 2026-10-07, `llm-mailroom` 0.8.0 and the sandbox still read the predecessor tag `v9.1` (commit `bc9eab28`, data commit `ed7576b6`), so results from those two should name the pin they used. See [Mailroom dataset](../mailroom-dataset/mailroom-dataset.md).
+
 ### Classes and sources
 
 | Class              |  Rows | Source                                             | License                                                  |
@@ -49,8 +51,8 @@ The pipeline itself does not depend on the `datasets` library; it loads the corp
 ## Rules everyone follows
 
 * **Pin a revision.** Never read the live tip of a dataset. Code records the revision it used so results are reproducible.
-* **Keep labels blind.** The model under test only ever sees the `default` config.
-* **One split rule.** Across the whole family, `md5(filename) % 10 == 0` means test, so a document is in the same split in every dataset that contains it.
+* **Keep labels blind.** The model under test only ever sees the `default` config. Labels live in a separate config precisely so that a missed filter cannot hand the answers to the model.
+* **One split rule.** Across the whole family, `md5(filename) % 10 == 0` means test, so a document is in the same split in every dataset that contains it. Because the split is a pure function of the filename, no repository needs to store or share a split file. A training builder must still apply the rule to exclude test rows.
 * **Subclasses are strata, not classes.** `expected_subclass` is a second-level label (for example `all_cash` under `merger_agreement`). It is not promoted to a top-level class unless the pipeline's taxonomy adopts it.
 * **Retired classes stay retired.** `compliance_filing`, `court_opinion` and `due_diligence` are no longer live classes.
 

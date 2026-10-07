@@ -67,6 +67,21 @@ confidence:
     # … merger_agreement, insurance_claim, corporate_record, correspondence
 ```
 
+#### Tuning guide: what moving each threshold does
+
+These are the directions of effect implied by the routing rules in [Operational procedure](operational-procedure.md) and the [Pipeline flowchart](../the-pipeline-in-depth/flowchart.md). Change one value at a time and re-run a pilot before and after, so any shift in accuracy or cost is attributable.
+
+| Change | Effect on documents | Effect on cost and workload |
+| --- | --- | --- |
+| Raise `high` | More classifications fall below the auto-continue line, so more go to retry and Lane A | More sorter and reviewer calls; more documents may reach human review |
+| Lower `high` | Fewer documents are second-checked | Cheaper and faster, with more risk of an unreviewed misclassification |
+| Raise `low` | More documents retry or go to review instead of being accepted at moderate confidence | More retries and more human review |
+| Raise `judge_band_high` | More extractions fall into the judged band | More judge (and arbiter) calls; each adds an LLM generation |
+| Lower `judge_band_high` | More extractions skip the judge | Fewer calls; completeness gaps are more likely to go unchecked |
+| Raise `retry_max` | More attempts before escalating | More LLM calls per hard document, and later escalation |
+
+Per-class values under `by_class` let you do this for one class without touching the others: tighten contracts, for instance, while leaving correspondence alone.
+
 ### `doc_classes`
 
 Each entry defines a document type. To add a new type:
@@ -131,7 +146,7 @@ Controls the deterministic field-type-aware extraction scorer (`observability/fi
 | Key                         | Default                                  | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | --------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ambiguous_band`            | `[0.5, 0.85]`                            | Global scores-inside-this-band → escalate to the LLM judge (fallback when no per-type band applies)                                                                                                                                                                                                                                                                                                                                                            |
-| `type_bands`                | see YAML                                 | **Per-field-type** judge-escalation bands, calibrated by `scripts/calibrate_field_scoring.py` (issues #4/#5). `date`/`id` are `never` (deterministic score decisive both ways); `money`/`free_text` get calibrated numeric cutoffs; `name`/`entity_list` use `[0.5, 1.0]` (trust only perfect scores, escalate near-misses — Jaro-Winkler/token-set are typo-tolerant by design, so a deterministic reject is unreliable). `always`/`never` are also accepted. |
+| `type_bands`                | see YAML                                 | **Per-field-type** judge-escalation bands, calibrated by `scripts/calibrate_field_scoring.py` (issues #4/#5). `date`/`id` are `never` (deterministic score decisive both ways); `money`/`free_text` get calibrated numeric cutoffs; `name`/`entity_list` use `[0.5, 1.0]` (trust only perfect scores, escalate near-misses — Jaro-Winkler/token-set are typo-tolerant by design, so a deterministic reject is unreliable). `always`/`never` are also accepted. **Caveat:** in the pinned scorer (v0.19.1) `score_extraction` applies only the global `ambiguous_band`; see [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md). |
 | `bipartite_match_threshold` | `0.6`                                    | Minimum pairwise similarity for an entity-list match                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `embedding_enabled`         | `true`                                   | Use embedding cosine rescue for ambiguous name/free-text fields                                                                                                                                                                                                                                                                                                                                                                                                |
 | `embedding_model`           | `sentence-transformers/all-MiniLM-L6-v2` | Sentence-transformer model for the embedding signal                                                                                                                                                                                                                                                                                                                                                                                                            |
@@ -308,6 +323,26 @@ See `.env.example` for the complete list:
 | `MAILROOM_DOCCLASS_PROMPTS`     | No                        | off                                                          | Opt-in KANBAN-090 docclass prompt arm (`1`/`true`/`yes`/`on`). Runtime fetches `mailroom-docclass-<key>` with the in-repo append as fallback; production `mailroom-<agent>` templates are unchanged. `run_hf_pilot.py --docclass` sets this.                                                                                                                                                                                                                                                       |
 
 The-Mailroom (not this process) reads `MAILROOM_PIPELINE_URL`, `MAILROOM_PIPELINE_TOKEN`, and `MAILROOM_PIPELINE_API_PREFIX=/v1`. A Space Observatory must use the public producer Space URL — see [`deploy/space/PAIRING.md`](https://github.com/Exios66/llm-mailroom/tree/main/deploy/space/PAIRING.md).
+
+### Operational and tooling knobs
+
+Read by the code but not in the main table above (verified against llm-mailroom v0.8.0).
+
+| Variable | Default | Description |
+| -------- | ------- | ----------- |
+| `MAILROOM_BERT_DEBUG` | on | Kill switch for the ModernBERT lane's debug capture. `MAILROOM_BERT_INTAKE` stays the gate (off by default). |
+| `MAILROOM_WATCHDOG_POLL_SECONDS` | `20` | How often the watcher watchdog checks the heartbeat. |
+| `MAILROOM_WATCHDOG_STALE_SECONDS` | `30` | Heartbeat age after which the watcher counts as stale. |
+| `MAILROOM_WATCHDOG_REMIND_MINUTES` | `60` | Reminder cadence while the watcher stays down. Healthy-status emails are never sent. |
+| `MAILROOM_STATUS_EMAIL` | maintainer inbox | Recipient of watchdog and watcher status emails. Set it to your own address. |
+| `MAILROOM_WATCHER_STATUS` | `1` | `0` disables every status email and the watcher-side heartbeat enrichment (used by hermetic tests). |
+| `MAILROOM_PAUSE_TTL_SECONDS` | `3600` | How long the ops-monitor pause file (`ops_monitor_paused`) stays in effect. |
+| `MAILROOM_MEMORY_DIR` | `<MAILROOM_BASE_DIR>/memory` | Location of the append-only agent memory JSONL. |
+| `MAILROOM_HF_CACHE_DIR` | `<MAILROOM_BASE_DIR>/hf_cache/corpus` | Local cache for the pinned Hub corpus. |
+| `MAILROOM_HF_PILOT_DIR` | under the base dir | Output root for HF pilot reports. |
+| `MAILROOM_HF_PILOT_GAP_S` | `1.5` (`0` with `--mock`) | Pause between documents in the HF pilot. |
+| `MAILROOM_FIELD_SCORING_EMBEDDING` | `0` in the HF pilot | `1` turns on embedding-based clause scoring, which spends OpenRouter quota at corpus scale. Lexical scoring always runs. |
+| `MAILROOM_HF_SPACE` | — | Hugging Face Space id used by `publish_space.py`. |
 
 ### Gmail intake channel (HUB-037)
 

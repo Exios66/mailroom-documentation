@@ -36,7 +36,7 @@ Extras: `train` (torch, transformers), `serve` (onnxruntime, fastapi), `deploy` 
 
 ## Rules worth knowing
 
-* Pin Hub revisions; never train or evaluate on a live tip. The canonical eval corpus is `mailroom-dataset` at `670e8bc6`; training uses `mailroom-modernbert-training`.
+* Pin Hub revisions; never train or evaluate on a live tip. The canonical eval corpus is `mailroom-dataset` at `ed7576b6` (v9.1 data commit, as of 2026-10-07); training uses `mailroom-modernbert-training`.
 * The training set is leak-free and clerk-normalized. Do not reintroduce a title or filename label leak.
 * Subclass surfaces are consumed from the canonical taxonomy, never redefined here.
 

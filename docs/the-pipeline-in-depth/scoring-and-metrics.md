@@ -7,6 +7,12 @@ This page explains two things:
 
 Short version: the scoring logic is well defined and lives mostly in the [llm-dojo-scoring](https://github.com/Exios66/llm-dojo-scoring) package. Measured results are **thin**. Most numbers come from isolated per-agent runs in the sibling [eval-environment](https://github.com/LLM-Mailroom-Services/eval-environment) repo (20 to 100 documents per run, late September 2026). This repo has no recorded end-to-end scorecard for the current release (0.8.0).
 
+### Three things to hold in mind while reading
+
+* **A score is a mean of field scores, not a share of correct documents.** An `overall` of 0.50 means that, averaged over all scored fields, the extraction earned half credit. It does not mean half the documents were wrong. Partial credit is common: a name that is nearly right, a list that is half complete.
+* **Every field counts equally.** There are no weights, so a long list of keywords moves the score as much as an effective date does.
+* **Scores answer different questions at different layers.** Field scores grade *what the specialist wrote*. Routing confidence decides *what happens next to the document*. The two are separate: field scores are computed after the run on grounded (ground-truth) runs, and they do not route documents inside the graph.
+
 For the pipeline stages referenced below, see [Pipeline flowchart](flowchart.md) and [Architecture](../pipeline-reference-llm-mailroom/architecture.md). For the fields each specialist extracts, see [Extraction schemas](extraction-schemas.md).
 
 {% hint style="warning" %}
@@ -107,6 +113,17 @@ f1        = 2 * precision * recall / (precision + recall)   (0 when matched = 0)
 ```
 overall_score = sum(field_scores) / count(field_scores)
 ```
+
+**A worked example.** The numbers below are illustrative, not from a recorded run. A contract has four expected fields, and the specialist returns three of them.
+
+| Field | Type and rule | Expected | Predicted | Field score |
+| ----- | ------------- | -------- | --------- | ----------: |
+| `effective_date` | `date`, same calendar date | 2024-01-15 | January 15, 2024 | 1.00 |
+| `governing_law` | `name` scored by containment: every expected token appears | Delaware | State of Delaware | 1.00 |
+| `parties` | partial-label `entity_list`: recall, with one of two expected parties matched | Acme Corp; Beta LLC | Acme Corp | 0.50 |
+| `term_length` | required field, no prediction | 3 years | (missing) | 0.00 |
+
+The mean is (1.00 + 1.00 + 0.50 + 0.00) / 4 = **0.625**. Notice what moved the score: the missing `term_length` cost 0.25 on its own, while the date written in a different format cost nothing, because dates are normalized before comparison. The `parties` field scores exactly 0.5, which sits on the edge of the ambiguous band (0.5 to 0.85, inclusive), so it is listed in `ambiguous_fields` and `needs_judge_review` is true. The band's inclusive lower bound is what makes this boundary case count.
 
 > **Note on `type_bands`.** `taxonomy.yaml` defines per-type bands (`date: never`, `id: never`, `money: [0.675, 0.938]`, `free_text: [0.6, 0.95]`, `name: [0.5, 1.0]`, `entity_list: [0.5, 1.0]`) and comments say they were calibrated by [`scripts/calibrate_field_scoring.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/scripts/calibrate_field_scoring.py). In the pinned v0.19.1, these bands are read by the library function `field_is_ambiguous`, but `score_extraction` checks only the global `ambiguous_band` \[0.5, 0.85]. The pipeline does not call `field_is_ambiguous`. So in practice the global band decides `needs_judge_review`.
 
@@ -261,6 +278,13 @@ For the full graph, see [Pipeline flowchart](flowchart.md) and [Operational proc
 | mailroom-ml `reports/`                      | ModernBERT intake classifier on a 323-document held-out test                                                  | Classifier only, not the LLM pipeline                  |
 
 Nothing in this repo records a full-pipeline accuracy for release 0.8.0. Treat every number below as a per-agent or experimental result, not a production scorecard.
+
+### How to read these tables
+
+* **Compare within a row, not across classes.** Each class has a different field mix and a different ground-truth source. For example, the insurance ground truth is homogeneous (every row is `approved`), which makes some fields easier to match. A higher insurance score than a merger-agreement score does not rank the two specialists.
+* **Small samples carry wide error.** Runs of 20 documents can move several points on a rerun. Where this page shows 20-, 50- and 100-document runs of the same class, the spread between them is a rough guide to that noise.
+* **The scorer version differs.** These runs resolved the scoring library at v0.15.0 while the pipeline pins v0.19.1, so treat absolute values as indicative.
+* **Prompts differ too.** The qwen3.7-flash legs ran the mutated prompt lineage, so they are not a measurement of the shipped production prompts.
 
 ### Specialist extraction: production model `qwen/qwen3.7-flash`
 

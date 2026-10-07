@@ -4,6 +4,18 @@
 
 Mailroom is a multi-agent legal document processing pipeline built on LangGraph. It ingests legal documents, classifies them, routes them to specialist agents for structured extraction, compiles matter records, and archives everything with a full audit trail.
 
+### Design principles
+
+Five decisions shape everything below. Each is tied to the mechanism that enforces it.
+
+* **State you can see.** A document's position is its folder (`inbox`, `processing/<worker_id>`, `archive`, `review`, `failed`). Claiming a file is an atomic rename, so two workers cannot take the same document and no external lock is needed. You can `ls` a directory to see what the system is doing.
+* **One bounded graph per document.** Every document gets its own LangGraph run, and every node is wrapped so a run deadline and token budget are checked before it executes. One slow or runaway document cannot stall the others.
+* **Provider independence.** Agents ask for a role, and `taxonomy.yaml` decides which model answers. Swapping OpenRouter for Ollama or vLLM is configuration, not code.
+* **Observability is optional; the audit log is not.** Tracing backends can be absent, swapped or down without changing behavior. The hash-chained audit log lives in the database and is independent of them, because it is the compliance record.
+* **A human is the final fallback, and the fallback is durable.** Human review pauses the graph with `interrupt()`, but the filesystem review bin, not the in-memory checkpoint, is what survives a restart.
+
+**How to read this page.** Start with the state machine diagram, then the Core Components for the machinery behind each box, then Data Flow for the narrative of one document. The Conditional Edges section is the precise routing rulebook; the [Pipeline flowchart](../the-pipeline-in-depth/flowchart.md) draws the same rules as a map.
+
 ## Architectural Diagram
 
 ### LangGraph state machine
@@ -316,6 +328,8 @@ Every state transition writes an `AuditLogEntry` to the database. Each entry:
 * Forms a tamper-evident chain — modifying any entry breaks all subsequent hashes
 * Is independent of Langfuse (the audit log is the compliance record)
 * Can be verified via the `/audit/{doc_id}` API endpoint or `schemas/audit.py:verify_chain()`
+
+**What the chain does and does not establish.** Because each hash covers the previous one, editing or deleting an entry in the middle of a chain is detectable: verification fails at that point. The hash is a plain SHA-256 with no secret key, so the chain makes tampering *evident*, not *impossible*. A party who can rewrite the table and recompute every later hash can produce a chain that verifies. Treat it as a detection control, and pair it with access control on the database and off-box backups (see [Postgres](deployment/postgres.md) and [Backup & Restore](deployment/README.md#backup--restore)) when the record must stand up to a hostile reader.
 
 ## Evaluators & Quality
 

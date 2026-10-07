@@ -12,6 +12,18 @@ If you want the prose explanation of each stage, read [Architecture](../pipeline
 * `high`, `low`, `retry_max`, `judge_band_high`, `judge_max_passes` and `arbiter_retry_max` are values from the `confidence:` block of [`src/config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml). The numbers are in [Thresholds used by the routers](flowchart.md#thresholds-used-by-the-routers) below.
 * `transient` means a provider error that `llm/retry.is_transient_error` treats as temporary (connection error, timeout, rate limit, 5xx). Each node has its own counter (`transient_retries_<node>`). The router retries the same node while that counter is 2 or less (`_TRANSIENT_MAX_RETRIES = 2`), then sends the document to `human_review`. Transient retries never use up the confidence retry budget.
 
+## Three paths through the graph
+
+The full chart below has many branches. Most documents take one of three routes, and it is easier to read the chart once you can follow these. The confidence values are the router thresholds listed in [Thresholds used by the routers](flowchart.md#thresholds-used-by-the-routers).
+
+**1. The clean path (two LLM calls).** `intake` → `classify` → `extract` → `compile_report` → `catalog_write` → `archive`. The sorter returns confidence at or above `high`, so the document goes straight on. The specialist returns confidence at or above `judge_band_high`, so the judge is skipped. Everything after extraction is procedural.
+
+**2. The doubtful classification (Lane A).** `classify` returns confidence from `low` up to `high`. The document goes to `retry_classify` first, while the retry budget (`retry_max`) lasts. If the confidence is still in that medium band, `review_classify` asks a second agent that has not seen the first answer. The document continues to `extract` only when the reviewer either agrees or overrides *and* its own confidence is at or above `high`. A low-confidence agreement, a disagreement or a reviewer error all go to `human_review`. Below `low` the document retries, and goes to review if retries run out.
+
+**3. The doubtful extraction (Lane B).** `extract` returns confidence from `low` up to `judge_band_high`. `judge_verify` checks completeness. A `complete` verdict goes on to `compile_report`. A `partial` or `incomplete` verdict goes to `arbiter`, which picks exactly one of three outcomes: accept with caveats (on to `compile_report`), re-extract (back through `retry_extract`, bounded by `arbiter_retry_max`), or `human_review`.
+
+Two things can interrupt any of these paths. A **transient provider error** retries the same node without spending the confidence budget, and sends the document to `human_review` once the transient limit (`_TRANSIENT_MAX_RETRIES = 2`) is exceeded. A **conflict** with an archived record of the same class in the same matter diverts the document to `boss_escalation`: an `approved` decision continues to `compile_report`, and any other decision goes to `human_review`.
+
 ## The full pipeline
 
 ```mermaid

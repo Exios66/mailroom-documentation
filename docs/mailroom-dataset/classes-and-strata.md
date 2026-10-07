@@ -1,11 +1,22 @@
 # Classes and strata
 
 The canonical surface is **five document classes** and **55 class-by-subclass strata**. Subclasses are second-level gold (`expected_subclass`); they are not extra top-level classes. Counts below are from Mailroom-Corpus-EDA `reports/tables/strata_counts.csv` and `imbalance_metrics.json` (P2, 2026-09-13), matching Hub `mailroom-dataset` v1 / corpus-family v9.
-Two different denominators are in play: **Share** is that stratum's rows over the **3,302**-row corpus, while **Test % of stratum** is that stratum's test rows over its **own** row count (so it answers "how much of this stratum is held out", not "what share of the test split").
+
+## How to read the tables
+
+The tables use two different denominators:
+
+* **Share** is the stratum's rows divided by all **3,302** rows.
+* **Test % of stratum** is the stratum's test rows divided by the stratum's **own** rows. This column tells you how much of the stratum is held out. It does not tell you the stratum's share of the test split.
+
+## Why the strata matter for evaluation
+
+A class-level score can hide a weak subclass. For example, an extractor can score well on `contract` and still fail on one rare contract type. Thus report results per stratum when the stratum has enough rows.
+
+* **† Zero test rows.** The family split puts no row of this stratum in `test`. A test-split score says nothing about this stratum. To measure the stratum, use its train rows as an evaluation sample.
+* **‡ Fewer than 10 rows.** One error moves the stratum's accuracy by 10 points or more. Do not compare these strata between runs as single numbers. Report the counts (for example, 3 of 4 correct).
 
 Type entropy is **2.09 bits**. Type-level max/min imbalance is **7.2×** (1,100 insurance vs 152 merger). Stratum-level max/min is **557×** (557 correspondence `email` vs 1 merger `mixed_cash_stock_election`).
-
-† = zero test rows under the family split. ‡ = minority stratum (< 10 rows).
 
 <figure><img src="https://raw.githubusercontent.com/Exios66/Mailroom-Corpus-EDA/main/reports/figures/23_imbalance_treemap.png" alt="Treemap of mailroom-dataset class and subclass imbalance"><figcaption><p>Imbalance treemap (figure 23). Interactive: <a href="https://github.com/Exios66/Mailroom-Corpus-EDA/blob/main/reports/figures_interactive/23_imbalance_treemap.html">Plotly HTML</a>.</p></figcaption></figure>
 

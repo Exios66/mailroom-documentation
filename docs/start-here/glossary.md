@@ -16,6 +16,12 @@ Terms that appear across the constellation's code, docs and commit messages.
 
 **Confidence gate.** The thresholds in `taxonomy.yaml` (`confidence.low`, `confidence.high`, `retry_max`) that decide whether a result proceeds, retries, or goes to review.
 
+**Ambiguous band.** The score range in which a deterministic field result is not trusted either way, so it is flagged for the LLM judge. In the pinned scoring library the global band `[0.5, 0.85]` decides. `taxonomy.yaml` also defines per-type bands (dates and ids never escalate; names and entity lists trust only perfect matches), but v0.19.1's `score_extraction` does not apply them; see [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md). Set under `field_scoring` in `taxonomy.yaml`.
+
+**By-class thresholds.** Per-class overrides of the global confidence gate (`confidence.by_class`). Once the sorter has assigned a class, that class's `high`, `low` and `judge_band_high` replace the global fallbacks (`0.97`, `0.88`, `0.95`). Contract, merger agreement and insurance claim use `0.98` / `0.90` / `0.97`.
+
+**Fail-open.** A design where an optional component's failure is absorbed instead of propagated. The ModernBERT intake fast path is fail-open: if it is disabled, missing or errors, intake proceeds with the deterministic clerk.
+
 **First pass (STP).** A document that archived in one hop with no retry, reviewer, arbiter, boss, human review or guardrail. Reported as the `success_rate` score. Straight-through processing.
 
 **Gmail triage lane.** An auxiliary flow outside the 13-node graph. Single-attachment emails go through a free OpenRouter model for classification and key-field extraction; multi-attachment or oversized documents go to the full pipeline.
@@ -23,6 +29,8 @@ Terms that appear across the constellation's code, docs and commit messages.
 **Guardrails.** Deterministic checks (`pipeline/guards.py`) after every LLM call. A violation lowers confidence below the routing threshold so bad output retries or goes to review.
 
 **Intake clerk.** The deterministic first step of intake (`agents/intake.py`): transcribe, normalize and prepare the text. An optional LLM pass cleans messy documents.
+
+**Judge band.** The extraction-confidence range from `low` up to `judge_band_high`. An extraction inside it gets the completeness judge; one above it skips the judge and adds zero LLM calls.
 
 **Judge.** The completeness check in the extraction quality lane. Also the offline LLM-as-a-judge evaluators.
 
@@ -70,7 +78,13 @@ Terms that appear across the constellation's code, docs and commit messages.
 
 **GEPA.** The prompt-mutation loop that proposes new prompt candidates from a frozen baseline.
 
+**Hungarian matching.** An optimal one-to-one assignment between two lists. The scorer uses it to pair extracted entities with ground-truth entities so a list scores well when the right items are present in any order. Pairs below `bipartite_match_threshold` (0.6) do not count as a match.
+
+**Jaro-Winkler.** A string similarity that rewards a shared prefix and tolerates typos. Used to compare names. Because it is typo-tolerant by design, a near-miss name is routed to the judge rather than rejected.
+
 **Mock mode.** A deterministic fake LLM used to run the machinery with no network and no spend.
+
+**Token F1.** The harmonic mean of precision and recall over the words shared by an extracted passage and its reference. It is the free-text metric; paraphrases legitimately score between about 0.6 and 0.88, which is why that range is escalated to the judge.
 
 **Tiers (T0 to T3).** The metric registry's importance levels in llm-dojo-scoring, from T0 headline metrics to T3 logged-only.
 

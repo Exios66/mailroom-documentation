@@ -1,6 +1,15 @@
 # Postgres
 
-Postgres is **optional**. The catalog, audit log and relations are plain SQLite files by default and the pipeline is designed to run with no database server at all. Postgres matters in two separate places, and they are not the same database — confusing them is the most common source of wasted effort here.
+Postgres is **optional**. By default, the catalog, the audit log and the relations table are SQLite files. The pipeline runs with no database server.
+
+Postgres appears in two places, and they are two different databases. Before you change a `DATABASE_URL`, identify which database you mean.
+
+| If you want to... | Read |
+| --- | --- |
+| Run self-hosted Langfuse | [Two distinct roles](#two-distinct-roles), then [Langfuse](langfuse.md) |
+| Move the pipeline catalog off SQLite | [The URL scheme](#the-url-scheme) and [Local setup](#local-setup) |
+| Run the full Docker stack (Mode G) | [Mode G service](#mode-g-service) |
+| Back up or restore the catalog | [Backup](#backup) |
 
 ## Two distinct roles
 
@@ -9,11 +18,17 @@ Postgres is **optional**. The catalog, audit log and relations are plain SQLite 
 | Who uses it | [Langfuse](langfuse.md) tracing UI | The pipeline: catalog, audit log, relations |
 | Compose file | [`src/config/docker/docker-compose.yml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/docker/docker-compose.yml) | [`deploy/docker-compose.full.yml`](https://github.com/Exios66/llm-mailroom/blob/main/deploy/docker-compose.full.yml) (Mode G) |
 | Image | `pgvector/pgvector:pg16` | `${POSTGRES_IMAGE:-postgres:16-alpine}` |
-| Why that image | Langfuse v2 **requires** pgvector | Plain Postgres — no vector extension needed |
+| Why that image | Upstream compose choice (see note below) | Plain Postgres — no vector extension needed |
 | Default | Only started if you ask for Langfuse | Started automatically in Mode G |
 | Published port | `5432:5432` | **not** published — internal only |
 
-The pipeline catalog does **not** need pgvector. If you want Langfuse and the catalog in one stack, point Langfuse's `DATABASE_URL` at the pgvector service rather than swapping the catalog onto it.
+The pipeline catalog does **not** need pgvector.
+
+{% hint style="info" %}
+**About the pgvector image.** The upstream compose file uses `pgvector/pgvector:pg16`, and no comment in the code gives the reason. Langfuse v2 stores its data in standard Postgres tables. The pipeline catalog uses no vector columns. Thus a plain `postgres:16` image is sufficient for both, as of 2026-10-07. Keep the upstream image unless you test the change.
+{% endhint %}
+
+The upstream [`src/config/docker/README.md`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/docker/README.md) lets this one server hold both the Langfuse store and the optional catalog. By default, both URLs name the same database, `mailroom`. To keep the two sets of tables apart, create a second database. Then point the catalog `DATABASE_URL` at that second database.
 
 ## The URL scheme
 
@@ -103,7 +118,7 @@ Backups contain confidential client documents: encrypt at rest and keep them off
 
 ## Related
 
-* [Langfuse](langfuse.md) — why its store needs pgvector and yours does not
+* [Langfuse](langfuse.md) — the self-hosted stack that uses the first Postgres
 * [LiteLLM gateway](litellm-gateway.md) — the other required Mode G service
 * [Configuration](../configuration.md) — `DATABASE_URL`, `MAILROOM_CHECKPOINTER`
 * [Deployment](./) — laptop install, backup and restore, Railway

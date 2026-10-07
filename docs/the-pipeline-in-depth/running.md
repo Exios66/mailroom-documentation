@@ -4,6 +4,28 @@ This page lists the commands you need to install `llm-mailroom`, start it, push 
 
 All commands run from the repository root. Most scripts need `PYTHONPATH=src` because the code lives under `src/`.
 
+## Find the command you need
+
+| You want to | Run | Needs an LLM key? |
+| --- | --- | --- |
+| Make sure the install works | `validate_pipeline.py --fixtures`, then `pytest` | No |
+| Process one document and follow it | Start the API, then `curl` the upload, status and audit routes | Yes (or a local provider) |
+| Measure accuracy on a sample | `run_hf_pilot.py --real` or `run_pilot.py --real` | Yes |
+| Get judge scores for a finished run | `run_quality_judges.py --real --report <file>` | Yes |
+| Test one agent without the graph | `run_agent_eval.py --agent <name>` | Only with `--real` |
+| Prove the audit log is intact | `verify_audit_chains.py` | No |
+| Recover documents after a crash | `recover_processing.py` (dry run), then `--apply` | No |
+| Move an agent to another model or provider | `cutover.py` | No |
+
+### Mock runs and real runs
+
+Most scripts have a `--mock` mode and a `--real` mode, and several scripts refuse to start without one of them. The two modes answer different questions:
+
+* **`--mock`** replaces the LLM with a fake client. It tests the machinery: graph routes, bins, manifests, the catalog and the audit chain. It costs nothing. Its accuracy numbers are **not** model results.
+* **`--real`** calls the configured provider. Use it only to measure model quality. It costs tokens and takes minutes per document.
+
+Run `--mock` first. If a mock run fails, the problem is in the code or the configuration, not in the model.
+
 ## Prerequisites and install
 
 | Need                   | Value                                                                                     | Source           |
@@ -104,6 +126,9 @@ Push a document through and follow it:
 curl -X POST http://localhost:8000/v1/upload \
   -F "file=@src/tests/fixtures/contract/sample_msa.txt" \
   -F "matter_id=MATTER-001"
+# The upload returns an upload_id. The watcher gives the document a doc_id
+# when it claims the file. Find the doc_id in /v1/queue or the watcher logs.
+curl http://localhost:8000/v1/queue
 curl http://localhost:8000/v1/status/{doc_id}
 curl http://localhost:8000/v1/audit/{doc_id}
 curl http://localhost:8000/v1/health

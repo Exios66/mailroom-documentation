@@ -1,6 +1,13 @@
 # Langfuse
 
-Langfuse is the pipeline's **default tracing backend** — the first stop in the `auto` resolution chain — and the only backend that records structured, per-graph-node spans rather than just LLM calls. It is optional: the pipeline runs identically with tracing off.
+Langfuse is the pipeline's **default tracing backend**. It is the first backend in the `auto` resolution chain. It is also the only backend that records one span for each graph node, not only the LLM calls. Tracing is optional: the pipeline runs identically with tracing off.
+
+| If you want to... | Do this |
+| --- | --- |
+| See one trace per document, with a span for each node | Use Langfuse (Cloud or self-hosted) |
+| Trace LLM calls locally at no cost | Use [Apache Phoenix](phoenix.md) |
+| Run with no tracing | Set `OBSERVABILITY_PROVIDER=none` |
+| Keep traces on your own hardware | Use [Self-hosted Langfuse](#self-hosted-langfuse) |
 
 The active backend is chosen by `OBSERVABILITY_PROVIDER`, resolved in [`src/observability/tracing.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/tracing.py):
 
@@ -48,12 +55,12 @@ LANGFUSE_HOST=https://us.cloud.langfuse.com
 `_resolve_host()` reads `LANGFUSE_HOST`, then `LANGFUSE_BASE_URL`, then falls back to `http://localhost:3000`.
 
 {% hint style="warning" %}
-**Short-lived jobs must call `flush()` before exit.** The SDK batches in a background exporter that may not drain before the process ends, so a one-shot script or CI job can exit before its spans are exported. Pipeline runs are long-lived enough that this rarely bites, but ad-hoc scripts and eval batches do need an explicit flush.
+**Call `flush()` before a short-lived job exits.** The SDK sends spans in batches from a background exporter. If a one-shot script or CI job exits first, the SDK drops the unsent spans. Pipeline processes run long enough to send their spans. Ad-hoc scripts and eval batches need an explicit flush.
 {% endhint %}
 
 ## Self-hosted Langfuse
 
-Langfuse v2 needs **its own** Postgres (with pgvector) **and** ClickHouse — see [Postgres](postgres.md) for why that store is not the pipeline's own. Both come from [`src/config/docker/docker-compose.yml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/docker/docker-compose.yml):
+The self-hosted stack gives Langfuse **its own** Postgres server and a ClickHouse server. See [Postgres](postgres.md) for how that Postgres differs from the pipeline catalog. All three services come from [`src/config/docker/docker-compose.yml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/docker/docker-compose.yml):
 
 | Service | Image | Port | Purpose |
 | ------- | ----- | ---- | ------- |
@@ -78,7 +85,13 @@ CLICKHOUSE_PASSWORD=...
 
 Startup is healthcheck-gated: `langfuse-server` waits on `postgres` **and** `clickhouse` being healthy. Its healthcheck is `wget -qO- http://localhost:3000/api/auth/signin`. `LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES` is set to `"true"`.
 
-**First run:** open `http://localhost:3000`, create an account, then generate API keys and put them in `.env` as `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` / `LANGFUSE_HOST`.
+**First run:**
+
+1. Open `http://localhost:3000`.
+2. Create an account and a project.
+3. Generate API keys for the project.
+4. Put the keys in `.env` as `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY`.
+5. Set `LANGFUSE_HOST=http://localhost:3000`.
 
 {% hint style="info" %}
 Use `src/config/docker/docker-compose.yml`, not the Mode G stack. The Mode G [`deploy/docker-compose.full.yml`](https://github.com/Exios66/llm-mailroom/blob/main/deploy/docker-compose.full.yml) does **not** run Langfuse — it wires `LANGFUSE_*` keys for Langfuse **Cloud**, and offers local [Phoenix](phoenix.md) behind a compose profile instead.
@@ -107,7 +120,7 @@ PYTHONPATH=src python src/scripts/sync_langfuse_logs.py --since 24h
 ## Related
 
 * [Apache Phoenix](phoenix.md) — the local, cost-free fallback; what it does *not* capture
-* [Postgres](postgres.md) — Langfuse's own pgvector-backed store vs the pipeline catalog
+* [Postgres](postgres.md) — Langfuse's own store vs the pipeline catalog
 * [Scoring and performance](../../the-pipeline-in-depth/scoring-and-metrics.md) — trace wiring and score definitions
 * [Configuration](../configuration.md) — `OBSERVABILITY_PROVIDER`, `LANGFUSE_*`
 * [Docker](docker-deployment.md) — compose matrix

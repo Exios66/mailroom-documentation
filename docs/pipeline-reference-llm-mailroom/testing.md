@@ -1,17 +1,38 @@
 # Testing
 
+The unit suite runs with **no network and no API key**. A shared fixture replaces every LLM client with a mock. Thus a green suite proves that the routing, the schemas, the file moves and the audit chain are correct. A green suite does **not** prove that a model classifies or extracts well. To measure model quality, run a pilot with real calls.
+
+| If you want to... | Run | Network |
+| --- | --- | --- |
+| Check a code change before you push | `pytest -q` | None |
+| Test one area (routing, audit, an agent) | `pytest src/tests/<file>.py -v` | None |
+| Run the full graph on the 25 sample documents with fake LLM answers | `PYTHONPATH=src python src/scripts/run_pilot.py --mock` | None |
+| Measure real model accuracy | `PYTHONPATH=src python src/scripts/run_pilot.py --real` | LLM provider; costs money |
+| Compare two pilot runs | Add `--baseline <earlier report>.json` to `run_pilot.py` | As the run |
+| Evaluate one agent outside the graph | `PYTHONPATH=src python src/scripts/run_agent_eval.py` | LLM provider |
+
+The test environment is hermetic. The autouse fixture `_set_test_env` in `conftest.py` sets `OBSERVABILITY_PROVIDER=none`, sets `MAILROOM_GMAIL_ENABLED=0` and `MAILROOM_DOCCLASS_PROMPTS=0`, and stops a late reload of `.env`. A key in your local `.env` does not change a test result.
+
 ## Test Structure
 
 ```
-tests/
+src/tests/
 ├── conftest.py                  # Shared fixtures and mocks
 ├── test_agents/
 │   ├── __init__.py
+│   ├── test_base.py             # BaseAgent contract
 │   ├── test_sorter.py           # Sorter agent unit tests
-│   └── test_specialists.py      # All specialist + Boss unit tests
+│   ├── test_specialists.py      # All specialist + Boss unit tests
+│   └── test_prompt_calibration.py
 ├── test_routing.py              # Confidence-based routing logic
 ├── test_audit_log.py            # Hash-chain integrity tests
 ├── test_pipeline_e2e.py         # End-to-end pipeline tests
+├── test_bert_intake.py          # ModernBERT fast-path lane (fail-open)
+├── test_merger_agreement_specialist.py
+├── test_gateway_tiers.py        # Mode G tier routing (LiteLLM + Modal)
+├── test_smoke_modal_tiers.py    # network-free tier contract
+├── test_status_notify.py        # watchdog / status email
+└── ...                          # ~95 modules in total; `pytest --collect-only -q` lists them
 └── fixtures/
     ├── contract/                # 3 sample contracts (MSA, NDA, ambiguous)
     ├── corporate_record/        # 2 sample corp records (bylaws, resolution)
@@ -58,7 +79,7 @@ pytest -v -s
 * Contracts Specialist: extraction accuracy, confidence scoring
 * Corporate Records Specialist: entity/record extraction
 * Correspondence Specialist: action item extraction
-* Compliance Specialist: filing type identification
+* Merger Agreement Specialist: MAUD consideration, parties, clauses
 * Insurance Claims Specialist: claim extraction, parse-error lane
 * Boss Agent: adjudication decisions, system metrics analysis
 
@@ -66,17 +87,19 @@ All LLM calls are **mocked** — tests assert schema conformance and confidence-
 
 ### Routing Tests (`test_routing.py`)
 
-**33 tests** covering every conditional edge:
+**38 tests** covering every conditional edge:
 
-* High confidence → proceed
-* Low confidence → retry → retry again → human review
+* High confidence → extract
+* Medium band → one retry → Lane A reviewer → extract or human review
+* Low confidence → retry (up to `retry_max`) → human review
+* Transient provider errors → retry on their own counter, not the confidence budget
 * Conflict detection → Boss escalation
 * Boss decision → compile\_report or human review
 * Human review → approved or failed
 
 ### Audit Log Tests (`test_audit_log.py`)
 
-**11 tests** covering:
+**14 tests** covering:
 
 * Hash computation and chaining
 * Chain verification (valid chains)
@@ -109,7 +132,18 @@ These tests spin up a complete LangGraph graph with all 13 nodes and mock the LL
 
 ### Pilot sample set
 
-For live end-to-end pilots (not the unit suite), see `docs/examples/samples/`: 25 legal PDFs on the live manifest (real CC-BY-4.0 CUAD/Atticus contracts + LegalBench MAUD merger agreements + repo-written synthetic text including three `insurance_claim` coverage letters) with a ground-truth `manifest.csv`, built by `scripts/prepare_samples.py` (and `scripts/fetch_external_samples.py` for the external corpus) and evaluated by `scripts/run_pilot.py` (`--mock` for a deterministic run over the live 25-sample set, `--real` for actual LLM accuracy on the 15 real committed documents, `--baseline` to diff two runs, `--source <corpus>` to run one dataset). Real runs are restricted to the actual committed legal documents (CUAD/Atticus PDFs + LegalBench MAUD); the repo-written synthetic `.txt` samples (corporate / correspondence / insurance / ambiguous) are mock-only and are refused by `--real`. See `docs/examples/samples/README.md`. Per-agent isolation eval (no full graph) is `scripts/run_agent_eval.py`.
+The pilot sample set is for live end-to-end pilots, not for the unit suite. It is in `docs/examples/samples/` of `llm-mailroom`, with a ground-truth `manifest.csv`.
+
+* **Content.** The live manifest lists 25 documents. 15 are real legal documents: CC-BY-4.0 CUAD/Atticus contracts and LegalBench MAUD merger agreements. The others are synthetic `.txt` samples written in the repository, including three `insurance_claim` coverage letters.
+* **Build.** `src/scripts/prepare_samples.py` builds the set. `src/scripts/fetch_external_samples.py` gets the external corpus.
+* **Run.** `src/scripts/run_pilot.py` evaluates the set:
+  * `--mock` runs all 25 samples with fake LLM answers. The result is deterministic.
+  * `--real` measures real LLM accuracy on the 15 real documents only. It refuses the synthetic samples, because their only purpose is to test the pipeline machinery.
+  * `--baseline <report>.json` compares this run with an earlier run.
+  * `--source <corpus>` runs one dataset only.
+* **One agent.** `src/scripts/run_agent_eval.py` evaluates one agent without the full graph.
+
+See `docs/examples/samples/README.md` in `llm-mailroom`.
 
 ### Shared Fixtures (`conftest.py`)
 
@@ -187,9 +221,9 @@ def test_routing_scenario():
 def test_full_pipeline(self, temp_base_dir, mock_openai_client):
     from graph.build_graph import build_graph
 
-    # Create test file
-    inbox = temp_base_dir / "pipeline" / "inbox"
-    test_file = inbox / "test.txt"
+    # Create test file (temp_base_dir already set MAILROOM_BASE_DIR)
+    from pipeline.bins import inbox_dir
+    test_file = inbox_dir() / "test.txt"
     test_file.write_text("Document content...")
 
     # Build graph and run
@@ -214,4 +248,4 @@ testpaths = ["src/tests"]
 pythonpath = ["src", "."]
 ```
 
-Tests auto-discover asyncio fixtures. No `@pytest.mark.asyncio` decorator needed for sync tests — the graph now uses sync nodes.
+`asyncio_mode = "auto"` runs every `async def` test without a `@pytest.mark.asyncio` marker. The graph nodes are synchronous, so most tests are plain `def` functions.

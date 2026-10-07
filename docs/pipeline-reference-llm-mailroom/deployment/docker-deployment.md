@@ -1,8 +1,22 @@
 # Docker
 
-Full compose matrix for llm-mailroom: OpenRouter, local Ollama/llamafile, BERT intake, the The-Mailroom producer image, and the single-host Mode G stack (LiteLLM gateway + Modal GPU tiers). Compose files live in [`deploy/`](https://github.com/Exios66/llm-mailroom/tree/main/deploy/README.md). For Modal itself, see [Modal + vLLM](modal-vllm.md). For a laptop Python install without Docker, see [Deployment](./).
+This page covers every Docker Compose setup for llm-mailroom. All setups use one image. The *mode* selects where the LLM calls go. The compose files are in [`deploy/`](https://github.com/Exios66/llm-mailroom/tree/main/deploy/README.md).
 
-`MAILROOM_API_TOKEN` is **required** on every compose `app` service. The container binds `0.0.0.0`; audit L-2 refuses an off-loopback bind without a live bearer token.
+## Choose a mode
+
+| If... | Use mode | Cost model |
+| --- | --- | --- |
+| You have an OpenRouter key and want the shortest setup | **B** (or **Mixed** to add the BERT intake fast path) | Pay per token |
+| Documents must not leave the host | **A-ollama** or **A-llamafile** | Local CPU or GPU, no per-token cost |
+| You want open-weight models on a GPU you do not own | **M** — see [Modal + vLLM](modal-vllm.md) | Pay per GPU second |
+| You want one host to run the API, monitor, Postgres and a gateway that sends each agent to a GPU or API tier | **G** | Mixed: GPU tiers plus API fallback |
+| The-Mailroom REVIEW desk must reach this pipeline | Add the [producer file](#producer-image-the-mailroom-pairing) to your mode | No change |
+
+For a Python install on a laptop with no Docker, see [Deployment](./).
+
+{% hint style="warning" %}
+**Set `MAILROOM_API_TOKEN` before you start any compose `app` service.** The container binds `0.0.0.0`. Audit rule L-2 refuses a bind off the loopback address when no bearer token is set. Thus the service does not start without the token.
+{% endhint %}
 
 ## Compose files
 
@@ -91,7 +105,10 @@ Resource notes (CPU, no GPU): Qwen3 **7B Q4\_K\_M ≈ 4.7 GB** weights (≈ 6–
 
 Startup is healthcheck-gated: postgres + gateway healthy → app healthy (schema created, `/health` green) → ops-monitor + watchdog.
 
-Only LLM calls leave the host. Documents move through the filesystem bins on the shared `mailroom_data` volume (`inbox` → `processing` → `archive` / `review` / `failed`). The gateway runs `num_retries: 0` and **no trace callbacks**. The mailroom retry ladder (a gateway 503 is a Modal cold start → long backoff) and client-side tracing (Langfuse / Phoenix / Braintrust) stay authoritative.
+Only LLM calls leave the host. Documents move through the filesystem bins on the shared `mailroom_data` volume (`inbox` → `processing` → `archive` / `review` / `failed`). The gateway does not retry (`num_retries: 0`) and sends **no traces**. The pipeline keeps control of both jobs, for these reasons:
+
+* **Retries.** The pipeline reads a gateway 503 as a Modal cold start and waits longer before the next attempt. A gateway retry hides that signal and adds a second retry loop.
+* **Traces.** The pipeline already traces each call from the client side (Langfuse, Phoenix or Braintrust). Gateway traces make duplicate records.
 
 ### 1. Deploy the GPU tiers on Modal
 

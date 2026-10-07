@@ -1,6 +1,19 @@
 # Operational procedure
 
-**Purpose:** canonical operator-facing procedure for the current Mailroom pipeline. It describes the runtime path, escalation rules, human-review procedure, artifacts, and operational checks.
+This page is the operator procedure for the Mailroom pipeline. Use it when you run the pipeline, resolve human reviews, or hand over a shift.
+
+| You need to | Go to |
+| --- | --- |
+| Understand where a document can go | [1. Pipeline at a glance](#1-pipeline-at-a-glance) |
+| Know why a document is in review | [Review triggers](#review-triggers) |
+| Resolve a review item | [Operator review sequence](#operator-review-sequence) |
+| Start or end a shift | [9. Routine operations checklist](#9-routine-operations-checklist) |
+| Diagnose a stuck or failed document | [11. Symptoms and first checks](#11-symptoms-and-first-checks) |
+
+Two rules govern every step on this page:
+
+1. **The graph decides routes. The operator decides only at human review.** Do not move files between bins or edit catalog rows to force a result.
+2. **Every decision is recorded.** The audit log keeps each automatic and human decision, so a later reader can reconstruct why a document ended where it did.
 
 ## 1. Pipeline at a glance
 
@@ -54,14 +67,23 @@ The current design has two happy-path LLM generations: classification and extrac
 
 ## 2. Classification procedure
 
-1. Watcher/API places the document in the inbox and the pipeline atomically claims it into processing.
-2. `intake` creates the manifest and performs deterministic intake normalization.
-3. The sorter assigns a live class: `contract`, `merger_agreement`, `corporate_record`, `correspondence`, or `insurance_claim`.
-4. `unknown`, retired, empty, or unsupported labels go to human review; they are **not** coerced into a nearby class.
-5. Current global defaults are `high = 0.97`, `low = 0.88`, `retry_max = 2`; class-specific overrides take precedence. Source: [`src/config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml) (`confidence` and `retry` blocks).
-6. High-confidence live classes proceed to extraction.
-7. Medium-band results receive a classification retry; an exhausted medium band can receive the Lane A reviewer second opinion.
-8. Results still below the low threshold are parked for human review after the retry budget.
+1. The API or the watcher puts the document in the inbox. The watcher claims it into `processing/` with an atomic move.
+2. `intake` creates the manifest and normalizes the text with deterministic rules.
+3. The Sorter assigns one live class: `contract`, `merger_agreement`, `corporate_record`, `correspondence`, or `insurance_claim`.
+4. If the label is `unknown`, retired, empty, or unsupported, the document goes to human review. The pipeline does **not** change it to a nearby class.
+5. The Sorter's confidence then selects the route. The table shows each route.
+
+| Confidence after the first pass | Next step | If the retry gives the same band |
+| --- | --- | --- |
+| At or above `high` | Extract | Not applicable |
+| From `low` up to `high` (medium band) | One re-classification pass (`retry_classify`) | The Lane A reviewer gives a second opinion. If the reviewer is not confident, the document goes to human review. |
+| Below `low` | One re-classification pass | Human review |
+
+The global defaults are `high = 0.97`, `low = 0.88` and `retry_max = 2`. The class-specific values in the next table replace them. Source: [`src/config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml) (`confidence` and `retry` blocks); routes in [`src/graph/routing.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/graph/routing.py) (`after_classify`, `after_retry_classify`).
+
+Why a medium result is not accepted: a medium score usually means the document matches the form of one class and the topic of another. A second pass with a re-evaluation prompt often resolves this. A second, independent model resolves most of the remaining cases. A person sees only the cases that both models cannot resolve.
+
+Provider errors (timeouts, rate limits, 5xx) do not use this retry budget. Each node retries a transient error on its own counter, and then sends the document to human review.
 
 ### Current class-specific thresholds
 
@@ -73,7 +95,7 @@ The current design has two happy-path LLM generations: classification and extrac
 | `corporate_record` | 0.96 | 0.86 | 0.94 |
 | `correspondence` | 0.95 | 0.85 | 0.92 |
 
-These values live in `src/config/taxonomy.yaml`; operators should change configuration rather than embed routing constants in code. Source: [`src/config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml).
+The thresholds increase with the cost of an error. A misfiled contract, merger agreement or claim has legal or financial results, so those classes need more confidence. A misfiled letter costs less, so `correspondence` accepts a lower score. To change a threshold, edit `src/config/taxonomy.yaml`. Do not put routing constants in code. For the effect of each change, see the [tuning guide](configuration.md#tuning-guide-what-moving-each-threshold-does). Source: [`src/config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml).
 
 ## 3. Extraction procedure
 
@@ -86,7 +108,7 @@ These values live in `src/config/taxonomy.yaml`; operators should change configu
 
 Current Judge/Arbiter controls include `arbiter_retry_max = 2` and `judge_max_passes = 3`. The Judge checks completeness; the Arbiter can stand the result, order re-extraction, or send the matter to human review. Source: [`src/config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml) (`judge` / `arbiter` blocks).
 
-The field scorer uses deterministic, type-aware matching and factuality verification. Its configured global ambiguous band is `[0.50, 0.85]`, with type-specific overrides. Source: [llm-dojo-scoring `field_scoring.py` v0.19.1](https://github.com/Exios66/llm-dojo-scoring/blob/v0.19.1/llm_dojo_scoring/field_scoring.py); band table in [Configuration](configuration.md).
+The field scorer uses deterministic, type-aware matching and factuality verification. A field score in the global ambiguous band `[0.50, 0.85]` (inclusive) sets `needs_judge_review`. The scorer also defines per-type bands, but `score_extraction` does not apply them. Source: [llm-dojo-scoring `field_scoring.py` v0.19.1](https://github.com/Exios66/llm-dojo-scoring/blob/v0.19.1/llm_dojo_scoring/field_scoring.py); band table in [Configuration](configuration.md).
 
 ## 4. Human-review procedure
 
@@ -107,22 +129,26 @@ The review filesystem bin is the durable parking mechanism across process restar
 
 ### Operator review sequence
 
-**1 — Inspect.** Review the queue item, source document, manifest, classification/extraction evidence, and trace/audit information.
+**1 — Inspect.** Read the queue item (`GET /v1/review/queue`). The `escalation_reason` field gives the trigger, and `actions` lists the dispositions that the item accepts. Then examine the source document (`GET /v1/documents/{doc_id}/source`), the manifest, the classification and extraction evidence, and the trace or audit entries.
 
-**2 — Disposition.** Choose explicitly:
+**2 — Decide.** Select one disposition:
 
-* **Approve** — current result is acceptable; resume.
-* **Correct classification** — assign the correct live class; resume extraction.
-* **Correct/reconcile extraction** — record the authoritative field decision/notes; resume.
-* **Reject** — terminate the run into `failed` when processing should not continue.
+| Decision | Use it when | Request body |
+| --- | --- | --- |
+| **Approve** | The current result is correct. | `decision=approved`, `disposition=resume`. The document is extracted again and continues. |
+| **Correct classification** | The class is wrong. | `decision=approved`, `disposition=resume`, plus `override_doc_type` (and `doc_subclass` or `contract_subtype` if necessary). Extraction uses the new class. |
+| **Correct the extraction** | You have the correct field values. | `decision=approved`, `disposition=complete`, plus `extracted_data`. The document is archived with your values and no further LLM call. |
+| **Reject** | The document must not continue (for example, it is not a supported document). | `decision=rejected`, `disposition=resume`. The run stops in `failed/`. |
 
-**3 — Record rationale.** Human decisions are attributable and auditable; the resolution is appended to the audit trail. Source: [`src/schemas/audit.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/schemas/audit.py) and [`src/pipeline/review_resolve.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/pipeline/review_resolve.py).
+Two more dispositions exist for special cases. `record` writes the decision to the audit trail and leaves the file where it is. `requeue` copies the source back to the inbox for a new run.
 
-**4 — Resume.** Use the review-resolution API. If the original checkpoint is unavailable, `resume_from_review` reconstructs from the manifest and parked source.
+**3 — Record the reason.** Put the reason for your decision in `notes`. The resolution goes into the audit trail, so each human decision can be examined later. Source: [`src/schemas/audit.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/schemas/audit.py) and [`src/pipeline/review_resolve.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/pipeline/review_resolve.py).
+
+**4 — Send.** Send the decision with `POST /v1/review/{doc_id}/resolve` (JSON or form body). If the original checkpoint is not available (for example, after a restart), `resume_from_review` rebuilds the state from the manifest and the parked source.
 
 ## 5. Conflict adjudication
 
-A conflict means an extraction disagrees with existing matter data; it is a **consistency problem**, not merely low confidence.
+A conflict occurs when a new extraction disagrees with data that the matter already holds. Example: a new contract gives a different governing law from the earlier contracts in the same matter. This is a **consistency problem**, not low confidence. Both values can have high confidence, and the newer value is not always correct. For this reason, the pipeline does not select a value by date or by confidence.
 
 1. Detect the conflict against existing same-class matter fields.
 2. Route to `boss_escalation`.
@@ -209,6 +235,16 @@ Operators should not manually move live documents between bins to force state tr
 4. **Audit everything.** Human and terminal decisions must remain reconstructable.
 5. **Do not assume checkpoints survive restart.** Review bin + manifest are the durable recovery path. Source: [`src/pipeline/watcher.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/pipeline/watcher.py).
 6. **Keep operational knobs in `src/config/taxonomy.yaml`.** Source: [`src/config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml).
+
+## 11. Symptoms and first checks
+
+| Symptom | First check | Next action |
+| --- | --- | --- |
+| Files stay in `inbox/` | `GET /v1/health`: is `checks.watcher` `live`? | If `stale` or `missing`, restart the API (it includes the watcher) or the dedicated watcher. |
+| A file stays in `processing/` | The trace and the watcher logs for that `doc_id` | Find the last node that completed. Do not move the file by hand. |
+| The review queue grows fast | The trigger of each new item | If most items have one trigger (for example, one class under its gate), examine the model or the threshold. Do not approve them as a group. |
+| Many transient-error reviews | The provider status and the trace errors | Fix the provider or the gateway, then resolve the items. They are provider failures, not quality failures. |
+| `GET /v1/audit/{doc_id}` reports `"chain_valid": false` | The backup dates of the catalog DB and the manifests | Restore all three artifacts from the same point in time. See "Backup & Restore" on the [Deployment](deployment/README.md) page. |
 
 ## Visual reference
 

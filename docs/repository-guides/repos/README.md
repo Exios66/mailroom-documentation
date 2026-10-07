@@ -1,6 +1,19 @@
 # All repositories
 
-One page per repository: what it does, where it fits, how to start, and where its own docs live. Each guide summarizes and links; the repository's own README and `docs/` remain the source of truth.
+One page per repository: what it does, where it fits, how to start, and where its own docs live. Each guide summarizes and links. The repository's own README and `docs/` remain the source of truth.
+
+## Start here by task
+
+| If you want to... | Start with |
+| --- | --- |
+| Run or change the document pipeline | [llm-mailroom](llm-mailroom.md) |
+| Change how a field is scored | [llm-dojo-scoring](llm-dojo-scoring.md) |
+| Test a new prompt before it goes to production | [llm-entity-extraction](llm-entity-extraction.md), then [eval-environment](eval-environment.md) |
+| Run the pipeline offline or on Modal with no setup | [local-mailroom-sandbox](local-mailroom-sandbox/) |
+| See what the pipeline did to a document | [The-Mailroom](the-mailroom.md) |
+| Add or fix documents in the dataset | [Mailroom-Corpus-EDA](mailroom-corpus-eda.md) and the corpus feed for the class |
+| Make a change across two or more packages | [Digital-Mailroom](digital-mailroom.md) |
+| File or find a cross-repo issue | [mailroom-issues](mailroom-issues.md) |
 
 ## Hub and coordination
 

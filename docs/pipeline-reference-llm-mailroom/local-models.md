@@ -1,6 +1,21 @@
 # Local models
 
-Mailroom is designed for provider-agnostic LLM usage. OpenRouter is the primary provider today, but switching to local models (Ollama, vLLM) is a configuration change — no code rewrite required.
+Mailroom does not depend on one LLM provider. OpenRouter is the default provider. A change to local models (Ollama, llamafile, vLLM) is a configuration change, not a code change.
+
+## Should you use local models?
+
+| Reason | Local models help? |
+| --- | --- |
+| Documents must not leave your infrastructure | Yes. This is the main reason to use them. |
+| You need to run with no internet connection | Yes. |
+| You want to reduce cost | Sometimes. The measured OpenRouter cost is about $0.01 to $0.18 per document, so the saving is small at pilot volume. A GPU has its own cost. |
+| You want better accuracy | Usually no. A 7B or 8B local model is smaller than the default champion. Measure it with a pilot before you depend on it. |
+
+Three rules apply to every change on this page:
+
+1. **Change one agent at a time, then measure.** The unit tests check the configuration, not the model quality. Only a `--real` pilot measures quality.
+2. **Keep the Lane A reviewer different from the Sorter.** The reviewer gives a second opinion. If the Sorter and the `sorter_reviewer` use the same local model, the two opinions are not independent, and Lane A gives less protection.
+3. **Record the previous value before each change.** Run `cutover.py --list` first, so you can go back to the exact model.
 
 Compose sidecars (Ollama / llamafile) and the Mode G host stack: [Docker deployment](deployment/docker-deployment.md). Remote GPU OpenAI `/v1` (`mailroom-vllm`): [Modal + vLLM](deployment/modal-vllm.md).
 
@@ -40,10 +55,10 @@ taxonomy.yaml (agent config)
 
 **Qwen 3 7B** (`qwen3:7b`) is the recommended primary local model for Mailroom:
 
-* Strong structured JSON output (critical for extraction schemas)
-* Good legal text understanding
-* Available 14B variant for higher accuracy
-* Part of the same Qwen family as OpenRouter's `qwen/qwen-3-7b`
+* Strong structured JSON output. Every specialist must return JSON that matches a Pydantic schema, so this is the most important property.
+* Good legal text understanding.
+* A 14B variant (`qwen3:14b`) is available for higher accuracy.
+* It is in the same family as the default champion `qwen/qwen3.7-flash`, so the prompts need fewer changes.
 
 ### Full Local Model Catalog (Ollama)
 
@@ -71,27 +86,37 @@ Set a single environment variable to switch ALL agents to local:
 export DEFAULT_PROVIDER=ollama
 ```
 
-All agents will now use Ollama with whatever model is specified in `config/taxonomy.yaml`. The agent `model:` value is taken from the taxonomy (defaults today to `qwen/qwen3.7-flash`), never from an Ollama-side default — so with `DEFAULT_PROVIDER=ollama` run `src/scripts/cutover.py --list` first and pull a model with the same name (or move each agent per Phase 2).
+All agents now use Ollama. The pipeline changes each agent's OpenRouter model name to an Ollama tag with `ollama_model_map` in `src/config/taxonomy.yaml` (`llm/client.py: _self_hosted_model`). The current map:
+
+| Taxonomy model (OpenRouter) | Ollama tag | llamafile alias | vLLM model id |
+| --- | --- | --- | --- |
+| `qwen/qwen3.7-flash` | `qwen3:7b` | `qwen3:7b` | `Qwen/Qwen3-8B` |
+| `deepseek/deepseek-v4-flash` | `deepseek-r1:8b` | `qwen3:7b` | `deepseek-ai/DeepSeek-R1-Distill-Qwen-7B` |
+| `deepseek/deepseek-v4-pro` | `deepseek-r1:14b` | `qwen3:14b` | `deepseek-ai/DeepSeek-R1-Distill-Qwen-14B` |
+| `openrouter/free` | `qwen3:7b` | `qwen3:7b` | `Qwen/Qwen3-8B` |
+
+Pull each tag in the map before you start (`ollama pull qwen3:7b`). If the Ollama library has no `qwen3:7b` tag, pull `qwen3:8b` and change the mapped tag in `taxonomy.yaml` to match. If a model has no entry in the map, the pipeline sends the name unchanged, and Ollama returns "model not found". Self-hosted providers are exempt from the `MAILROOM_LLM_FREE_ONLY` guard because they have no per-token price.
 
 ***
 
 ## Phase 2: Agent-by-Agent Cutover (Recommended)
 
-Move agents one at a time, validating each before moving the next. This minimizes risk.
+Move one agent, measure it, then move the next agent. If quality drops, you know which agent caused it.
 
-### Recommended Cutover Order (Least Risky First)
+### Recommended Cutover Order
 
-| Order | Agent                            | Risk        | Rationale                                      |
-| ----- | -------------------------------- | ----------- | ---------------------------------------------- |
-| 1     | **Sorter**                       | Low         | Classification is the least accuracy-sensitive |
-| 2     | **Compliance Specialist**        | Low         | Structured forms, predictable formats          |
-| 3     | **Correspondence Specialist**    | Medium      | Narrative text, moderate complexity            |
-| 4     | **Corporate Records Specialist** | Medium      | Hierarchical data, moderate complexity         |
-| 5     | **Contracts Specialist**         | Medium-High | Complex extraction, legal precision            |
-| 6     | **Insurance Claims Specialist**  | High        | Coverage-determination nuance                  |
-| 7     | **Boss**                         | Medium      | Adjudication — lower frequency                 |
+Start with the agents whose errors a later check catches. Move the agents whose errors reach the archive last.
 
-> The **reporter** is procedural (`get_llm("reporter")` is unused) and **due-diligence / court-opinion** specialists were retired in v0.5.0 — neither has a model to cut over.
+| Order | Agent (taxonomy key) | Why this position |
+| ----- | -------------------- | ----------------- |
+| 1 | `sorter` | The confidence gates, the retry and the Lane A reviewer catch a wrong class. Keep `sorter_reviewer` on a different model. |
+| 2 | `correspondence_specialist` | It has the lowest thresholds and the smallest cost of an error. |
+| 3 | `corporate_records_specialist` | Its records have a regular structure. |
+| 4 | `insurance_claims_specialist` | Its thresholds are high (0.98 / 0.90), so weak output goes to review more often. |
+| 5 | `contracts_specialist`, `merger_agreement_specialist` | Long documents (up to 100,000 characters) and precise legal fields. |
+| 6 | `judge`, `arbiter`, `boss` | They check the other agents. Move them last, and keep them on a different model from the specialists if you can. |
+
+The `reporter` key exists in the taxonomy, but report compilation is procedural, so no LLM call uses it. The due-diligence and court-opinion specialists were retired in v0.5.0. `pdf_transcriber` and `image_extractor` need a vision model. See [Vision pages not being sent](#vision-pages-not-being-sent).
 
 ### Using the Cutover Utility
 
@@ -109,8 +134,9 @@ PYTHONPATH=src python src/scripts/cutover.py --validate --agent sorter
 PYTHONPATH=src python src/scripts/cutover.py --agent contracts_specialist --provider ollama --model qwen3:7b
 PYTHONPATH=src python src/scripts/cutover.py --validate --agent contracts_specialist
 
-# 5. If validation fails, roll back
-PYTHONPATH=src python src/scripts/cutover.py --agent sorter --provider openrouter --model openai/gpt-4o
+# 5. If validation or the pilot fails, restore the provider and model that step 1 showed
+#    (the values below are the shipped defaults; use your own recorded values if they differ)
+PYTHONPATH=src python src/scripts/cutover.py --agent sorter --provider openrouter --model qwen/qwen3.7-flash
 ```
 
 ### Manual Cutover (Direct YAML Edit)
@@ -129,18 +155,17 @@ agents:
 
 ## Phase 3: Full Validation
 
-After all agents are cut over:
+After all agents are cut over, run two checks. They answer different questions.
 
 ```bash
-# Run the full test suite
+# 1. Configuration: the tests use a mock LLM, so they prove the plumbing, not the model
 pytest -v
 
-# Compare extraction accuracy with golden fixtures
-# This requires OpenRouter to still be available for comparison:
-python -c "
-# Run each fixture through both providers and compare extraction outputs
-"
+# 2. Quality: run the same pilot on the local models and compare with a cloud baseline
+PYTHONPATH=src python src/scripts/run_pilot.py --real --baseline data/pilot_report_baseline_real_<stamp>.json
 ```
+
+Make the baseline with a `--real` pilot on the cloud configuration before the cutover. Each `--real` run writes a dated copy, `pilot_report_baseline_real_<stamp>.json`, next to its report. The `--baseline` flag prints the overall and per-class difference. Look at classification accuracy, the field scores, and the share of documents that go to review. A local model that sends twice as many documents to review costs operator time, even if its accepted results are correct.
 
 ***
 
@@ -153,10 +178,10 @@ python -c "
 | Instruction following  | Excellent             | Good                 | Very Good             |
 | Inference speed        | Depends on provider   | Fast (local GPU)     | Fast (local GPU)      |
 | Cost per document      | \~$0.012–0.18 measured | $0 (local)           | $0 (local)            |
-
-The OpenRouter figure is the **measured** range across the 20-document pilot runs in [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md) ($0.012063 to $0.177431), not an estimate. It varies with specialist, document length, and how many retry/arbiter passes a run needs.
 | Data privacy           | Documents leave infra | Documents stay local | Documents stay local  |
 | Availability           | Requires internet     | Fully offline        | Fully offline         |
+
+The OpenRouter cost is the **measured** range across the 20-document pilot runs in [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md) ($0.012063 to $0.177431), not an estimate. It changes with the specialist, the document length, and the number of retry or arbiter passes. The other ratings are a qualitative assessment, not a benchmark (see [Sources](#sources)).
 
 ***
 

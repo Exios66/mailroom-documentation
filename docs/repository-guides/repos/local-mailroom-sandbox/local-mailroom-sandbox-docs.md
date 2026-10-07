@@ -21,7 +21,7 @@ Parent guide: [local-mailroom-sandbox](./).
 | ----------------------------------------------------------------------------------------------------- | ---------------------------------------- |
 | [SANDBOX-GUIDE.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/docs/SANDBOX-GUIDE.md) | End-to-end sandbox guide                 |
 | [evals.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/docs/evals.md)                 | Runners, matrix, scoring, experiment log |
-| [tracing.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/docs/tracing.md)             | Langfuse v4 data model and tags          |
+| [tracing.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/docs/tracing.md)             | Langfuse 3 / Python SDK v4 data model and tags; local span mirror and `traces pack` |
 | [jobs.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/docs/jobs.md)                   | Long-running jobs (`sandbox run`)        |
 | [datasets/](https://github.com/Exios66/local-mailroom-sandbox/tree/main/docs/datasets)                | Dataset card                             |
 

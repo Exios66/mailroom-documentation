@@ -1,8 +1,19 @@
 # Modal + vLLM
 
-Remote GPU OpenAI `/v1` for llm-mailroom. The app name is **`mailroom-vllm`** (not the sandbox app `sandbox-vllm`). Source: [`deploy/modal_vllm.py`](https://github.com/Exios66/llm-mailroom/blob/main/deploy/modal_vllm.py). Everyday production stays on OpenRouter via `get_llm(agent_name)` — flip to Modal only when you want self-hosted weights on GPU. Local CPU smoke: [Local models](../local-models.md) (Ollama). The Docker host that talks to these GPUs is [Docker deployment](docker-deployment.md).
+Modal runs vLLM on a rented GPU and gives the pipeline an OpenAI-compatible `/v1` endpoint. The Modal app name is **`mailroom-vllm`**. Do not confuse it with the sandbox app `sandbox-vllm`. Source: [`deploy/modal_vllm.py`](https://github.com/Exios66/llm-mailroom/blob/main/deploy/modal_vllm.py).
 
-Do not use Modal for pytest or `--mock`.
+Everyday production uses OpenRouter. Use Modal only when you want open-weight models on a GPU that you do not own.
+
+| If you want... | Use |
+| --- | --- |
+| One model for all agents, behind one URL | [Single-tier serve (Mode M)](#single-tier-serve-mode-m) |
+| A small model for routing, a large model for extraction, and a vision model, behind the LiteLLM gateway | [Multi-tier serve (Mode G)](#multi-tier-serve-mode-g) |
+| A local smoke test on CPU | [Local models](../local-models.md) (Ollama), not Modal |
+| Unit tests or `--mock` runs | No LLM server. Do not use Modal for these |
+
+The Docker host that sends calls to these GPUs is on [Docker deployment](docker-deployment.md).
+
+**Cost model.** Modal charges for GPU time while a container runs, not for each token. Each function scales to zero after `SCALEDOWN_SECONDS` of idle time. The first call after that starts a new container (a cold start).
 
 ## Single-tier serve (Mode M)
 
@@ -31,7 +42,7 @@ VLLM_BASE_URL=https://<workspace>--mailroom-vllm-serve.modal.run/v1
 VLLM_API_KEY=<same as MODAL_VLLM_API_TOKEN>
 ```
 
-Every agent still goes through `get_llm()`. A `503` from a `*.modal.run` endpoint is a Modal cold start — `llm/retry.py` applies a long bounded backoff (DMR-052). Flip back with `DEFAULT_PROVIDER=openrouter`.
+Every agent still gets its client from `get_llm()`. The pipeline reads a `503` from a `*.modal.run` endpoint as a cold start. For that error, `llm/retry.py` waits longer between attempts, up to a fixed limit (DMR-052). To go back to OpenRouter, set `DEFAULT_PROVIDER=openrouter`.
 
 The sibling `llm-entity-extraction` pipeline can share the **same** server through its `OPENROUTER_BASE_URL` seam, so one Modal workspace can back both pipelines.
 
@@ -91,7 +102,7 @@ PYTHONPATH=src python src/scripts/smoke_modal_tiers.py --run
 
 A host vLLM server is still `DEFAULT_PROVIDER=vllm` + `VLLM_BASE_URL=http://localhost:8000/v1`. Confirm `/v1` is on the URL (the OpenAI SDK appends `/chat/completions`). Cutover and troubleshooting: [Local models](../local-models.md).
 
-`taxonomy.yaml: vllm_model_map` rewrites OpenRouter ids onto whatever the engine serves. Gmail triage has **no** vLLM implementation — that lane stays on `openrouter/free` unless you point a local serving profile at it.
+`taxonomy.yaml: vllm_model_map` changes each OpenRouter model id to the id that the engine serves. `DEFAULT_PROVIDER` overrides the `provider:` of every agent, Gmail triage included. Thus on vLLM, Gmail triage sends `openrouter/free` through the map and gets `Qwen/Qwen3-8B`.
 
 ## Related
 

@@ -10,6 +10,16 @@ This page lists exactly what the pipeline extracts from each document class, tak
 
 For the thresholds and model settings in `taxonomy.yaml`, see [Configuration](../pipeline-reference-llm-mailroom/configuration.md). For what each agent does and how it is prompted, see [Agents](../pipeline-reference-llm-mailroom/agents.md). This page does not repeat them.
 
+## Find what you need
+
+| If you are asking... | Go to |
+| --- | --- |
+| What does the specialist for class X return? | The class section: [Contract](#contract-contract), [Merger agreement](#merger-agreement-merger_agreement), [Corporate record](#corporate-record-corporate_record), [Correspondence](#correspondence-correspondence), [Insurance claim](#insurance-claim-insurance_claim) |
+| What else is in `extracted_data` besides the class fields? | [The common envelope](#the-common-envelope) |
+| Why does a field differ from what the model returned? | [How normalization works](#how-normalization-works) |
+| Why was my extraction flagged or clamped to low confidence? | the guardrail step of [How normalization works](#how-normalization-works) and [Known gaps](#known-gaps-in-the-current-code) |
+| Where do the clause and question lists come from? | [CUAD and MAUD label sets](#cuad-and-maud-label-sets) |
+
 ## Two definitions of every schema
 
 Each class is defined twice in the code. You need to know both.
@@ -18,6 +28,8 @@ Each class is defined twice in the code. You need to know both.
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Pydantic model (for example `ContractExtraction`) | [`src/schemas/documents.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/schemas/documents.py), registry `EXTRACTION_SCHEMAS`                                   | Validation. The extraction guardrail calls `model_validate` on the extraction (`observability/scores.py:validate_extraction`). The Gmail triage lane also clamps its key-entity output to these models. |
 | JSON schema (for example `CONTRACTS_SCHEMA`)      | [`src/langchain_agents/specialist_agents.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/langchain_agents/specialist_agents.py), registry `SPECIALIST_SCHEMAS` | Sent to the model. `_call_structured` embeds it in the user message and asks for a `json_object` response. It also drives `normalize_extraction`.                                                       |
+
+The split is deliberate: **ask for everything, accept less.** The model is shown a strict contract so it is prompted to address every field, including the ones where the honest answer is `null`. The validator is lenient so that a partly filled answer degrades into a lower-confidence extraction that the routing rules can retry or send to review, rather than crashing the run.
 
 The JSON schemas are built with `build_structured_schema`, which marks **every property as required** and sets `additionalProperties: false`. So the model is always asked for every key. The Pydantic models give **every field a default**, so validation accepts a payload with keys missing. In the field tables below, "Default" is the Pydantic default.
 

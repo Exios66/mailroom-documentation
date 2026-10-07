@@ -2,7 +2,17 @@
 
 [`Lucius-Morningstar/mailroom-dataset`](https://huggingface.co/datasets/Lucius-Morningstar/mailroom-dataset) is the corpus every Mailroom repository measures against. This section is the GitBook home for that dataset: composition, configs, source corpora, and the exploratory analysis published by [Mailroom-Corpus-EDA](../repository-guides/repos/mailroom-corpus-eda.md).
 
-It is called **v1** on the Hub and **v9** in the corpus family's lineage. Both names refer to the same 3,302-document surface. The corpus family pins Hub tag `v9.2` (`FULL_CORPUS_REVISION` in `pipeline/hf_corpora.py`), which resolves to commit `670e8bc6`. Figures and tables on these pages come from Mailroom-Corpus-EDA's `run_all.py` (P0–P6), generated 2026-09-13 against an earlier v9 tip (`a7067844`). Row counts, classes, and strata are unchanged across `v9.1` and `v9.2`; the `v9.1` quality revision moved `clause_count` / `maud_label_count` out of the blind `metadata` blob so they live only on `ground_truth`.
+The Hub calls this dataset **v1**. The corpus family's lineage calls it **v9**. Both names refer to the same 3,302 documents.
+
+### Which revision to use
+
+| If you want to... | Pin | Note |
+| --- | --- | --- |
+| Start new work | Hub tag `v9.2` → `670e8bc6` | The published pin |
+| Reproduce a SAND-37 or SAND-40 result, or match llm-mailroom 0.8.0 | Hub tag `v9.1` → `bc9eab28` (data commit `ed7576b6`) | llm-mailroom (`FULL_CORPUS_REVISION` in `pipeline/hf_corpora.py`) and local-mailroom-sandbox (`FAMILY_HF_TAG`) still read `v9.1`, as of 2026-10-07 |
+| Read the figures on these pages | — | Mailroom-Corpus-EDA `run_all.py` (P0–P6) made them on 2026-09-13, from an earlier v9 tip (`a7067844`) |
+
+The row counts, classes and strata are the same in `v9.1` and `v9.2`. Thus the figures stay valid for both tags. The `v9.1` quality revision moved `clause_count` and `maud_label_count` out of the blind `metadata` blob. These two values are now only in `ground_truth`.
 
 The constellation rules page is still [Data and corpora](../how-it-fits-together/data-and-corpora.md). This section is the full dataset breakdown.
 

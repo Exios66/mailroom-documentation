@@ -52,6 +52,8 @@ flowchart TD
     PIPE -. "same doctrine, mirrored taxonomy" .-> AGENT
 ```
 
+How to read the diagram: a solid arrow is a hard dependency or a data flow that the receiving repo cannot work without. A dotted arrow is optional or doctrinal: the ModernBERT fast path can be switched off, and agent-mailroom mirrors the pipeline's taxonomy by convention rather than by importing it. Labels on the arrows name the coupling mechanism (a pin, a vendored copy, a path source, a trace), which tells you what breaks, and how, when the upstream side changes.
+
 All of these packages also live together in the [Digital-Mailroom](../repository-guides/repos/digital-mailroom.md) monorepo, which is where cross-repo changes are made. The diagram shows how the packages relate at runtime and release time, not where their code sits.
 
 ## The flows, one by one
@@ -60,7 +62,7 @@ All of these packages also live together in the [Digital-Mailroom](../repository
 
 1. **Corpus feeds build class-specific samples.** Enron-Evaluation-Environment turns 517K Enron emails into a stratified, de-duplicated `correspondence` sample. claims-data-eda renders CMS Medicare claim events into plain-text EOB documents with ground truth for `insurance_claim`. Contracts (CUAD), merger agreements (MAUD) and corporate records (EDGAR S-1 exhibits) come from public legal corpora.
 2. **Everything is published to one dataset.** The canonical corpus is [`Lucius-Morningstar/mailroom-dataset`](https://huggingface.co/datasets/Lucius-Morningstar/mailroom-dataset): 3,302 documents, five classes, 55 class-by-subclass strata. Mailroom-Corpus-EDA profiles it (phases P0 to P6) and owns the upload helpers. GitBook embeds those figures on [Mailroom dataset](../mailroom-dataset/mailroom-dataset.md) ([visualizations](../mailroom-dataset/visualizations.md)).
-3. **Consumers pin a revision, never a live tip.** The pipeline, eval-environment and mailroom-ml all pin the same Hub revision (`670e8bc6`, tag v9.2). The labels sit in a separate `ground_truth` config joined to the blind `default` config on `filename`, so a model under test never sees its answers.
+3. **Consumers pin a revision, never a live tip.** Every consumer pins a Hub revision: the published pin is `670e8bc6` (tag v9.2), while eval-environment, mailroom-ml, llm-mailroom 0.8.0 and the sandbox still read the predecessor tag v9.1 (commit `bc9eab28`, data commit `ed7576b6`) as of 2026-10-07. The labels sit in a separate `ground_truth` config joined to the blind `default` config on `filename`, so a model under test never sees its answers.
 
 Details: [Data and corpora](data-and-corpora.md). Full dataset section: [Mailroom dataset](../mailroom-dataset/mailroom-dataset.md).
 

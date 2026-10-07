@@ -1,6 +1,10 @@
 # LiteLLM gateway
 
-The LiteLLM gateway is the single OpenAI-compatible endpoint that sits in front of every LLM call in **Mode G**. It fronts the [Modal](modal-vllm.md) GPU tiers and, for agents on the `api` tier, OpenRouter — so the pipeline talks to one URL and the gateway decides where each request actually lands.
+In **Mode G**, every LLM call goes to one OpenAI-compatible endpoint: the LiteLLM gateway. The gateway sends each request to a [Modal](modal-vllm.md) GPU tier or, for agents on the `api` tier, to OpenRouter.
+
+**Why a gateway.** Without a gateway, each agent needs its own provider URL and key. With the gateway, the pipeline knows one URL. A tier name selects the destination, so you can move an agent between GPU and API with one setting and no new deploy.
+
+**When you need this page.** Read it only if you run Mode G. Modes A, B and M call their provider directly and do not use a gateway.
 
 Two files own it:
 
@@ -11,9 +15,9 @@ Two files own it:
 
 ```
 app ──► llm-gateway (LiteLLM) ──https──► Modal mailroom-vllm-fast
-  │      :4000/v1                      └──► Modal mailroom-vllm-extract
-  │                                     └──► Modal mailroom-vllm-vision
-  └──► OpenRouter  (agents on the `api` tier only)
+         :4000/v1               ├──────► Modal mailroom-vllm-extract
+                                ├──────► Modal mailroom-vllm-vision
+                                └──────► OpenRouter  (agents on the `api` tier only)
 ```
 
 The `app` service sets `DEFAULT_PROVIDER=litellm` and `LITELLM_BASE_URL=http://llm-gateway:4000/v1`, and passes `LITELLM_API_KEY` the gateway's own master key.

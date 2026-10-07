@@ -1,6 +1,21 @@
 # Deployment
 
-Laptop install, Railway, Hugging Face Spaces, and backup. The **full Docker compose matrix** (Modes B / Mixed / A-ollama / A-llamafile / M / G) is [Docker deployment](docker-deployment.md). Remote GPU OpenAI `/v1` is [Modal + vLLM](modal-vllm.md). Compose files themselves live in [`deploy/`](https://github.com/Exios66/llm-mailroom/tree/main/deploy/README.md).
+This page covers the laptop install, production process management, the producer for The-Mailroom, Railway, Hugging Face Spaces, backup and restore, and log handling.
+
+## Choose a deployment
+
+| Your goal | Use | Page |
+| --- | --- | --- |
+| Try the pipeline on one machine | Laptop install (Python + SQLite) | This page, steps 1 to 6 |
+| Run the pipeline with no cloud LLM | Docker with Ollama or llamafiles | [Docker deployment](docker-deployment.md), [Llamafiles](llamafiles.md) |
+| Give The-Mailroom a live producer | Producer container, Railway, or a Hugging Face Space | This page, [Docker Deployment (producer)](#docker-deployment-producer-for-the-mailroom) and [Railway](#railway) |
+| Use open-weight models on a remote GPU | Modal + vLLM, usually behind the LiteLLM gateway | [Modal + vLLM](modal-vllm.md), [LiteLLM gateway](litellm-gateway.md) |
+| Keep traces in-house | Self-hosted Langfuse or local Phoenix | [Langfuse](langfuse.md), [Apache Phoenix](phoenix.md) |
+| Run many workers or a large volume | Postgres instead of SQLite | [Postgres](postgres.md) |
+
+Each choice changes one layer and keeps the other layers the same. The model provider, the database and the trace backend are independent settings, so you can combine them.
+
+The **full Docker compose matrix** (Modes B / Mixed / A-ollama / A-llamafile / M / G) is [Docker deployment](docker-deployment.md). Remote GPU OpenAI `/v1` is [Modal + vLLM](modal-vllm.md). Compose files themselves live in [`deploy/`](https://github.com/Exios66/llm-mailroom/tree/main/deploy/README.md).
 
 ## Prerequisites
 
@@ -72,7 +87,7 @@ python -c "import asyncio; from storage.db import init_db; asyncio.run(init_db()
 
 ## 4. Run Services
 
-Start all services (each in its own terminal or use a process manager):
+Start the services. Use one terminal for each service, or use a process manager.
 
 ```bash
 # Terminal 1: API (embeds the inbox watcher by default)
@@ -133,13 +148,20 @@ Every LLM call (classification, extraction, reports, Boss) is auto-traced; no pe
 
 ### Process Management
 
-Use `systemd`, `supervisord`, or Docker to manage the three processes:
+Use `systemd`, `supervisord`, or Docker to manage the processes. The API includes the watcher by default, so the minimum is two processes:
 
 ```
-[Service] pipeline-watcher  → PYTHONPATH=src python -m pipeline.watcher
 [Service] mailroom-api      → PYTHONPATH=src uvicorn api.main:app --host 0.0.0.0 --port 8000
 [Service] ops-monitor       → PYTHONPATH=src python -m pipeline.ops_monitor
 ```
+
+If you want the watcher in its own process (for example, to restart it without the API), set `MAILROOM_EMBED_WATCHER=0` on the API and add a third service:
+
+```
+[Service] pipeline-watcher  → PYTHONPATH=src python -m pipeline.watcher
+```
+
+Do not run an embedded watcher and a dedicated watcher together. Only one watcher can hold `watcher.lock`.
 
 ### Database
 
@@ -221,7 +243,7 @@ See [`deploy/space/SPACE_README.md`](https://github.com/Exios66/llm-mailroom/tre
 
 ## Backup & Restore
 
-The audit log is the compliance record — backup strategy is a critical concern. The following guidance covers the SQLite default; the same principles apply to Postgres.
+The audit log is the compliance record. The pipeline cannot rebuild it, so the backup is the only copy that survives a disk loss. This section covers the SQLite default. The same rules apply to Postgres.
 
 ### What to back up
 
@@ -260,6 +282,8 @@ Schedule a daily snapshot via cron:
   cp -R data/manifests backup/$(date +\%Y-\%m-\%d)/manifests
 ```
 
+The SQLite `.backup` calls do not coordinate with the two `cp -R` copies. Stop the API, the watcher and the ops monitor before this sequence. Start them again after both copies finish. Otherwise the backup can mix states and fail the audit-chain check on restore.
+
 Retain a rotation window (e.g. 30–90 days) sized to your compliance requirements. The audit log is append-only — backups are the only way to reconstruct it.
 
 ### Postgres backup
@@ -272,24 +296,31 @@ pg_dump -h localhost -U mailroom mailroom > backup/mailroom-$(date +%F).sql
 
 ### Restore procedure
 
-1. Stop the watcher, API, and ops monitor (prevents writes during restore).
-2.  Restore the catalog DB:
+Restore all artifacts from **one** backup date. The audit chain links each entry to the previous entry. If the catalog DB and the manifests come from different dates, the chain does not verify.
+
+1. Stop the API, the ops monitor, and the dedicated watcher if you use one. This prevents writes during the restore.
+2.  Restore the catalog DB. Replace `<date>` with the backup folder name.
 
     ```bash
     # SQLite
-    cp backup/mailroom.db data/mailroom.db
-    cp backup/checkpoints.db data/checkpoints.db
+    cp backup/<date>/mailroom.db data/mailroom.db
+    cp backup/<date>/checkpoints.db data/checkpoints.db   # only if you use MAILROOM_CHECKPOINTER=sqlite
     # Postgres
     # psql -h localhost -U mailroom mailroom < backup/mailroom-YYYY-MM-DD.sql
     ```
-3.  Restore `/archive` and `/manifests`:
+3.  Move the current archive and manifests aside. Then restore them from the same backup.
 
     ```bash
-    cp -R backup/archive data/archive
-    cp -R backup/manifests data/manifests
+    mv data/archive data/archive.pre-restore
+    mv data/manifests data/manifests.pre-restore
+    cp -R backup/<date>/archive data/archive
+    cp -R backup/<date>/manifests data/manifests
     ```
-4. Restart services.
-5. **Verify the audit chain**: `curl http://localhost:8000/v1/audit/<doc_id>` must report `"chain_valid": true`. If hashes break, the restored DB and manifests are out of sync (e.g. mixed backup dates).
+
+    If you copy into a directory that exists, `cp -R` puts the backup inside it (`data/archive/archive`). Newer files also stay next to the restored files. Moving the directories aside prevents both problems.
+4. Start the services again.
+5. **Verify the audit chain.** Run `curl -H "Authorization: Bearer $MAILROOM_API_TOKEN" http://localhost:8000/v1/audit/<doc_id>` for some restored documents. Each response must report `"chain_valid": true`. If a response reports `false`, the DB and the manifests come from different dates. Restore again from one date.
+6. When the chain verifies, delete the `*.pre-restore` directories.
 
 ### Disaster-recovery checklist
 
@@ -310,11 +341,13 @@ The pipeline emits **structured logs to stdout** (structlog, `LOG_FORMAT=json|pr
 | **Retention** | Keep 14–30 days (or as required by your retention policy); the audit log in SQLite is the long-term compliance record, logs are operational only |
 | **Format**    | Use `LOG_FORMAT=json` in production so rotated logs are machine-parseable                                                                        |
 
-**systemd** (`journald` handles rotation automatically):
+**systemd** (`journald` rotates the logs automatically). `ExecStart` does not accept a `VAR=value` prefix, so set `PYTHONPATH` with `Environment=`:
 
 ```ini
 [Service]
-ExecStart=/usr/bin/PYTHONPATH=src python -m pipeline.watcher
+WorkingDirectory=/path/to/llm-mailroom
+Environment=PYTHONPATH=src
+ExecStart=/path/to/llm-mailroom/.venv/bin/python -m pipeline.watcher
 StandardOutput=journal
 StandardError=journal
 ```
@@ -323,7 +356,9 @@ StandardError=journal
 
 ```ini
 [program:watcher]
-command=/usr/bin/PYTHONPATH=src python -m pipeline.watcher
+directory=/path/to/llm-mailroom
+environment=PYTHONPATH="src"
+command=/path/to/llm-mailroom/.venv/bin/python -m pipeline.watcher
 stdout_logfile=/var/log/mailroom/watcher.log
 stdout_logfile_maxbytes=100MB
 stdout_logfile_backups=14
