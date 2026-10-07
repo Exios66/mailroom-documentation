@@ -1,6 +1,15 @@
 # Repository index
 
-Every repository connected to the Mailroom, including copies and earlier attempts, with where to do work. When in doubt, develop in the monorepo and release through the `Exios66/*` repository.
+This page lists every repository connected to the Mailroom, including copies and earlier attempts. For each repository, it tells you where to make a change.
+
+## Where to make a change
+
+1. Find the repository in [Active repositories](#active-repositories).
+2. If the **Develop in** column names a monorepo package, make the change in `LLM-Mailroom-Services/Digital-Mailroom` under that package. Then release with `scripts/sync_packages.py push`. Do not edit the `Exios66/*` repository by hand.
+3. If the **Develop in** column says "here", make the change in that repository directly.
+4. If the repository is in [Organization copies and forks](#organization-copies-and-forks) or [Earlier monorepos](#earlier-monorepos-and-derived-sites), do not start work there. Find the active repository that it copies.
+
+**Why the monorepo.** A change that touches two packages (for example, a new span name in llm-mailroom and in The-Mailroom) must land in one commit. The monorepo makes that possible. The `Exios66/*` repositories are release vehicles that deploy targets install from. See [The constellation](architecture.md#code-monorepo-and-release-repos).
 
 Status snapshot: 2026-10-06. "Mirror" and "earlier monorepo" labels below are inferred from each repository's README and commit history; confirm with the owner before archiving anything.
 

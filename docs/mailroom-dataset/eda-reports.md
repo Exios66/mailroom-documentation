@@ -66,7 +66,7 @@ Merger agreements are the long pole: the median is about 21,000 tokens by the ÷
 **The two token tables do not agree.** By the ÷4 estimate, the longest document (252,135 characters) is about 63,000 tokens, so every document fits 65,536 tokens. The budget table below shows 165 documents above 65,536 tokens. Thus the budget table counts tokens with a method that gives more tokens than the ÷4 estimate. Legal text often tokenizes at fewer than 4 characters per token. Before you choose a context window, count tokens with the tokenizer of the model that you use.
 {% endhint %}
 
-**What this means for the pipeline.** The merger agreement specialist reads at most `max_input_chars: 100000` characters (`taxonomy.yaml`, as of 2026-10-07). The median merger agreement is 84,547 characters, and the 95th percentile is 124,430. Thus a large minority of merger agreements is cut before extraction. A field that appears only after the cut gets no value. When you examine a low recall on a merger field, first check where the field occurs in the document.
+**What this means for the pipeline.** The pipeline does not cut long documents. If a document is longer than one window, the specialist reads it in overlapping windows (`taxonomy.yaml: chunking`, as of 2026-10-07). Each window is at most 90,000 characters, capped by the agent's `max_input_chars`. Each window overlaps the next by 8,000 characters, so a clause that crosses a cut is read twice. The median merger agreement is 84,547 characters and the 95th percentile is 124,430. Thus many merger agreements need two windows, and each extra window adds one LLM call.
 
 Token-budget coverage ([`token_budget_coverage.csv`](https://github.com/Exios66/Mailroom-Corpus-EDA/blob/main/reports/tables/token_budget_coverage.csv)):
 

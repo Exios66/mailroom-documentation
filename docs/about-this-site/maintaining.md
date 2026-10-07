@@ -40,7 +40,7 @@ The site has **one space** (`mailroom-docs`). The space reads `content.directory
 
 The site **content** lives entirely in the `docs/` folder — `docs/README.md` (landing), `docs/SUMMARY.md` (TOC), `docs/.gitbook/assets/`, `docs/assets/` (the Fumi + Hermes art), `docs/.gitbook.yaml` (the space's content config), and the section folders. The **repository root holds the site config (`gitbook-docs.yaml`) and `.gitattributes`** — nothing else. There is no `landing/` or root-level `assets/` folder in this repo; the site art lives under `docs/assets/` and `docs/.gitbook/assets/`.
 
-The **Changelog** section reflects the pipeline repository [`Exios66/llm-mailroom`](https://github.com/Exios66/llm-mailroom)'s `CHANGELOG.md` — it is generated, so never hand-edit it. Regenerate it with `PYTHONPATH=src python src/scripts/sync_gitbook_changelog.py` in `llm-mailroom`; `--check` is the guard.
+This site has **no Changelog section**. Release notes stay in [`CHANGELOG.md`](https://github.com/Exios66/llm-mailroom/blob/main/CHANGELOG.md) in `llm-mailroom`. Link to that file. Do not copy it here. The `llm-mailroom` script `src/scripts/sync_gitbook_changelog.py` writes `docs/changelog/` for the old, disconnected *Mailroom Inc. Docs* site, not for this site.
 
 ## Connecting the GitBook site (one-time)
 
@@ -78,7 +78,6 @@ GitBook's published favicon is the site icon in **Customize** ([icons, colors, a
 * **Date facts that drift.** Versions, pins and counts carry an "as of" date; when a release moves them, update [Overview](../start-here/overview.md) and the affected guide.
 * **Reference the pipeline in `llm-mailroom`, don't relocate it.** The pipeline source, its `src/`, `deploy/`, notebooks and `CHANGELOG.md` live in [Exios66/llm-mailroom](https://github.com/Exios66/llm-mailroom) — GitHub URLs under `Exios66/llm-mailroom/...` and paths such as `pipeline-reference-llm-mailroom/...` describe the pipeline and stay as they are. Only the *published documentation site* is sourced from this repo.
 * **Keep the GitHub wiki separate.** The `llm-mailroom` repository's own `docs/wiki/` remains wiki-only and is not mirrored on this site.
-* **Keep the GitBook Changelog in sync.** The site's Changelog section mirrors `llm-mailroom`'s `CHANGELOG.md`; after that file changes, run `PYTHONPATH=src python src/scripts/sync_gitbook_changelog.py` in `llm-mailroom`.
 
 ## When a repository changes
 
@@ -93,4 +92,4 @@ GitBook's published favicon is the site icon in **Customize** ([icons, colors, a
 | Sandbox run reports or figures change | [Run reports](../repository-guides/repos/local-mailroom-sandbox/local-mailroom-sandbox-reports.md) and [Visuals](../repository-guides/repos/local-mailroom-sandbox/local-mailroom-sandbox-visuals.md); keep image URLs on `Exios66/local-mailroom-sandbox` `main` |
 | Mailroom-Corpus-EDA figures or SUMMARY\_REPORT change | [EDA reports](../mailroom-dataset/eda-reports.md) and [Visualizations](../mailroom-dataset/visualizations.md); keep PNG URLs on `Exios66/Mailroom-Corpus-EDA` `main` and iframe URLs on `exios66.github.io/Mailroom-Corpus-EDA` |
 | Fumi's or Hermes's artwork changes | The full mascot set is built in the `llm-mailroom` repository (`src/scripts/build_mascot.py`, from `source/fumi-base.png`) and mirrored here under `docs/assets/mascot/` — plus `docs/assets/banner.png` and `docs/assets/fumi/fumi.gif`. Refresh the GitBook-referenced copies in `docs/.gitbook/assets/` (`banner.png`, `fumi.gif`, `hoot-icon.png`) to match. GitBook strips scripts and may not animate SVG, so the GIF is the one to use on this page. The GitBook home header is **LLM-MAILROOM** only; Fumi appears twice as `fumi.gif` after the masthead (Postal Worker Fumi (文, "letter") on duty, then Meet Fumi). The owl banner, title, and badges stay the masthead. Re-upload `hoot-icon.png` in GitBook Customize if the Hermes sprite changes. |
-| `llm-mailroom` `CHANGELOG.md` changes | Run `PYTHONPATH=src python src/scripts/sync_gitbook_changelog.py` in the `llm-mailroom` repository so the site's Changelog section matches. `--check` is the guard. |
+| `llm-mailroom` `CHANGELOG.md` changes | No change here. Pages that quote a release link to `CHANGELOG.md`; update a quoted version only if a page states it. |
