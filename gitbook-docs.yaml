@@ -14,7 +14,7 @@ site:
           path: undefined
           default: true
           content:
-            directory: ./
+            directory: ./docs
             language: en
     - type: section
       key: section-2

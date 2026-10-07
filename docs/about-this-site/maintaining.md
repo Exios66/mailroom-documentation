@@ -2,19 +2,20 @@
 
 **This repository — [Exios66/mailroom-documentation](https://github.com/Exios66/mailroom-documentation) — is the source of [The Digital Mailroom](https://mailroom-inc.gitbook.io/the-digital-mailroom/).** GitBook [Git Sync](https://gitbook.com/docs/getting-started/git-sync) publishes the site straight from the `docs/` folder of this repo. The pipeline the site documents still lives in [Exios66/llm-mailroom](https://github.com/Exios66/llm-mailroom); only the published documentation moved here.
 
-Git Sync reads its config from `docs/gitbook-docs.yaml`, so the **Project directory is `docs/`**. The site is a **single space** (`mailroom-docs`) reading `content.directory: ./` — the whole `docs/` folder is one GitBook book: `docs/README.md` is the landing page and `docs/SUMMARY.md` is the table of contents. The space is mounted at `path: /`, so pages publish at `…/the-digital-mailroom/{page}`. A merge to `main` replaces the site. There is **no section wrapper**, so the `docs` folder itself never appears as a navigation entry — the sidebar is just the book's own sections.
+Git Sync reads its site config from [`gitbook-docs.yaml`](https://github.com/Exios66/mailroom-documentation/blob/main/gitbook-docs.yaml) at the **repository root**. The repository root is also GitBook's default **Project directory**, so the config is found with no hidden setting to keep in sync. The site is a **single space** (`mailroom-docs`) reading `content.directory: ./docs` — the whole `docs/` folder is one GitBook book: `docs/README.md` is the landing page and `docs/SUMMARY.md` is the table of contents. The space is mounted at `path: /`, so pages publish at `…/the-digital-mailroom/{page}`. A merge to `main` replaces the site. There is **no section wrapper**, so the `docs` folder itself never appears as a navigation entry — the sidebar is just the book's own sections.
 
 ## How it is built
 
 | File / path | Role |
 | --- | --- |
-| `docs/gitbook-docs.yaml` | The live Git Sync config, at the root of the Git Sync **project directory** (`docs/`). Declares the site title (**The Digital Mailroom**) and one top-level space (`mailroom-docs`, `path: /`) whose `content.directory` is `./` — the whole `docs/` folder. No section wraps it. Do not change the space `key`. |
+| `gitbook-docs.yaml` (repository root) | The live site-wide Git Sync config, at the root of the Git Sync **project directory** (the repository root — GitBook's default). Declares the site title (**The Digital Mailroom**) and one top-level space (`mailroom-docs`, `path: /`) whose `content.directory` is `./docs` — the whole `docs/` folder. No section wraps it. Do not change the space `key`. |
+| `docs/.gitbook.yaml` | The `docs/` space's content config: sets the content root to `./docs` itself and names `README.md` (landing page) and `SUMMARY.md` (table of contents). |
 | `docs/README.md` | The GitBook landing page. Page header is **LLM-MAILROOM** only (GitBook uses the H1 / `SUMMARY.md` title — no Fumi in the header), owl banner below the badges, two `fumi.gif`s (Postal Worker Fumi (文, "letter") on duty after the masthead, then Meet Fumi), tags, install, pipeline walk-through, and docs shelf. GitBook's own type; it does not load any static landing page's display font. GitBook strips scripts, so the idle TUI stays off the page. |
 | `docs/SUMMARY.md` | The table of contents. Only pages listed here are published. |
 | `docs/.gitbook/assets/` | Site images (`banner.png`, `fumi.gif`, `hoot-icon.png`), referenced with relative paths such as `.gitbook/assets/banner.png`. |
 | Section folders under `docs/` (`start-here/`, `the-pipeline-in-depth/`, `how-it-fits-together/`, `mailroom-dataset/`, `repository-guides/`, `pipeline-reference-llm-mailroom/`, `about-this-site/`) | Site content, grouped by the sections defined in `docs/SUMMARY.md`. |
 
-The site content lives entirely in the `docs/` folder — `docs/README.md` (landing), `docs/SUMMARY.md` (TOC), `docs/.gitbook/assets/`, `docs/gitbook-docs.yaml` (the config), and the section folders. The **repository root holds only `.gitattributes`**. There is no `landing/`, `wiki/`, or root-level `assets/` folder in this repo.
+The site **content** lives entirely in the `docs/` folder — `docs/README.md` (landing), `docs/SUMMARY.md` (TOC), `docs/.gitbook/assets/`, `docs/.gitbook.yaml` (the space's content config), and the section folders. The **repository root holds the site config (`gitbook-docs.yaml`) and `.gitattributes`** — nothing else. There is no `landing/`, `wiki/`, or root-level `assets/` folder in this repo.
 
 The **Changelog** section reflects the pipeline repository [`Exios66/llm-mailroom`](https://github.com/Exios66/llm-mailroom)'s `CHANGELOG.md` — it is generated, so never hand-edit it. Regenerate it with `PYTHONPATH=src python src/scripts/sync_gitbook_changelog.py` in `llm-mailroom`; `--check` is the guard.
 
@@ -22,7 +23,7 @@ The **Changelog** section reflects the pipeline repository [`Exios66/llm-mailroo
 
 1. In GitBook, open the site's space (the `mailroom-docs` space, titled **The Digital Mailroom**).
 2. Open the space's **Configure** menu, choose **GitHub Sync**, and install the GitBook GitHub app on **`Exios66/mailroom-documentation`** (this repo — *not* `llm-mailroom`).
-3. Pick the `main` branch and set the **Project directory** to **`docs`**.
+3. Pick the `main` branch and **leave the Project directory empty** (it defaults to the repository root, where `gitbook-docs.yaml` lives). If an earlier setup put `docs` here, clear it — the config moved to the repository root.
 4. Choose **GitHub to GitBook** for the first sync so the repository content is imported rather than overwritten.
 
 After that, a merge to `main` updates the site. Edits made in the GitBook editor come back as commits.
@@ -35,12 +36,12 @@ The Project directory, `content.directory`, and `path` are three different knobs
 
 | Knob | File | Meaning | Correct value here |
 | --- | --- | --- | --- |
-| Git Sync **Project directory** (GitBook UI) | — | Where GitBook looks for `gitbook-docs.yaml` | **`docs`** — the config sits at `docs/gitbook-docs.yaml` |
-| `content.directory` | `docs/gitbook-docs.yaml` | Git folder the space reads, relative to the Project directory | `./` (the `docs/` folder itself) |
-| `path` | `docs/gitbook-docs.yaml` | URL after the site slug | `/` (site home) |
-| space `key` | `docs/gitbook-docs.yaml` | Stable identifier for the `mailroom-docs` space | `mailroom-docs` — **never change it** |
+| Git Sync **Project directory** (GitBook UI) | — | Where GitBook looks for `gitbook-docs.yaml` | **empty** (repository root) — the config sits at `gitbook-docs.yaml` |
+| `content.directory` | `gitbook-docs.yaml` | Git folder the space reads, relative to the Project directory | `./docs` (this repo's `docs/` folder) |
+| `path` | `gitbook-docs.yaml` | URL after the site slug | `/` (site home) |
+| space `key` | `gitbook-docs.yaml` | Stable identifier for the `mailroom-docs` space | `mailroom-docs` — **never change it** |
 
-`content.directory` is a **folder**; `path` is a **URL**. With the Project directory at `docs/`, `content.directory: ./` points the space at the whole `docs/` book. Do not set `path: docs` — that would publish the home at `…/the-digital-mailroom/docs/` instead of the site root.
+`content.directory` is a **folder**; `path` is a **URL**. With the config at the repository root (the default Project directory), `content.directory: ./docs` points the space at the whole `docs/` book. Do not set `path: docs` — that would publish the home at `…/the-digital-mailroom/docs/` instead of the site root.
 
 GitBook also replaces the markdown H1 with the `SUMMARY.md` link title. Keep that link as `* [LLM-MAILROOM](README.md)` so the GitBook page header reads **LLM-MAILROOM** and matches the `# LLM-MAILROOM` heading in `docs/README.md` (the previous `* [Welcome](README.md)` title is why the live home used to read **Welcome**).
 

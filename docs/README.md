@@ -118,7 +118,8 @@ The pages below are the canonical documentation for the `llm-mailroom` pipeline 
 
 * `README.md` — this file; the site landing page (in `docs/`)
 * `SUMMARY.md` — the table of contents for this site (in `docs/`)
-* [`gitbook-docs.yaml`](https://github.com/Exios66/mailroom-documentation/blob/main/docs/gitbook-docs.yaml) — this site's GitBook configuration (Git Sync project directory is `docs/`)
+* [`gitbook-docs.yaml`](https://github.com/Exios66/mailroom-documentation/blob/main/gitbook-docs.yaml) — this site's GitBook configuration (at the repository root; maps the space to `./docs`)
+* [`docs/.gitbook.yaml`](https://github.com/Exios66/mailroom-documentation/blob/main/docs/.gitbook.yaml) — the `docs/` space's content configuration (root, landing page, table of contents)
 * [`.gitbook/assets/`](https://github.com/Exios66/mailroom-documentation/tree/main/docs/.gitbook/assets) — images and diagrams (under `docs/`)
 * [`about-this-site/maintaining.md`](about-this-site/maintaining.md) — how this site is built and kept current
 * [Exios66/llm-mailroom `README.md`](https://github.com/Exios66/llm-mailroom/blob/main/README.md) — the upstream pipeline repository's package overview

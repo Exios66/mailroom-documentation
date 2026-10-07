@@ -1,0 +1,13 @@
+# Space configuration for the "The Digital Mailroom" space.
+#
+# The site-wide config lives at the repository root (../gitbook-docs.yaml) and
+# maps this space to the ./docs directory. This file then tells GitBook how to
+# read that directory: the content root is ./docs itself, the landing page is
+# README.md and the table of contents is SUMMARY.md.
+#
+# Docs: https://gitbook.com/docs/docs-as-code/git-sync/content-configuration
+root: ./
+
+structure:
+  readme: README.md
+  summary: SUMMARY.md
