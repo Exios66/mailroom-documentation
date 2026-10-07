@@ -41,11 +41,13 @@ PYTHONPATH=src python src/scripts/run_pilot.py --mock
 PYTHONPATH=src python -m api.main
 
 # In another shell: upload, then follow the document
-curl -X POST http://localhost:8000/upload \
+curl -X POST http://localhost:8000/v1/upload \
   -F "file=@src/tests/fixtures/contract/sample_msa.txt" -F "matter_id=MATTER-001"
-curl http://localhost:8000/status/{doc_id}
-curl http://localhost:8000/audit/{doc_id}
+curl http://localhost:8000/v1/status/{doc_id}
+curl http://localhost:8000/v1/audit/{doc_id}
 ```
+
+Every route is also mounted **without** the `/v1` prefix for backwards compatibility, but `/v1` is the current interface — see [API](../pipeline-reference-llm-mailroom/api.md).
 
 Next: [Pipeline architecture](../pipeline-reference-llm-mailroom/architecture.md), [Configuration](../pipeline-reference-llm-mailroom/configuration.md), [API](../pipeline-reference-llm-mailroom/api.md).
 

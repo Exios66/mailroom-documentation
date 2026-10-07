@@ -101,15 +101,15 @@ This path skips the `assert_bind_allowed()` check in `__main__`, so set a token 
 Push a document through and follow it:
 
 ```bash
-curl -X POST http://localhost:8000/upload \
+curl -X POST http://localhost:8000/v1/upload \
   -F "file=@src/tests/fixtures/contract/sample_msa.txt" \
   -F "matter_id=MATTER-001"
-curl http://localhost:8000/status/{doc_id}
-curl http://localhost:8000/audit/{doc_id}
-curl http://localhost:8000/health
+curl http://localhost:8000/v1/status/{doc_id}
+curl http://localhost:8000/v1/audit/{doc_id}
+curl http://localhost:8000/v1/health
 ```
 
-Every route except `/api/relations/mode` is also mounted under `/v1` (`_mount_v1_aliases()`). Full endpoint list: [API reference](../pipeline-reference-llm-mailroom/api.md).
+The examples above use the **`/v1` prefix**, which is the current interface. Every route except `/api/relations/mode` is *also* mounted without it (`_mount_v1_aliases()`) for backwards compatibility; those unversioned aliases are deprecated. Full endpoint list: [API reference](../pipeline-reference-llm-mailroom/api.md).
 
 ### Other long-running processes
 

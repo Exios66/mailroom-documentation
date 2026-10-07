@@ -25,7 +25,9 @@ Largest: `charter_amendment` (80), `articles_of_incorporation` (62), `officer_ce
 
 ## Attribution
 
-US Securities and Exchange Commission, EDGAR public filings. Works of the US federal government are in the public domain. Cite EDGAR; do not present copies as official SEC records. Re-verify against EDGAR before commercial redistribution.
+US Securities and Exchange Commission, **EDGAR** public filings — <https://www.sec.gov/edgar>. Works of the US federal government are in the public domain. Cite EDGAR; do not present copies as official SEC records. Re-verify against EDGAR before commercial redistribution.
+
+Every `corporate_record` row carries a live pointer back to the authoritative regulatory source: the originating accession number and filing index resolve through [EDGAR company search](https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany). When in doubt, pull the exhibit from EDGAR rather than trusting the local copy.
 
 ## Caveats
 

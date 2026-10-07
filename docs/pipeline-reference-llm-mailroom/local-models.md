@@ -152,7 +152,9 @@ python -c "
 | Legal terminology      | Excellent             | Good                 | Fair                  |
 | Instruction following  | Excellent             | Good                 | Very Good             |
 | Inference speed        | Depends on provider   | Fast (local GPU)     | Fast (local GPU)      |
-| Cost per document      | \~$0.01-0.05          | $0 (local)           | $0 (local)            |
+| Cost per document      | \~$0.012–0.18 measured | $0 (local)           | $0 (local)            |
+
+The OpenRouter figure is the **measured** range across the 20-document pilot runs in [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md) ($0.012063 to $0.177431), not an estimate. It varies with specialist, document length, and how many retry/arbiter passes a run needs.
 | Data privacy           | Documents leave infra | Documents stay local | Documents stay local  |
 | Availability           | Requires internet     | Fully offline        | Fully offline         |
 
@@ -256,7 +258,7 @@ Page images are only attached when the agent's model matches a `vision.models` s
 
 * Use quantized models (`qwen3:7b-q4_K_M` for GGUF quants)
 * Enable GPU passthrough in Docker Compose
-* Reduce context window (agents run per-agent `max_input_chars` budgets from 12K chars for the sorter/reviewer up to 100K for the contracts specialist — set yours accordingly)
+* Reduce context window (per-agent `max_input_chars` overrides run from **12,000** chars for the sorter/reviewer up to **100,000** for the contracts specialist; the global fallback when an agent sets none is **25,000** — see [Configuration](configuration.md). Set yours accordingly)
 * Check the model actually runs on GPU: `docker exec mailroom-ollama ollama ps` (a CPU-only model will be listed without a GPU line)
 
 ### OOM / out-of-memory
@@ -280,3 +282,12 @@ Smaller local models are often over-confident or under-confident. If everything 
 1. Verify the agent model actually serves the taxonomy classes (a model not fine-tuned for legal text may classify poorly).
 2. Compare against OpenRouter with `PYTHONPATH=src python src/scripts/run_vision_sweep.py --real` or a pilot diff: `PYTHONPATH=src python src/scripts/run_pilot.py --real --baseline data/pilot_report_baseline.json`.
 3. Adjust `confidence.high` / `confidence.low` in `taxonomy.yaml` — thresholds are config, not code.
+
+## Sources
+
+| Claim on this page | Source of record |
+| ------------------ | ---------------- |
+| Cost per document (~$0.012–0.18) | Measured — the 20-document pilot runs in [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md), per-run reports under eval-environment `reports/api-comparisons/` |
+| Capability comparison (GPT-4o vs Qwen 3 7B vs Llama 3.1 8B) | **Qualitative operator assessment, not a benchmark.** There is no head-to-head run recorded on this page; treat the Excellent/Good/Fair ratings as judgement, and use the pilot/eval reports for measured quality. |
+| Hardware and VRAM requirements | **Vendor-documented model sizes plus operator experience**, not a measured sweep. Sizes come from the models' own cards (Qwen 3 7B, Llama 3.1 8B); the VRAM figures assume 4-bit quantization and leave no headroom for a second loaded model. |
+| `max_input_chars` budgets (12,000 / 25,000 / 100,000) | [`src/config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml) — per-agent overrides with a global fallback; documented in [Configuration](configuration.md) |

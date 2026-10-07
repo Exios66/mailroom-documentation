@@ -95,7 +95,7 @@ The pages below are the canonical documentation for the `llm-mailroom` pipeline 
 
 <figure><img src=".gitbook/assets/fumi.gif" alt="Fumi in her postal uniform while Hermes the owl blinks on her shoulder" width="192"><figcaption><p>Fumi (文, "letter") is the mailroom's head maid — a USPS-style carrier uniform, a mini cap on her headdress, a leather satchel, and Hermes checking postmarks from her shoulder.</p></figcaption></figure>
 
-<figure><img src=".gitbook/assets/hoot-icon.png" alt="Hermes, the pixel owl on Fumi&#x27;s shoulder" width="96"><figcaption><p>Hermes is the pixel owl on Fumi's shoulder and the night-shift owl's junior colleague on the banner.</p></figcaption></figure>
+<figure><img src=".gitbook/assets/hoot-icon.png" alt="Hermes, the pixel owl on Fumi's shoulder" width="96"><figcaption><p>Hermes is the pixel owl on Fumi's shoulder and the night-shift owl's junior colleague on the banner.</p></figcaption></figure>
 
 ## Related files
 

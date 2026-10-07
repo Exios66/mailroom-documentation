@@ -10,7 +10,7 @@ Terms that appear across the constellation's code, docs and commit messages.
 
 **Audit chain.** The hash-chained `audit_log` table. Each entry includes the hash of the previous one, so any later edit breaks the chain and is detectable with `verify_chain`.
 
-**Bins.** The filesystem folders a document moves through: `inbox → processing/<worker_id>/ → archive | review | failed`. Only helpers in `pipeline/bins.py` move files.
+**Bins.** The filesystem folders a document moves through: `inbox → processing/<worker_id>/ → classified → archive | review | failed` (`classified/` holds classification/working artifacts when a run uses one). Only helpers in `pipeline/bins.py` move files.
 
 **Boss.** The escalation agent for conflicting extractions. Also runs as a scheduled sweep (`pipeline.ops_monitor`).
 

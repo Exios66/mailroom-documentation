@@ -11,7 +11,7 @@
 
 ## What it does
 
-The repository analyzes the full CMS 2008 to 2010 DE-SynPUF Sample 1 (about 11.15 million claim events across inpatient, outpatient, carrier and prescription files, linked to 116,352 beneficiaries) and renders each sampled event as an Explanation of Benefits document. Ground-truth fields line up with the pipeline's `InsuranceClaimExtraction` schema.
+The repository analyzes the full CMS 2008 to 2010 DE-SynPUF Sample 1 (about 11.15 million claim events across inpatient, outpatient, carrier and prescription files, linked to 116,352 beneficiaries) and renders each sampled event as an Explanation of Benefits document. Ground-truth fields line up with the pipeline's `InsuranceClaimExtraction` schema. Source dataset: [CMS DE-SynPUF](https://cms.gov/data-research/statistics-trends-and-reports/medicare-claims-synthetic-public-use-files/cms-2008-2010-data-entrepreneurs-synthetic-public-use-file-de-synpuf); this repository's own counts are in [`reports/`](https://github.com/Exios66/claims-data-eda/tree/main/reports) and the recovered archives are sha256-pinned in `data/raw/MANIFEST.json`.
 
 Things worth knowing:
 

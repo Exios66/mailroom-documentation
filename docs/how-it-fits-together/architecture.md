@@ -81,7 +81,7 @@ Details: [Data and corpora](data-and-corpora.md). Full dataset section: [Mailroo
 
 ### Runtime: from document to archive
 
-The pipeline runs one LangGraph state machine per document: intake, classify (with retry and a second-opinion reviewer), extract (with retry, judge, arbiter and boss escalation), compile report, write catalog, archive. Files move through filesystem bins (`inbox → processing → archive | review | failed`). Two auxiliary flows sit outside the graph: the free-model Gmail triage lane and the post-archive relations clerk.
+The pipeline runs one LangGraph state machine per document: intake, classify (with retry and a second-opinion reviewer), extract (with retry, judge, arbiter and boss escalation), compile report, write catalog, archive. Files move through filesystem bins (`inbox → processing → classified → archive | review | failed`, where `classified/` holds classification/working artifacts when a run uses one). Two auxiliary flows sit outside the graph: the free-model Gmail triage lane and the post-archive relations clerk.
 
 An optional **ModernBERT fast path** from mailroom-ml can run at intake (`MAILROOM_BERT_INTAKE`, off by default). It is fail-open: if the flag is off, the package is missing or the model errors, intake carries on with the deterministic clerk.
 

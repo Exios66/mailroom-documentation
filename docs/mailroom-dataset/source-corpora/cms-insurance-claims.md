@@ -10,12 +10,14 @@ A **rendered evaluation corpus**: one row = one plain-text EOB / pharmacy statem
 
 | Subclass     | Rows | Origin                                 |
 | ------------ | ---: | -------------------------------------- |
-| `auto`       |  300 | BDR motor-claims narratives            |
+| `auto`       |  300 | BDR motor-claims narratives (150) + INSURBIAS claim narratives (150, v9) |
 | `property`   |  200 | GNOTHEIA                               |
 | `carrier`    |  150 | CMS DE-SynPUF physician/supplier       |
 | `inpatient`  |  150 | CMS DE-SynPUF                          |
 | `outpatient` |  150 | CMS DE-SynPUF                          |
 | `pde`        |  150 | CMS DE-SynPUF prescription-drug events |
+
+Source: per-subclass counts from Mailroom-Corpus-EDA `reports/tables/strata_counts.csv` (P2, 2026-09-13) and the `source_corpus` / `source_revision` columns on the Hub rows; each lineage links to its dataset card under [`docs/dataset-cards/`](https://github.com/Exios66/Mailroom-Corpus-EDA/tree/main/docs/dataset-cards). Canonical sources are tabulated under [Attribution](#attribution).
 
 CMS Sample-1 archives were recovered from Internet Archive captures; sha256 manifests live in claims-data-eda. A stable `metadata.record_id` survives across revisions. The family split re-keys on `md5(filename)`; 96/600 CMS-source rows differ from the source repo's `md5(record_id)` placement — the `split` column here is authoritative.
 
@@ -44,7 +46,17 @@ Tables: [`claim_amount_stats.csv`](https://github.com/Exios66/Mailroom-Corpus-ED
 
 ## Attribution
 
-Centers for Medicare & Medicaid Services, 2008–2010 DE-SynPUF. Fully synthetic; CMS's “very limited inferential research utility” caveat applies — an evaluation substrate, not epidemiology. Cite CMS for SynPUF and the sibling dataset licenses for GNOTHEIA / BDR / INSURBIAS.
+Centers for Medicare & Medicaid Services, **Linkable 2008–2010 Medicare Data Entrepreneurs' Synthetic Public Use File (DE-SynPUF)** — <https://cms.gov/data-research/statistics-trends-and-reports/medicare-claims-synthetic-public-use-files/cms-2008-2010-data-entrepreneurs-synthetic-public-use-file-de-synpuf> (Sample 1; [codebook](https://cms.gov/files/document/cms08-10desynpufcodebookpdf)). Fully synthetic; CMS's "very limited inferential research utility" caveat applies — an evaluation substrate, not epidemiology.
+
+The three sibling line-of-business sources are separately licensed synthetic corpora and carry their own attribution:
+
+| Source | Rows here | Line of business | License | Canonical source |
+| ------ | ---------: | ---------------- | ------- | ---------------- |
+| GNOTHEIA | 200 | `property` (FNOL documents, stratified by loss event) | Apache-2.0 | [`gratex/GNOTHEIA-synthetic-insurance-dataset`](https://huggingface.co/datasets/gratex/GNOTHEIA-synthetic-insurance-dataset) (Gratex International a.s., InnovAIte) |
+| BDR | 300 | `auto` (motor-claims decision letters: `APPROVE` / `REVIEW` / `REJECT`) | MIT | [`bdr-ai-org/insurance-motor-claims-decision-v1`](https://huggingface.co/datasets/bdr-ai-org/insurance-motor-claims-decision-v1) |
+| INSURBIAS | 150 (v9 addition) | `auto` (claim narratives) | see dataset card | [`feihuangfh/INSURBIAS`](https://huggingface.co/datasets/feihuangfh/INSURBIAS) — Huang & Shamim, "Gender Bias in AI-Assisted Insurance Claim Processing: A Counterfactual Audit of Large Language Models", SSRN 6324800 |
+
+All three are fully synthetic with no real PII. `coverage_determination` is **pending** for GNOTHEIA property rows (the source carries no adjudication) — see the honest-gap note in [Agents](../../pipeline-reference-llm-mailroom/agents.md).
 
 ## Caveats
 

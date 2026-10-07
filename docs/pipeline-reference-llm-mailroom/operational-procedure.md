@@ -43,6 +43,8 @@ flowchart TD
 | **5. Catalog** | `catalog_write` | Persist document/matter metadata and extracted data. | SQLite/Postgres rows |
 | **6. Archive** | `archive` | Move source, write manifest sidecar, append hash-chained audit entry. | Archived document + audit |
 
+All **13** graph nodes appear above: the six phase rows account for `intake`, `classify`, `retry_classify`, `review_classify`, `extract`, `retry_extract`, `judge_verify`, `arbiter`, `boss_escalation`, `compile_report`, `catalog_write`, `archive` (12), plus **`human_review`** — the cross-cutting governance boundary that every phase can enter and that resumes into Extract. It has no phase of its own, so it is called out here rather than given a row; see [Human-review procedure](#4-human-review-procedure).
+
 **Auxiliary flows (outside the graph):**
 
 * **Gmail triage lane**: free OpenRouter model handles single-document Gmail uploads (classification + key extraction + archive) without paid agents. Multi-document emails and over-budget documents route to the full pipeline.

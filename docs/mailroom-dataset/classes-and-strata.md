@@ -1,6 +1,7 @@
 # Classes and strata
 
 The canonical surface is **five document classes** and **55 class-by-subclass strata**. Subclasses are second-level gold (`expected_subclass`); they are not extra top-level classes. Counts below are from Mailroom-Corpus-EDA `reports/tables/strata_counts.csv` and `imbalance_metrics.json` (P2, 2026-09-13), matching Hub `mailroom-dataset` v1 / corpus-family v9.
+Two different denominators are in play: **Share** is that stratum's rows over the **3,302**-row corpus, while **Test % of stratum** is that stratum's test rows over its **own** row count (so it answers "how much of this stratum is held out", not "what share of the test split").
 
 Type entropy is **2.09 bits**. Type-level max/min imbalance is **7.2×** (1,100 insurance vs 152 merger). Stratum-level max/min is **557×** (557 correspondence `email` vs 1 merger `mixed_cash_stock_election`).
 
@@ -12,7 +13,7 @@ Type entropy is **2.09 bits**. Type-level max/min imbalance is **7.2×** (1,100 
 
 Six lines of business. Largest class. Train 986 / test 114.
 
-| Subclass     | Rows | Train | Test | Share | Test share |
+| Subclass     | Rows | Train | Test | Share | Test % of stratum |
 | ------------ | ---: | ----: | ---: | ----: | ---------: |
 | `auto`       |  300 |   266 |   34 | 9.09% |      11.3% |
 | `property`   |  200 |   184 |   16 | 6.06% |       8.0% |
@@ -27,7 +28,7 @@ Source card: [CMS insurance claims](source-corpora/cms-insurance-claims.md).
 
 Eight mail subtypes drawn from the Enron dedup pool. Train 915 / test 85. `email` alone is 16.9% of the whole corpus.
 
-| Subclass            | Rows | Train | Test |  Share | Test share |
+| Subclass            | Rows | Train | Test |  Share | Test % of stratum |
 | ------------------- | ---: | ----: | ---: | -----: | ---------: |
 | `email`             |  557 |   518 |   39 | 16.87% |       7.0% |
 | `memo`              |   83 |    74 |    9 |  2.51% |      10.8% |
@@ -44,7 +45,7 @@ Source card: [Enron correspondence](source-corpora/enron-correspondence.md).
 
 Twenty-six CUAD commercial-contract groups (26 of CUAD's 28-group taxonomy appear). Train 540 / test 60. 509 rows carry CUAD clause spans; 91 v9 EX-10 exhibits do not.
 
-| Subclass                    | Rows | Train | Test | Share | Test share |
+| Subclass                    | Rows | Train | Test | Share | Test % of stratum |
 | --------------------------- | ---: | ----: | ---: | ----: | ---------: |
 | `Supply`                    |   47 |    42 |    5 | 1.42% |      10.6% |
 | `License_Agreements`        |   43 |    41 |    2 | 1.30% |       4.7% |
@@ -79,7 +80,7 @@ Source card: [CUAD contracts](source-corpora/cuad-contracts.md).
 
 Ten governance-document subclasses from SEC EDGAR exhibits. Train 403 / test 47.
 
-| Subclass                    | Rows | Train | Test | Share | Test share |
+| Subclass                    | Rows | Train | Test | Share | Test % of stratum |
 | --------------------------- | ---: | ----: | ---: | ----: | ---------: |
 | `charter_amendment`         |   80 |    71 |    9 | 2.42% |      11.2% |
 | `articles_of_incorporation` |   62 |    57 |    5 | 1.88% |       8.1% |
@@ -98,7 +99,7 @@ Source card: [SEC corporate records](source-corpora/edgar-corporate-records.md).
 
 Five consideration-type subclasses from MAUD. Train 135 / test 17. Smallest class and the long-document stress test.
 
-| Subclass                      | Rows | Train | Test | Share | Test share |
+| Subclass                      | Rows | Train | Test | Share | Test % of stratum |
 | ----------------------------- | ---: | ----: | ---: | ----: | ---------: |
 | `all_cash`                    |   57 |    51 |    6 | 1.73% |      10.5% |
 | `other`                       |   57 |    49 |    8 | 1.73% |      14.0% |
@@ -111,6 +112,10 @@ Source card: [MAUD merger agreements](source-corpora/maud-merger-agreements.md).
 ## Split integrity and minority cells
 
 The family split is `md5(filename utf-8) % 10 == 0 → test` (2,979 / 323). Per-stratum test shares still deviate from 10%. Chi-squared split homogeneity across the five types: χ² = 2.88, p = 0.58 (4 d.f.) — type mix is compatible with the hash split; **stratum** mix is not.
+
+{% hint style="info" %}
+χ² is **recomputable from the five tables above** — it is the only figure on this page with no file in Mailroom-Corpus-EDA's `reports/tables/` inventory. Inputs are the per-type train/test pairs; expected test counts are `type_rows × 323/3302`. Observed vs expected test rows: `insurance_claim` 114/107.60, `correspondence` 85/97.82, `contract` 60/58.69, `corporate_record` 47/44.02, `merger_agreement` 17/14.87 — contributions 0.381 + 1.680 + 0.029 + 0.202 + 0.306 = **χ² 2.88 on 4 d.f., p = 0.58**.
+{% endhint %}
 
 **Ten strata have zero test rows:**
 

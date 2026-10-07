@@ -103,12 +103,12 @@ The uploaded file is written to the inbox and a small `<file>.meta` sidecar pers
 }
 ```
 
-`upload_id` is the tracking id for this upload — it appears in the `GET /queue` listing until the file is claimed. The pipeline's `doc_id` (for `GET /status/{doc_id}`) is minted when the watcher starts processing, so poll `GET /queue` or watch the watcher logs for it.
+`upload_id` is the tracking id for this upload — it appears in the `GET /v1/queue` listing until the file is claimed. The pipeline's `doc_id` (for `GET /v1/status/{doc_id}`) is minted when the watcher starts processing, so poll `GET /v1/queue` or watch the watcher logs for it.
 
-**Example:**
+**Example** (using the `/v1` prefix, as preferred above):
 
 ```bash
-curl -X POST http://localhost:8000/upload \
+curl -X POST http://localhost:8000/v1/upload \
   -F "file=@contract.pdf" \
   -F "matter_id=MATTER-001"
 ```

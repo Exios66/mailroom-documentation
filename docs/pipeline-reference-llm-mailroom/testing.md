@@ -52,7 +52,7 @@ pytest -v -s
 
 ### Agent Unit Tests (`test_agents/`)
 
-**36 tests** covering:
+**44 test functions across 4 files** (`test_base.py` 12, `test_sorter.py` 14, `test_specialists.py` 16, `test_prompt_calibration.py` 2), covering:
 
 * Sorter: classification across all doc types, low-confidence cases, JSON parse errors, output validation
 * Contracts Specialist: extraction accuracy, confidence scoring
@@ -109,7 +109,7 @@ These tests spin up a complete LangGraph graph with all 13 nodes and mock the LL
 
 ### Pilot sample set
 
-For live end-to-end pilots (not the unit suite), see `docs/examples/samples/`: 25 legal PDFs on the live manifest (real CC-BY-4.0 CUAD/Atticus contracts + LegalBench MAUD merger agreements + repo-written synthetic text including three `insurance_claim` coverage letters) with a ground-truth `manifest.csv`, built by `scripts/prepare_samples.py` (and `scripts/fetch_external_samples.py` for the external corpus) and evaluated by `scripts/run_pilot.py` (`--mock` for a deterministic run over the live 25-sample set, `--real` for actual LLM accuracy on the 15 real committed documents, `--baseline` to diff two runs, `--source <corpus>` to run one dataset). Real runs are restricted to the actual committed legal documents (CUAD/Atticus PDFs + LegalBench MAUD); the repo-written synthetic `.txt` samples (compliance / corporate / correspondence / insurance / ambiguous) are mock-only and are refused by `--real`. See `docs/examples/samples/README.md`. Per-agent isolation eval (no full graph) is `scripts/run_agent_eval.py`.
+For live end-to-end pilots (not the unit suite), see `docs/examples/samples/`: 25 legal PDFs on the live manifest (real CC-BY-4.0 CUAD/Atticus contracts + LegalBench MAUD merger agreements + repo-written synthetic text including three `insurance_claim` coverage letters) with a ground-truth `manifest.csv`, built by `scripts/prepare_samples.py` (and `scripts/fetch_external_samples.py` for the external corpus) and evaluated by `scripts/run_pilot.py` (`--mock` for a deterministic run over the live 25-sample set, `--real` for actual LLM accuracy on the 15 real committed documents, `--baseline` to diff two runs, `--source <corpus>` to run one dataset). Real runs are restricted to the actual committed legal documents (CUAD/Atticus PDFs + LegalBench MAUD); the repo-written synthetic `.txt` samples (corporate / correspondence / insurance / ambiguous) are mock-only and are refused by `--real`. See `docs/examples/samples/README.md`. Per-agent isolation eval (no full graph) is `scripts/run_agent_eval.py`.
 
 ### Shared Fixtures (`conftest.py`)
 
@@ -123,23 +123,24 @@ For live end-to-end pilots (not the unit suite), see `docs/examples/samples/`: 2
 
 ### Document Fixtures (`src/tests/fixtures/`)
 
-| Fixture                     | Type              | Purpose                                                               |
-| --------------------------- | ----------------- | --------------------------------------------------------------------- |
-| `sample_msa.txt`            | Contract          | Full Master Services Agreement — happy path                           |
-| `sample_nda.txt`            | Contract          | NDA — simpler contract variant                                        |
-| `ambiguous_doc.txt`         | Contract          | Deliberately vague — tests low-confidence path                        |
-| `sample_bylaws.txt`         | Corporate Record  | Full corporate bylaws                                                 |
-| `sample_resolution.txt`     | Corporate Record  | Board resolution                                                      |
-| `sample_dd_report.txt`      | Due Diligence     | Comprehensive DD report with risk flags                               |
-| `sample_checklist.txt`      | Due Diligence     | Simple DD checklist — tests sparse data                               |
-| `sample_demand_letter.txt`  | Correspondence    | Formal demand letter — action items                                   |
-| `ambiguous_memo.txt`        | Correspondence    | Interoffice memo mixing multiple doc types                            |
-| `sample_10k.txt`            | Compliance Filing | SEC 10-K filing                                                       |
-| `sample_state_filing.txt`   | Compliance Filing | State annual report                                                   |
-| `sample_claim_approved.txt` | Insurance Claim   | Local-pack approved hail claim (coverage determination contrast)      |
-| `sample_claim_denied.txt`   | Insurance Claim   | Local-pack auto denial (lapse)                                        |
-| `sample_claim_partial.txt`  | Insurance Claim   | Local-pack partial water + betterment exclusion                       |
-| `sample_opinion.txt`        | Court Opinion     | Appellate opinion — exercises suppression + weight-of-evidence issues |
+| Fixture (under `src/tests/fixtures/<class>/`) | Type             | Purpose                                                               |
+| --------------------------------------------- | ---------------- | --------------------------------------------------------------------- |
+| `contract/sample_msa.txt`                     | Contract         | Full Master Services Agreement — happy path                           |
+| `contract/sample_nda.txt`                     | Contract         | NDA — simpler contract variant                                        |
+| `contract/ambiguous_doc.txt`                  | Contract         | Deliberately vague — tests low-confidence path                        |
+| `corporate_record/sample_bylaws.txt`          | Corporate Record | Full corporate bylaws                                                 |
+| `corporate_record/sample_resolution.txt`      | Corporate Record | Board resolution                                                      |
+| `correspondence/sample_demand_letter.txt`     | Correspondence   | Formal demand letter — action items                                   |
+| `correspondence/ambiguous_memo.txt`           | Correspondence   | Interoffice memo mixing multiple doc types                            |
+| `insurance_claim/sample_claim.txt`            | Insurance Claim  | Base insurance-claim document                                         |
+| `insurance_claim/sample_claim_approved.txt`   | Insurance Claim  | Local-pack approved hail claim (coverage determination contrast)      |
+| `insurance_claim/sample_claim_denied.txt`     | Insurance Claim  | Local-pack auto denial (lapse)                                        |
+| `insurance_claim/sample_claim_partial.txt`    | Insurance Claim  | Local-pack partial water + betterment exclusion                       |
+| `court_opinion/sample_opinion.txt`            | Court Opinion    | Appellate opinion — exercises suppression + weight-of-evidence issues |
+| `due_diligence/sample_dd_report.txt`          | Due Diligence    | Comprehensive DD report with risk flags *(retired class — kept on disk)* |
+| `due_diligence/sample_checklist.txt`          | Due Diligence    | Simple DD checklist — tests sparse data *(retired class — kept on disk)* |
+
+Fixtures are grouped **one directory per document class**. There is deliberately **no `compliance_filing/` directory**: the compliance arm (module, schema, prompts, and its eval fixtures) was removed on 2026-09-15 — see [Agents](agents.md). `court_opinion` and `due_diligence` are retired classes whose fixtures are **retained on disk** so their historical suites still run.
 
 ***
 

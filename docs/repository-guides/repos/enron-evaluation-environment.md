@@ -15,7 +15,7 @@ The repository runs exploratory analysis over all 517,390 parseable Enron emails
 
 Findings that shaped the dataset:
 
-* **52.2% of message bodies are exact duplicates** (cc chains, sent-folder copies, mass mail), so the sampler de-duplicates by construction.
+* **52.2% of message bodies are exact duplicates** (cc chains, sent-folder copies, mass mail), so the sampler de-duplicates by construction. This is the measurement that justifies the whole dedup design and the size of the [`enron-correspondence-dedup`](https://huggingface.co/datasets/Lucius-Morningstar/enron-correspondence-dedup) pool — it is reproduced by this repo's own EDA run under [`reports/`](https://github.com/Exios66/Enron-Evaluation-Environment/tree/main/reports).
 * **The subclass taxonomy is data-driven**, with false-positive guards (energy-market "demand" language is excluded; reply and forward chains cannot pass as memos).
 
 The published Hub datasets (`enron-correspondence`, `enron-correspondence-dedup`) are what the canonical `mailroom-dataset` draws its correspondence rows from.

@@ -28,6 +28,8 @@ Intent is **100% hydrated** (1,000/1,000). `intent_source` records the path; the
 | `heuristic`     |  105 |
 | `manual`        |   96 |
 
+Source: the `intent_source` column of Hub `mailroom-dataset` `ground_truth`, cross-checked against Mailroom-Corpus-EDA's P2 metrics (2026-09-13). The 25 review-flagged rows come from the same `intent_status` pass.
+
 v9 added the `heuristic` path for subject-line-hydrated draws (`intent_status = auto_labeled`). 25 rows are flagged for review. Every canonical intent class appears in the 10% test split. AESLC mirrors (`snoop2head/enron_aeslc_emails`, `Yale-LILY/aeslc`) supply provenance and recovered subject lines only — they carry **no** intent annotations.
 
 ## Subclass mix
@@ -48,7 +50,9 @@ Table: [`correspondence_topic_intent.csv`](https://github.com/Exios66/Mailroom-C
 
 ## Attribution and license
 
-Klimt, Bryan, and Yiming Yang. “The Enron Corpus: A New Dataset for Email Classification Research.” _ECML 2004_. AESLC subject-line join: Zhang & Tetreault, ACL 2019.
+Klimt, Bryan, and Yiming Yang. "The Enron Corpus: A New Dataset for Email Classification Research." _ECML 2004_. Canonical distribution: <https://www.cs.cmu.edu/~enron/> (CMU, compute/csce/03-177).
+
+The subject line for each message is joined from the **AESLC** corpus: Zhang & Tetreault, "The Email Dataset Corpus: A New Email Dataset for Natural Language Processing", _ACL 2019_ — used via [`snoop2head/enron_aeslc_emails`](https://huggingface.co/datasets/snoop2head/enron_aeslc_emails). The deduplicated pool this class is drawn from is published as [`Lucius-Morningstar/enron-correspondence-dedup`](https://huggingface.co/datasets/Lucius-Morningstar/enron-correspondence-dedup).
 
 **Binding:** the CMU Enron dataset is **research use only** and contains real personally identifying information of Enron employees. Those terms are inherited by every correspondence row (`metadata.license`). No redistribution of raw PII outside research contexts; no production or consumer use of this subset.
 

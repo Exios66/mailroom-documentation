@@ -58,7 +58,7 @@ The pipeline itself does not depend on the `datasets` library; it loads the corp
 
 | Dataset                                             | Role                                                                   |
 | --------------------------------------------------- | ---------------------------------------------------------------------- |
-| `docclass-pilot`                                    | 48 class-by-subclass examples, one per stratum, for quick pilots       |
+| `docclass-pilot`                                    | 48 class-by-subclass examples (of that pack's 48 strata — not the canonical 55), for quick pilots |
 | `enron-correspondence-dedup`                        | 247,523-row de-duplicated Enron pool that correspondence is drawn from |
 | `mailroom-cuad-contracts-full`                      | Byte-verified CUAD contract mirror                                     |
 | `cms-desynpuf-insurance-claims`                     | Rendered CMS EOB documents                                             |
@@ -78,3 +78,18 @@ The pipeline itself does not depend on the `datasets` library; it loads the corp
 | Taxonomy terminology (v7 onward)                 | [Digital-Mailroom](../repository-guides/repos/digital-mailroom.md) ([v7 taxonomy contract](https://github.com/LLM-Mailroom-Services/Digital-Mailroom/blob/main/docs/v7-taxonomy.md)) |
 
 The dataset cards (one per source) live in Mailroom-Corpus-EDA under [`docs/dataset-cards/`](https://github.com/Exios66/Mailroom-Corpus-EDA/tree/main/docs/dataset-cards), and `run_all.py` there reproduces every number on this page. GitBook copies of those cards, plus the EDA figures, are in [Mailroom dataset](../mailroom-dataset/mailroom-dataset.md).
+
+## Sources
+
+Every figure on this page is reproduced by `run_all.py` in Mailroom-Corpus-EDA against Hub tag `v9.2` / `670e8bc6`, and is cross-checked against the canonical write-up:
+
+| Claim on this page | Source of record |
+| ------------------ | ---------------- |
+| Row counts (3,302 total; 1,100 / 1,000 / 600 / 450 / 152), 55 strata | [`reports/tables/strata_counts.csv`](https://github.com/Exios66/Mailroom-Corpus-EDA/blob/main/reports/tables/strata_counts.csv) and [`reports/SUMMARY_REPORT.md`](https://github.com/Exios66/Mailroom-Corpus-EDA/blob/main/reports/SUMMARY_REPORT.md) (generated 2026-09-13) |
+| Frozen parent (2,000 rows) and the delta to 3,302 | [Mailroom dataset](../mailroom-dataset/mailroom-dataset.md) |
+| Config table (3,302 / 3,302 / 50 bundles / 62 streams / 32 fixtures) | [Configs](../mailroom-dataset/configs.md), asserting `hf_corpus_loader` config names |
+| Text-length and token-budget distributions | [`reports/tables/text_length_stats_by_type.csv`](https://github.com/Exios66/Mailroom-Corpus-EDA/blob/main/reports/tables/text_length_stats_by_type.csv), [`token_budget_coverage.csv`](https://github.com/Exios66/Mailroom-Corpus-EDA/blob/main/reports/tables/token_budget_coverage.csv) |
+| Per-corpus narrative and caveats | [Source corpora](../mailroom-dataset/source-corpora/README.md), which carries the primary citations |
+| Family datasets and their sizes | Each dataset's own Hub card; sizes are asserted by the publishing repo's EDA, not by this page |
+
+Figures and narrative: [EDA reports](../mailroom-dataset/eda-reports.md) and [Visualizations](../mailroom-dataset/visualizations.md).

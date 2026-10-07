@@ -94,22 +94,24 @@ Uploads land in the inbox and drain while a watcher is running. `python -m api.m
 ```bash
 # Upload a test document (returns upload_id; the watcher mints the doc_id
 # once processing starts — see it in /queue or the watcher logs)
-curl -X POST http://localhost:8000/upload \
+curl -X POST http://localhost:8000/v1/upload \
   -F "file=@src/tests/fixtures/contract/sample_msa.txt" \
   -F "matter_id=TEST-001"
 
 # Check status (use the doc_id once processing has started)
-curl http://localhost:8000/status/<doc_id>
+curl http://localhost:8000/v1/status/<doc_id>
 
 # View the queue (uploaded/processing/recent docs, incl. upload_id tracking)
-curl http://localhost:8000/queue
+curl http://localhost:8000/v1/queue
 
 # View audit trail
-curl http://localhost:8000/audit/<doc_id>
+curl http://localhost:8000/v1/audit/<doc_id>
 
 # Check pipeline health
-curl http://localhost:8000/ops/status
+curl http://localhost:8000/v1/ops/status
 ```
+
+`/v1` is the current interface; the same routes are also served without the prefix, but those aliases are deprecated. See the [API reference](../api.md).
 
 ***
 
@@ -287,7 +289,7 @@ pg_dump -h localhost -U mailroom mailroom > backup/mailroom-$(date +%F).sql
     cp -R backup/manifests data/manifests
     ```
 4. Restart services.
-5. **Verify the audit chain**: `curl http://localhost:8000/audit/<doc_id>` must report `"chain_valid": true`. If hashes break, the restored DB and manifests are out of sync (e.g. mixed backup dates).
+5. **Verify the audit chain**: `curl http://localhost:8000/v1/audit/<doc_id>` must report `"chain_valid": true`. If hashes break, the restored DB and manifests are out of sync (e.g. mixed backup dates).
 
 ### Disaster-recovery checklist
 

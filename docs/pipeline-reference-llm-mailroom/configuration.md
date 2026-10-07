@@ -51,7 +51,7 @@ Controls the branching logic in `graph/routing.py`. Tunable without code changes
 | `arbiter_retry_max`  | 2                      | Max arbiter-approved re-extract loops (approval-inclusive)                                                                                                                                                          |
 | `judge_max_passes`   | 3                      | `1 + arbiter_retry_max` — one completeness judge per extraction attempt                                                                                                                                             |
 | `conflict_threshold` | 0.3                    | **Unused routing knob** (kept for config-file compatibility). Matter conflicts escalate via deterministic same-class field comparison in `graph/build_graph.py:_detect_conflict`, not an extraction-confidence gap. |
-| `by_class`           | (severity map)         | Per-class `high` / `low` / `judge_band_high` for critical contracts/mergers/insurance, high compliance, elevated corporate, standard correspondence                                                                 |
+| `by_class`           | (severity map)         | Per-class `high` / `low` / `judge_band_high` for critical contracts/mergers/insurance, elevated corporate, standard correspondence. The `compliance_filing` tier was **removed 2026-09-15** along with the class — see [Agents](agents.md) |
 
 ```yaml
 confidence:
