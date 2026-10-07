@@ -36,11 +36,38 @@ The site has **one space** (`mailroom-docs`). The space reads `content.directory
 | `docs/SUMMARY.md` | The table of contents. Only pages listed here are published. |
 | `docs/.gitbook/assets/` | GitBook-referenced site images (`banner.png`, `fumi.gif`, `hoot-icon.png`), referenced with relative paths such as `.gitbook/assets/banner.png`. |
 | `docs/assets/` | The **single source of truth** for the site's art — the full Fumi + Hermes mascot set (`mascot/`: `fumi.svg`, `fumi.gif`, `fumi.png`, `fumi-icon.png`, `fumi-sheet.png`, `hoot-icon.png`, and `source/fumi-base.png`), the masthead `banner.png`, `fumi/fumi.gif`, and `mailroom-pipeline.svg`. See `docs/assets/README.md` and `docs/assets/mascot/README.md`. |
-| Section folders under `docs/` (`start-here/`, `the-pipeline-in-depth/`, `how-it-fits-together/`, `mailroom-dataset/`, `repository-guides/`, `pipeline-reference-llm-mailroom/`, `about-this-site/`) | Site content, grouped by the sections defined in `docs/SUMMARY.md`. |
+| Section folders under `docs/` (`start-here/`, `the-pipeline-in-depth/`, `how-it-fits-together/`, `mailroom-dataset/`, `repository-guides/`, `pipeline-reference-llm-mailroom/`, `changelog/`, `about-this-site/`) | Site content, grouped by the sections defined in `docs/SUMMARY.md`. |
 
 The site **content** lives entirely in the `docs/` folder — `docs/README.md` (landing), `docs/SUMMARY.md` (TOC), `docs/.gitbook/assets/`, `docs/assets/` (the Fumi + Hermes art), `docs/.gitbook.yaml` (the space's content config), and the section folders. The **repository root holds the site config (`gitbook-docs.yaml`) and `.gitattributes`** — nothing else. There is no `landing/` or root-level `assets/` folder in this repo; the site art lives under `docs/assets/` and `docs/.gitbook/assets/`.
 
-This site has **no Changelog section**. Release notes stay in [`CHANGELOG.md`](https://github.com/Exios66/llm-mailroom/blob/main/CHANGELOG.md) in `llm-mailroom`. Link to that file. Do not copy it here. The `llm-mailroom` script `src/scripts/sync_gitbook_changelog.py` writes `docs/changelog/` for the old, disconnected *Mailroom Inc. Docs* site, not for this site.
+## Changelog
+
+This site has a Changelog section under `docs/changelog/`. It is a generated copy of [`CHANGELOG.md`](https://github.com/Exios66/llm-mailroom/blob/main/CHANGELOG.md) in `llm-mailroom`. Do not hand-edit it. Regenerate it as follows.
+
+1. Create a throwaway worktree of `llm-mailroom` at the `main` commit you mirror. Do not check out, edit, or commit in your own `llm-mailroom` checkout.
+
+   ```bash
+   git -C <llm-mailroom checkout> worktree add --detach <scratch>/mr-<sha> <sha>
+   ```
+
+2. Generate the pages and run the guard.
+
+   ```bash
+   cd <scratch>/mr-<sha>
+   PYTHONPATH=src python3 src/scripts/sync_gitbook_changelog.py
+   PYTHONPATH=src python3 src/scripts/sync_gitbook_changelog.py --check
+   ```
+
+3. Copy `README.md`, `unreleased.md`, and `2026/*.md` from the worktree `docs/changelog/` into `docs/changelog/` in this repo. Do **not** copy `SUMMARY.md`, `.gitbook.yaml`, or `.gitbook/`. Those files belong to the old nested space.
+4. Apply the four site fixes. These are the only edits you make to generated pages.
+   * Replace the generator hint "Regenerate with `PYTHONPATH=src python src/scripts/sync_gitbook_changelog.py`." with: `To regenerate them, follow "Changelog" in the Maintaining this site page.` The hint appears at the top of every generated page.
+   * Replace the `Pipeline docs:` link to the retired *Mailroom Inc. Docs* site with `[The Digital Mailroom](https://mailroom-inc.gitbook.io/the-digital-mailroom/)`.
+   * Rewrite links that resolve only inside `llm-mailroom` (`](docs/….md)`, `](docs/wiki/)`, `](README.md)`, `](AGENTS.md)`) to full `https://github.com/Exios66/llm-mailroom/blob/main/…` URLs (`tree/main/docs/wiki/` for the wiki folder). The v0.7.0 entry carries such links.
+   * The generator gives the undated "Released backlog — v0.4.0 → v0.6.0 era" heading a placeholder date (`UNDATED_DATES`, `2026-08-18`) so that GitBook can sort it. Keep the `{% update date=… %}` attribute. Replace the prose claim "Released 2026-08-18." on its page with "Undated catch-up entry in `CHANGELOG.md`.", and ", released 2026-08-18." in its `README.md` card with " (undated catch-up entry in `CHANGELOG.md`).".
+
+   Release-entry text that mentions *Mailroom Inc. Docs* is history from `CHANGELOG.md`. Leave it.
+5. When a release adds a page, add its line to the Changelog block in `docs/SUMMARY.md`. Keep the order newest first.
+6. Remove the worktree: `git -C <llm-mailroom checkout> worktree remove --force <scratch>/mr-<sha>`. The generator rewrites tracked files in the worktree, so `--force` is necessary. Use it only on this throwaway worktree.
 
 ## Connecting the GitBook site (one-time)
 
@@ -92,4 +119,4 @@ GitBook's published favicon is the site icon in **Customize** ([icons, colors, a
 | Sandbox run reports or figures change | [Run reports](../repository-guides/repos/local-mailroom-sandbox/local-mailroom-sandbox-reports.md) and [Visuals](../repository-guides/repos/local-mailroom-sandbox/local-mailroom-sandbox-visuals.md); keep image URLs on `Exios66/local-mailroom-sandbox` `main` |
 | Mailroom-Corpus-EDA figures or SUMMARY\_REPORT change | [EDA reports](../mailroom-dataset/eda-reports.md) and [Visualizations](../mailroom-dataset/visualizations.md); keep PNG URLs on `Exios66/Mailroom-Corpus-EDA` `main` and iframe URLs on `exios66.github.io/Mailroom-Corpus-EDA` |
 | Fumi's or Hermes's artwork changes | The full mascot set is built in the `llm-mailroom` repository (`src/scripts/build_mascot.py`, from `source/fumi-base.png`) and mirrored here under `docs/assets/mascot/` — plus `docs/assets/banner.png` and `docs/assets/fumi/fumi.gif`. Refresh the GitBook-referenced copies in `docs/.gitbook/assets/` (`banner.png`, `fumi.gif`, `hoot-icon.png`) to match. GitBook strips scripts and may not animate SVG, so the GIF is the one to use on this page. The GitBook home header is **LLM-MAILROOM** only; Fumi appears twice as `fumi.gif` after the masthead (Postal Worker Fumi (文, "letter") on duty, then Meet Fumi). The owl banner, title, and badges stay the masthead. Re-upload `hoot-icon.png` in GitBook Customize if the Hermes sprite changes. |
-| `llm-mailroom` `CHANGELOG.md` changes | No change here. Pages that quote a release link to `CHANGELOG.md`; update a quoted version only if a page states it. |
+| `llm-mailroom` `CHANGELOG.md` changes | Regenerate the Changelog section (see [Changelog](#changelog)). Update a quoted version on another page only if that page states it. |

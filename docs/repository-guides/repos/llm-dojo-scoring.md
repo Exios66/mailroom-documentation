@@ -6,7 +6,7 @@
 | ------------- | --------------------------------------------------------------------------------------------- |
 | Repository    | [Exios66/llm-dojo-scoring](https://github.com/Exios66/llm-dojo-scoring)                       |
 | Monorepo path | `packages/llm-dojo-scoring`                                                                   |
-| Latest        | v0.19.1 (llm-mailroom pins v0.19.1; entity-extraction and agent-mailroom pin v0.16.0)         |
+| Latest        | v0.21.0 (llm-mailroom pins v0.21.0; entity-extraction and agent-mailroom pin v0.16.0; as of 2026-10-07) |
 | Used by       | llm-mailroom, llm-entity-extraction, eval-environment, local-mailroom-sandbox, agent-mailroom |
 
 ## What it does
@@ -18,16 +18,19 @@ llm-dojo-scoring replaced each project's local scoring code with one importable 
 | `id`          | Normalize, then exact match                                          |
 | `date`        | Parse to ISO, then exact match ("March 3, 2024" equals "03/03/2024") |
 | `money`       | Strip symbols, compare within one cent                               |
+| `label`       | Canonicalize, then exact match; no partial credit                    |
 | `name`        | Jaro-Winkler plus token-set ratio                                    |
 | `free_text`   | SQuAD-style token F1                                                 |
 | `entity_list` | Hungarian bipartite matching, then precision, recall and F1          |
+
+The `llm_dojo_scoring.intents` module holds the controlled `intent` vocabulary (`INTENT_LABELS`) and the `normalize_intent` mapper for `corporate_record`, `correspondence` and `insurance_claim`. The `production_prompts` catalog serves the five frozen v1 specialist prompts that llm-mailroom loads at runtime. The `production` family is a verbatim copy of the live llm-mailroom prompts, including the classification prompts, for dojo evaluation. The Sorter is not in the catalog; it stays on `sorter_v14` through `get_managed_prompt` (as of 2026-10-07).
 
 An optional embedding similarity "rescues" names and free text that are worded differently but mean the same thing. A blank prediction is never rescued.
 
 ## Quick start
 
 ```bash
-pip install "llm-dojo-scoring @ git+https://github.com/Exios66/llm-dojo-scoring.git@v0.19.1"
+pip install "llm-dojo-scoring @ git+https://github.com/Exios66/llm-dojo-scoring.git@v0.21.0"
 pip install -e ".[embeddings]"   # optional extras: embeddings, tracing, dev, all
 ```
 

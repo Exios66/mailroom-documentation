@@ -72,7 +72,7 @@ The most common confusion is the difference between *prompt history* and *produc
 
 * **History.** Eval loops pin an explicit lineage key through `langchain_agents/prompts.py:PROMPT_VERSIONS` (`sorter_v0…v14`, `contracts_specialist_v1…v33`). This is an append-only record of every version tried.
 * **Classify in production** uses **`sorter_v14`**: the V12 CUAD-subtype lineage plus mailroom pipeline doctrine, and the strongest sorter this pipeline has. V13 remains a frozen insurance-class experiment derived from V0.
-* **Extract in production** uses the sandbox and eval-environment **frozen v1** stems in `src/llm/frozen_v1/` for all five specialists. They are sha256-locked, so a prompt cannot drift unnoticed. `contracts_specialist_v33` is eval-only.
+* **Extract in production** uses the sandbox and eval-environment **frozen v1** stems for all five specialists. The text is served from the llm-dojo-scoring `production_prompts` catalog, pinned in `pyproject.toml`. `src/llm/frozen_v1/lineage.json` records the sha256 and length of each prompt, so a prompt cannot drift unnoticed. The `.txt` files in `src/llm/frozen_v1/` are superseded and not packaged. `contracts_specialist_v33` is eval-only.
 
 Mailroom wrappers (`agents/sorter.py`, `agents/contracts_specialist.py`, `agents/merger_agreement_specialist.py`, and the native `BaseAgent` specialists) resolve these templates through `get_managed_prompt` (`mailroom-<agent>`, `production` label), so the LangGraph `classify` and `extract` nodes share one Langfuse surface. Sync with `scripts/sync_prompts.py`. All other agents follow the `BaseAgent` contract above.
 
@@ -91,6 +91,8 @@ Mailroom wrappers (`agents/sorter.py`, `agents/contracts_specialist.py`, `agents
 | **Personality** | Fast, decisive, flags ambiguity instead of guessing          |
 
 **System prompt seed:** "You are a fast, decisive legal document classifier operating in a transactional/corporate law firm's mailroom."
+
+The shared five-class doctrine in the classification prompts describes `merger_agreement` and `contract` by what they are, without naming the MAUD or CUAD corpora (llm-mailroom#102, as of 2026-10-07).
 
 The Sorter is the first LLM call in the pipeline. It reads the document text and determines which of the configured document classes it belongs to. The list of available classes is dynamically read from `config/taxonomy.yaml`, so adding a new document type automatically expands the Sorter's options.
 
@@ -136,7 +138,7 @@ Fires only where the pipeline would previously have pinged a human. Independence
 | `cuad_family`    | `str \| None` | CUAD agreement family                              |
 | `cuad_clauses`   | `list[str]`   | Present CUAD categories as `"<label>: <evidence>"` |
 
-The Contracts Specialist is also a **vendored LangChain agent** (`agents/contracts_specialist.py` re-exports `langchain_agents.specialist_agents.ContractsSpecialist`): production prompt is the sandbox / eval-environment **frozen v1** stem (`llm/frozen_v1/contracts_specialist.txt`, Langfuse `mailroom-contracts_specialist`), not entity-extraction `contracts_specialist_v33`. `normalize_extraction` guarantees every schema field is present, and a missing `confidence` is derived from the share of fields actually found. It extracts CUAD `contract` only. MAUD `merger_agreement` has its own specialist and `MergerAgreementExtraction` schema — the two labels are not interchangeable. It accepts a **`handoff_context`** — the chained-eval pattern: the graph passes the sorter's classification (`doc_type` + `contract_subtype` + confidence) into the extraction call so the specialist extracts with the expected clause set of that agreement family in mind. Every live specialist accepts the same optional `handoff_context` parameter.
+The Contracts Specialist is also a **vendored LangChain agent** (`agents/contracts_specialist.py` re-exports `langchain_agents.specialist_agents.ContractsSpecialist`): production prompt is the sandbox / eval-environment **frozen v1** stem (served from the dojo `production_prompts` catalog; Langfuse `mailroom-contracts_specialist`), not entity-extraction `contracts_specialist_v33`. `normalize_extraction` guarantees every schema field is present, and a missing `confidence` is derived from the share of fields actually found. It extracts CUAD `contract` only. MAUD `merger_agreement` has its own specialist and `MergerAgreementExtraction` schema — the two labels are not interchangeable. It accepts a **`handoff_context`** — the chained-eval pattern: the graph passes the sorter's classification (`doc_type` + `contract_subtype` + confidence) into the extraction call so the specialist extracts with the expected clause set of that agreement family in mind. Every live specialist accepts the same optional `handoff_context` parameter.
 
 ***
 
@@ -165,7 +167,7 @@ The Contracts Specialist is also a **vendored LangChain agent** (`agents/contrac
 | `subject_matter`       | `str \| None` | One grounded sentence                                                                 |
 | `keywords`             | `list[str]`   | Up to 8 grounded terms                                                                |
 
-`cuad_family` and `cuad_clauses` are not primary on this class. The specialist wraps the LangChain `MergerAgreementSpecialist` (chunked extraction for long MAUD agreements) and serves the frozen v1 stem via `get_managed_prompt`. Dojo suite key stays `merger_agreement`.
+`cuad_family` and `cuad_clauses` are not primary on this class. The specialist wraps the LangChain `MergerAgreementSpecialist` (chunked extraction for long MAUD agreements) and serves the frozen v1 stem (from the dojo `production_prompts` catalog) via `get_managed_prompt`. Dojo suite key stays `merger_agreement`.
 
 ***
 
@@ -193,7 +195,7 @@ The Contracts Specialist is also a **vendored LangChain agent** (`agents/contrac
 | `jurisdiction`   | `str \| None` | State/country of incorporation                                                                                                          |
 | `filing_number`  | `str \| None` | Official filing reference                                                                                                               |
 
-**Honest gap (dojo v0.19.1):** there is **no external extraction benchmark** for this class (nothing CUAD/MAUD-shaped). The published `mailroom-dataset` set has **450** `corporate_record` rows with record-type subclasses (v9 expanded this class from 39 legacy S-1 rows by +411 EDGAR exhibits — see [SEC corporate records](../mailroom-dataset/source-corpora/edgar-corporate-records.md)); Hub extract inventory stays the five tokens above — do not treat those rows as clause-level gold. Mailroom scores a **local extraction pack** (`observability.local_eval_packs`, mock/check only) with schema-complete `expected_fields` (entity\_name, subject\_matter, keywords, signatories, …) from committed fixtures. Extra Hub `ground_truth` columns are joined when present, never invented.
+**Honest gap (dojo v0.21.0):** there is **no external extraction benchmark** for this class (nothing CUAD/MAUD-shaped). The published `mailroom-dataset` set has **450** `corporate_record` rows with record-type subclasses (v9 expanded this class from 39 legacy S-1 rows by +411 EDGAR exhibits — see [SEC corporate records](../mailroom-dataset/source-corpora/edgar-corporate-records.md)); Hub extract inventory stays the five tokens above — do not treat those rows as clause-level gold. Mailroom scores a **local extraction pack** (`observability.local_eval_packs`, mock/check only) with schema-complete `expected_fields` (entity\_name, subject\_matter, keywords, signatories, …) from committed fixtures. Extra Hub `ground_truth` columns are joined when present, never invented.
 
 ***
 
@@ -267,7 +269,7 @@ Removed in commit `59c47401` (2026-09-15), which deleted the docclass arm: the c
 
 A first-class document class (added in mailroom v0.4.0 / KANBAN-067): schema registry, taxonomy doc\_class + agent block, graph dispatch node, classifier vocabulary, and sorter prompt coverage.
 
-**Honest gap (dojo v0.19.1):** Hub rows are CMS DE-SynPUF source tables (`carrier`/`inpatient`/`outpatient`/`pde`). Typed extraction plus field-micro P/R/F1/F2 are scored. **`determination_consistency` and `amount_exactness` are registered scorers**; CMS GT is homogeneous (all `coverage_determination=approved` with empty `denial_reasons`), so Hub `determination_consistency` is **gated** (not a quality KPI on GT-shaped rows). A local contrast pack (approved / denied / partial) exercises the scorer off that tautology. The same three determinations also live on the pilot manifest as synthetic mock-only PDFs (`insurance_01` approved / `insurance_02` denied / `insurance_03` partial, rendered from `docs/examples/sources/insurance/` by `prepare_samples.py`) so `--mock` pilots cover `insurance_claim` end-to-end; `--real` refuses them via `is_real_sample`. Mailroom still records a local field invariant on traces. Candidate corpus EDA lives in [`claims-data-eda`](https://github.com/Exios66/claims-data-eda).
+**Honest gap (dojo v0.21.0):** Hub rows are CMS DE-SynPUF source tables (`carrier`/`inpatient`/`outpatient`/`pde`). Typed extraction plus field-micro P/R/F1/F2 are scored. **`determination_consistency` and `amount_exactness` are registered scorers**; CMS GT is homogeneous (all `coverage_determination=approved` with empty `denial_reasons`), so Hub `determination_consistency` is **gated** (not a quality KPI on GT-shaped rows). A local contrast pack (approved / denied / partial) exercises the scorer off that tautology. The same three determinations also live on the pilot manifest as synthetic mock-only PDFs (`insurance_01` approved / `insurance_02` denied / `insurance_03` partial, rendered from `docs/examples/sources/insurance/` by `prepare_samples.py`) so `--mock` pilots cover `insurance_claim` end-to-end; `--real` refuses them via `is_real_sample`. Mailroom still records a local field invariant on traces. Candidate corpus EDA lives in [`claims-data-eda`](https://github.com/Exios66/claims-data-eda).
 
 ***
 

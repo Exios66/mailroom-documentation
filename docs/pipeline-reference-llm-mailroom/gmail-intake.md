@@ -4,6 +4,10 @@ The mailroom's agent mailbox — `llmmailroom@gmail.com` — is a full second in
 
 Single-document uploads are handled by the **free OpenRouter triage team** (`openrouter/free` — the Free Models Router, $0): the core pipeline steps run without any paid agent. This guide is the complete operator/sender manual: how to enable the channel, how to format an upload email (subject-line contract included), every pathway a document can take from Gmail into the pipeline, and how to operate and troubleshoot the channel.
 
+{% hint style="warning" %}
+**Unreleased on `main` (after v0.8.0, as of 2026-10-07).** The Gmail sender authentication, loop guards, reply outbox, acknowledgment and digest replies, quarantine, IMAP IDLE, the free-quota breaker, and the triage result cache described below are on llm-mailroom `main`. They are not part of the v0.8.0 release. Each such item is marked "unreleased". See [Changelog: Unreleased](../changelog/unreleased.md).
+{% endhint %}
+
 ## In short
 
 * **One email, one accepted attachment:** the free triage lane processes it for $0. The lane archives eligible results with hash-chained audit entries. It sends unknown or low-confidence results, and provider errors, to human review.
@@ -19,10 +23,13 @@ Code map:
 | Piece                                                  | File                              |
 | ------------------------------------------------------ | --------------------------------- |
 | IMAP poller / echo / reactions                         | `src/pipeline/gmail_intake.py`    |
+| Sender authentication + loop guards + reply budget (unreleased) | `src/pipeline/mail_guards.py` |
+| Durable reply outbox (unreleased)                      | `src/pipeline/mail_outbox.py`     |
 | Watcher claim + triage dispatch + capability pre-check | `src/pipeline/watcher.py`         |
 | Free triage agent                                      | `src/agents/gmail_triage.py`      |
+| Triage result cache (unreleased)                       | `src/llm/result_cache.py`         |
 | Connectivity smoke test                                | `src/scripts/gmail_smoke_test.py` |
-| Environment variables                                  | `docs/configuration.md`           |
+| Environment variables                                  | [Configuration](configuration.md#gmail-intake-channel-hub-037) |
 
 ***
 
@@ -42,6 +49,12 @@ The channel is **explicit opt-in** — it never starts polling on its own.
     # MAILROOM_GMAIL_MAX_ATTACHMENT_MB=50      # per-attachment cap
     # MAILROOM_GMAIL_DEFAULT_MATTER_ID=DEFAULT # matter when the subject has no [M:] tag
     # MAILROOM_GMAIL_ALLOWED_SENDERS=          # CSV allowlist; empty = accept all
+    # MAILROOM_GMAIL_REQUIRE_DMARC=1           # unreleased: allowlisted senders need Gmail's dmarc=pass
+    # MAILROOM_GMAIL_MAX_ATTEMPTS=3            # unreleased: failed sweeps before quarantine
+    # MAILROOM_GMAIL_MAX_REPLIES_PER_HOUR=20   # unreleased: reject/ack/digest budget per address
+    # MAILROOM_GMAIL_ACKS=1                    # unreleased: acknowledgment reply on queue
+    # MAILROOM_GMAIL_IDLE=0                    # unreleased: IMAP IDLE push (opt-in)
+    # MAILROOM_GMAIL_ALLOW_SELF=0              # unreleased: accept mail from the agent's own address
     # MAILROOM_GMAIL_REACTIONS=1               # ✅ claim acknowledgement
     # MAILROOM_GMAIL_REACTION_LABEL=✅
     # MAILROOM_GMAIL_ECHOES=1                  # completion-report replies
@@ -70,8 +83,10 @@ The channel is **explicit opt-in** — it never starts polling on its own.
 **Security best practices**
 
 * The app password grants full mailbox access — store it ONLY in `.env` (or the GitHub secret manager); rotate it like any credential.
-* Set `MAILROOM_GMAIL_ALLOWED_SENDERS` in production so only known senders can queue documents; the allowlist compares lowercased addresses. **Pilot roster (HUB-039):** `exios4@gmail.com`, `jjburleson@wisc.edu`, `axios337@gmail.com`, `exios4@protonmail.com` (expansion later per the human).
+* Set `MAILROOM_GMAIL_ALLOWED_SENDERS` in production so only known senders can queue documents; the allowlist matches the exact bare address, case-insensitive. A `+tag` variant does not match. **Pilot roster (HUB-039):** `exios4@gmail.com`, `jjburleson@wisc.edu`, `axios337@gmail.com`, `exios4@protonmail.com` (expansion later per the human).
 * **Free-only pilot guardrail:** set `MAILROOM_LLM_FREE_ONLY=1` while the pilot key must not touch paid models — `get_llm` then refuses to resolve any non-free model (cost-table $0, or an OpenRouter `:free` suffix), so even a stray multi-document email cannot spend: its documents fail-soft park instead. Unset it in full production, where paid agents are the designed handler for multi-document emails and inbox/CLI uploads.
+* **Sender authentication (unreleased on `main`).** With `MAILROOM_GMAIL_REQUIRE_DMARC=1` (the default), an allowlisted sender also needs Gmail's own `dmarc=pass` verdict. The poller trusts only the topmost `Authentication-Results` header from `mx.google.com`. If the header is absent or comes from another server, the check fails closed. A sender whose domain publishes no DMARC record is rejected while the setting is on.
+* **Loop guards (unreleased on `main`).** The poller marks these messages seen and skips them without a reply: auto-replies, DSN bounces, mailing-list mail, `Precedence: bulk`, `list` or `junk`, a null `Return-Path`, daemon senders, and the agent's own address. Set `MAILROOM_GMAIL_ALLOW_SELF=1` to accept the agent's own address (the smoke test mails itself). The agent's own replies stay excluded by their `Auto-Submitted` header.
 * Reactions/echoes reveal document status to the original sender only (echoes reply To: the sender, threaded via `In-Reply-To`); keep the mailbox address unlisted.
 
 ***
@@ -85,7 +100,8 @@ There is **no subject keyword to trigger pickup**. Every email arriving at the m
 | **Attach the document**      | Only attachments are processed — the email body is never read. Body-only emails are marked seen and skipped (logged as `gmail_message_no_processable_attachments`)    |
 | **Accepted extensions**      | `file_extensions` from `config/taxonomy.yaml`: `.pdf`, `.txt`, `.docx`, `.md`, `.jpg`, `.jpeg`, `.png`, `.gif`. Anything else is skipped (message still acknowledged) |
 | **Size**                     | ≤ `MAILROOM_GMAIL_MAX_ATTACHMENT_MB` (default **50 MB**) per attachment; oversized attachments are skipped, message still acknowledged                                |
-| **Sender**                   | Any mailbox can send unless `MAILROOM_GMAIL_ALLOWED_SENDERS` is set (CSV, lowercased comparison)                                                                      |
+| **Sender**                   | Any mailbox can send unless `MAILROOM_GMAIL_ALLOWED_SENDERS` is set (CSV, exact case-insensitive match on the bare address; `+tag` variants do not match). Unreleased on `main`: an allowlisted sender also needs Gmail's `dmarc=pass` verdict (`MAILROOM_GMAIL_REQUIRE_DMARC`), and automated mail is skipped without a reply (see Security best practices) |
+| **Replies (unreleased on `main`)** | Every reply goes through the durable outbox. The sender gets an acknowledgment when attachments are queued (`MAILROOM_GMAIL_ACKS`), and a reject reply that names each refused file and the reason (wrong type, too large, no usable name, no attachment). A single document gets the completion echo. A multi-document email gets one digest when every document finishes, or a partial "incomplete" digest after 6 hours. Reject, acknowledgment and digest replies are capped per address per hour (`MAILROOM_GMAIL_MAX_REPLIES_PER_HOUR`, default 20). Completion echoes are not capped. |
 | **Subject matter tag**       | Optional `[M:<matter_id>]` — see § Subject line below                                                                                                                 |
 | **One email = one document** | Best practice for traceability: send each document as its own email with one attachment                                                                               |
 
@@ -139,17 +155,24 @@ Attach:  claim_2026-03-14.pdf
         │
         ▼
  IMAP sweep (every MAILROOM_GMAIL_POLL_SECONDS, UNSEEN only)
+   0. loop guards (unreleased)        → auto-replies, bounces, list mail, own
+                                        address: marked seen, skipped, no reply
    1. sender allowlist check          → rejected senders marked seen, skipped
+      + DMARC check (unreleased)      → no dmarc=pass: marked seen, skipped
    2. count ACCEPTED attachments      → extension + size filters
    3. route stamp on every sidecar:
         exactly ONE accepted  → route: triage
         TWO or MORE accepted  → route: pipeline
-        zero accepted         → marked seen, skipped (logged)
-   4. attachments → SAME inbox bin the watcher drains
+        zero accepted         → marked seen, skipped (logged);
+                                reject reply queued (unreleased)
+   4. attachments → staged in <inbox>.staging/*.part, then placed in the
+      SAME inbox bin the watcher drains (no-clobber link; copy fallback
+      on EXDEV; unreleased)
       + /upload <file>.meta sidecar (source, message_id, sender,
         subject, matter_id, route, upload_id, size, received_at)
    5. message marked \Seen; Message-ID recorded in
       <base>/gmail_intake_state.json (a lost seen-mark can never double-queue)
+   6. acknowledgment reply queued in the outbox (unreleased)
         │
         ▼
  Watcher claim (watcher.lock — single intake authority)
@@ -165,6 +188,10 @@ Attach:  claim_2026-03-14.pdf
         │                      │
  PATHWAY A              PATHWAY B / C below
 ```
+
+**Quarantine (unreleased on `main`).** A message that keeps raising during a sweep is tried again on the next sweep. After `MAILROOM_GMAIL_MAX_ATTEMPTS` failed sweeps (default 3), the poller quarantines it: it marks the message `\Seen`, labels it `mailroom/failed`, and records it as processed. The attempt count is stored as `failed_attempts` in the state file. Connection-level IMAP errors abort the sweep and do not count against any message.
+
+**Staging (unreleased on `main`).** Attachments stage in `<inbox>.staging/*.part` on the same filesystem as the inbox. The poller places each file with a no-clobber link and falls back to a copy on `EXDEV` (cross-device). Orphan `.part` files older than 1 hour are swept. If an I/O error occurs while staging, the poller publishes no attachment of that email and retries the email. The retry counts toward the quarantine cap.
 
 From here the document follows one of three pathways. **All pathways end in a terminal manifest** (archived / review / failed) that dispatches the completion echo on the source email thread.
 
@@ -198,6 +225,8 @@ One accepted attachment per email (`route: triage`) and `MAILROOM_GMAIL_TRIAGE` 
 * **Advisory by design:** the triage read is the accurate intake log, never the final word. It never overrules pipeline agents (it only exists where no pipeline run happens).
 * **Review routes:** the lane has no retry loop and no reviewer, so it parks the document in `review/` (audit entry `triage_reviewed`) instead of archiving when the triage read's `primary_doc_class` is `unknown` (`triage_unknown_class`) or its confidence is missing or below the taxonomy `low` threshold for that class (`triage_low_confidence`).
 * **Fail-soft (HUB-049):** if the triage call itself fails (no `OPENROUTER_API_KEY`, a rate limit, a timeout, a provider error), intake is not blocked: the document parks in `review/` with an escalation reason starting `triage_llm_unavailable`, and the echo reports it. Only a later unexpected error parks to `failed/` (abort path).
+* **Free-quota breaker (unreleased on `main`, after v0.8.0, as of 2026-10-07):** when the shared free pool rate-limits the lane and the breaker is open, the call raises `FreeQuotaExhausted`. The lane then does not use a paid fallback and does not raise. It answers with its deterministic header pass and sets `degraded: free_quota` on the result. The document is parked with grounded entities and a `triage_free_quota_degraded` log event. For the thresholds and cooldown, see [Configuration: `free_quota`](configuration.md#free_quota).
+* **Triage result cache (unreleased on `main`, after v0.8.0, as of 2026-10-07):** the lane reuses a validated read when the same document comes again under the same model and the same full request. This covers a forwarded copy, a re-send after a reject, and a re-run. The cache key covers the model, the full system prompt (with skills and the JSON note), and the user message (with schema and boilerplate). The store is `<MAILROOM_BASE_DIR>/llm_result_cache.sqlite`. Entries expire after 30 days, and the cache sweeps expired rows on write. Only validated results are stored. A hit sets `debug.cache: "hit"` and logs `triage_cache_hit`. `MAILROOM_LLM_CACHE=0` turns the cache off. The cache is used by the Gmail triage agent only. See [Configuration](configuration.md#operational-and-tooling-knobs).
 * The lane never enters the LangGraph graph. The full chart is in [Pipeline flowchart](../the-pipeline-in-depth/flowchart.md#gmail-intake-path).
 
 ### Pathway B — capability handoff → the full paid pipeline
@@ -249,7 +278,24 @@ The echo (`send_intake_echo`) replies **on the source thread** (`In-Reply-To`/`R
 7. **RELATED (advisory)** — the relations ledger's associations for this document/matter, when any exist (HUB-040)
 8. **AUDIT TRAIL** — every event with actor + timestamp, and the hash-chain verification verdict (`OK — hash chain intact` / `BROKEN — investigate immediately`)
 
-Echoes are deduped per `(doc_id, stage)`; a failed send is retried by the next terminal event; `MAILROOM_GMAIL_ECHOES=0` disables. A triage-lane document whose claim-time ✅ reaction failed gets the reaction retried at echo time (it has exactly one claim, so this is the last chance to ack).
+Echoes go through the durable outbox (unreleased on `main`, as of 2026-10-07). See [The reply outbox](#the-reply-outbox-unreleased). `MAILROOM_GMAIL_ECHOES=0` disables echoes. Before this change, the poller deduped echoes in memory per `(doc_id, stage)` and retried a failed send on the next terminal event. A triage-lane document whose claim-time ✅ reaction failed gets the reaction retried at echo time (it has exactly one claim, so this is the last chance to ack).
+
+### The reply outbox (unreleased)
+
+Unreleased on llm-mailroom `main` (after v0.8.0, as of 2026-10-07). Every reply is queued in a durable SQLite outbox, `<base>/mail_outbox.sqlite` (WAL mode). A background worker sends the rows.
+
+| Item | Value |
+| --- | --- |
+| Dedup keys | `echo:<doc_id>:<stage>`, `ack:<message_id>`, `reject:<message_id>`, `digest:<message_id>` |
+| Retry backoff | `min(3600, 30 * 2^attempts)` seconds |
+| Dead rows | A row goes `dead` after 8 attempts. The worker never revives it. `/health` → `checks.gmail_intake` counts it as `echoes_dead`. |
+| Row lease | 300 seconds. Two processes never send the same row. |
+| Delivery | At-least-once. A restart does not re-send a `sent` row. |
+| Digest | One per multi-document email, sent when all documents finish. A partial "incomplete" digest goes out after 6 hours. Late documents get their own echo. |
+
+All replies carry `Auto-Submitted: auto-replied`. They are HTML-escaped. They go only to senders that passed the allowlist, DMARC and loop checks.
+
+**Fast path (unreleased).** A `BODYSTRUCTURE` pre-filter skips the body download for an email with no acceptable attachment (headers only, then the reject reply). The poller fetches bodies with `BODY.PEEK[]`, so a message is never marked seen before it is handled. With `MAILROOM_GMAIL_IDLE=1`, the poller waits between sweeps with an IMAP IDLE and sweeps new mail on arrival. It falls back to plain polling on any IDLE error. Run `gmail_smoke_test.py --real` before you enable IDLE.
 
 ### Quick pathway reference
 
@@ -258,9 +304,10 @@ Echoes are deduped per `(doc_id, stage)`; a failed send is retried by the next t
 | 1 text-based attachment, ≤ free budget          | A — free triage lane                  | $0   | archived (or review: unknown class, low confidence, or triage call failed) |
 | 1 image-only / scanned / over-budget attachment | B — honest handoff → C                | paid | full-pipeline terminal stages                                              |
 | 2+ accepted attachments                         | C — full paid pipeline per attachment | paid | full-pipeline terminal stages                                              |
-| No accepted attachment                          | —                                     | —    | marked seen, skipped (no document)                                         |
-| Rejected sender                                 | —                                     | —    | marked seen, skipped (no document)                                         |
-| Body-only email                                 | —                                     | —    | marked seen, skipped (no document)                                         |
+| No accepted attachment                          | —                                     | —    | marked seen, skipped (no document; reject reply, unreleased)               |
+| Rejected sender (or failed DMARC, unreleased)   | —                                     | —    | marked seen, skipped (no document, no reply)                               |
+| Body-only email                                 | —                                     | —    | marked seen, skipped (no document; reject reply, unreleased)               |
+| Auto-reply, bounce or list mail (unreleased)    | —                                     | —    | marked seen, skipped (no document, no reply)                               |
 
 ***
 
@@ -269,7 +316,9 @@ Echoes are deduped per `(doc_id, stage)`; a failed send is retried by the next t
 **Monitoring**
 
 * `/health` → `checks.gmail_intake`: `enabled`, `running`, `last_poll_at`, and counters (`messages_seen`, `attachments_queued`, `reactions_sent`, `reactions_failed`, `echoes_sent`). Credentials never appear.
-* Logs: structlog events `gmail_poller_started`, `gmail_attachment_queued` (with `route=`), `gmail_message_sender_rejected`, `gmail_message_no_processable_attachments`, `triage_handoff`, `file_claimed_triage`, `gmail_echo_sent`, `gmail_echo_failed`.
+* Poll-report counters (unreleased on `main`): `skipped_automated`, `skipped_auth`, `quarantined`.
+* `/health` counter `echoes_dead` (unreleased on `main`): outbox rows that went `dead`.
+* Logs: structlog events `gmail_poller_started`, `gmail_attachment_queued` (with `route=`), `gmail_message_sender_rejected`, `gmail_message_no_processable_attachments`, `triage_handoff`, `file_claimed_triage`, `gmail_echo_sent`, `gmail_echo_failed`, `gmail_echo_dead` (unreleased), `gmail_message_quarantined` (unreleased).
 * State file: `<MAILROOM_BASE_DIR>/gmail_intake_state.json` — the bounded (2,000-entry) Message-ID ledger that makes double-queuing impossible even if a `\Seen` mark is lost.
 
 | Symptom                                                                 | Cause                                                                       | Fix                                                                                                                                    |
@@ -280,7 +329,10 @@ Echoes are deduped per `(doc_id, stage)`; a failed send is retried by the next t
 | Document parked in `review/`                                            | Pipeline confidence/guardrails (normal) or fail-safe                        | Resolve via the review flow (The-Mailroom REVIEW or `POST /v1/review/{doc_id}/resolve`)                                                |
 | Document parked in `review/` after triage with `triage_llm_unavailable` | No `OPENROUTER_API_KEY` for the triage model, rate limit, or provider error | Add/verify the key; reprocess from the review bin (intake itself never crashes)                                                        |
 | Everything runs the paid pipeline                                       | Triage disabled (`MAILROOM_GMAIL_TRIAGE=0`) or capability handoff           | Expected for images, scans, over-budget text; check `intake.triage_handoff` on the manifest                                            |
-| Echo never arrives                                                      | Echo send failed (SMTP)                                                     | It retries on the next terminal event; check `gmail_echo_failed` logs + `MAILROOM_GMAIL_SMTP_*`                                        |
+| Echo never arrives                                                      | Echo send failed (SMTP)                                                     | The outbox worker retries with backoff (dead after 8 attempts; unreleased on `main`). Check `gmail_echo_failed` / `gmail_echo_dead` logs, the `echoes_dead` counter and `MAILROOM_GMAIL_SMTP_*` |
+| Allowlisted sender ignored (unreleased on `main`)                       | No `dmarc=pass` from Gmail (`skipped_auth` in the poll report), or the message was automated mail (`skipped_automated`) | Check the sender domain's DMARC record. `MAILROOM_GMAIL_REQUIRE_DMARC=0` relaxes the check. Confirm the allowlist entry is the exact bare address (no `+tag`) |
+| Multi-document email got no per-file echoes (unreleased on `main`)      | Expected: a bundle gets one digest when all documents finish                | A partial digest goes out after 6 hours; later documents get their own echo                                                            |
+| Message marked seen and labelled `mailroom/failed` (unreleased on `main`) | The message raised on `MAILROOM_GMAIL_MAX_ATTEMPTS` sweeps and was quarantined | Read the `gmail_message_quarantined` log event and the `quarantined` counter. Fix the cause, then re-send the document as a new email |
 | Two watchers fight over the inbox                                       | A second drain process exists                                               | Only one `watcher.lock` holder; the Gmail poller always runs inside it                                                                 |
 
 **Disablement matrix**

@@ -108,7 +108,7 @@ The thresholds increase with the cost of an error. A misfiled contract, merger a
 
 Current Judge/Arbiter controls include `arbiter_retry_max = 2` and `judge_max_passes = 3`. The Judge checks completeness; the Arbiter can stand the result, order re-extraction, or send the matter to human review. Source: [`src/config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml) (`judge` / `arbiter` blocks).
 
-The field scorer uses deterministic, type-aware matching and factuality verification. A field score in the global ambiguous band `[0.50, 0.85]` (inclusive) sets `needs_judge_review`. The scorer also defines per-type bands, but `score_extraction` does not apply them. Source: [llm-dojo-scoring `field_scoring.py` v0.19.1](https://github.com/Exios66/llm-dojo-scoring/blob/v0.19.1/llm_dojo_scoring/field_scoring.py); band table in [Configuration](configuration.md).
+The field scorer uses deterministic, type-aware matching and factuality verification. A field score in the global ambiguous band `[0.50, 0.85]` (inclusive) sets `needs_judge_review`. The scorer also defines per-type bands, but `score_extraction` does not apply them. Source: [llm-dojo-scoring `field_scoring.py` v0.21.0](https://github.com/Exios66/llm-dojo-scoring/blob/v0.21.0/llm_dojo_scoring/field_scoring.py); band table in [Configuration](configuration.md).
 
 ## 4. Human-review procedure
 

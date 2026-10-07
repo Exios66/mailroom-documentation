@@ -50,6 +50,7 @@ mailroom-documentation/
     ├── experiment-reports/    # │
     ├── repository-guides/     # │
     ├── pipeline-reference-llm-mailroom/
+    ├── changelog/             # generated release notes (regenerate, never hand-edit)
     └── about-this-site/       # ┘  maintaining.md = the deep runbook for this site
 ```
 
@@ -118,7 +119,7 @@ The three knobs people confuse (only `path` is a URL):
 3. **Link, don't copy.** Each repository's own README/docs stay canonical; a guide here summarizes and links, never duplicates.
 4. **Date facts that drift.** Versions, pins, and counts carry an "as of" date.
 5. **Assets:** `docs/assets/` is the source of truth; `docs/.gitbook/assets/` holds the copies GitBook pages actually reference. Keep them in sync when art changes.
-6. **Never hand-edit the generated Changelog** — regenerate it (recipe below).
+6. **Never hand-edit the generated Changelog** — regenerate it with the recipe in [Maintaining this site](docs/about-this-site/maintaining.md#changelog).
 
 ### Common tasks
 
@@ -130,7 +131,7 @@ The three knobs people confuse (only `path` is a URL):
 | **Change the site title** | Edit `site.title` (and the section/first space `title`) in `gitbook-docs.yaml`. Do **not** touch any `key`. |
 | **Set the favicon** | GitBook **Customize → site icon** (upload `docs/.gitbook/assets/hoot-icon.png`). It is not a config field. |
 | **Bump the dataset pin** | Follow the [Maintaining this site](docs/about-this-site/maintaining.md) guide: `mailroom-dataset/` first, then `Overview` and `Data and corpora`. |
-| **Regenerate the Changelog** | In `llm-mailroom`: `PYTHONPATH=src python src/scripts/sync_gitbook_changelog.py` (`--check` is the guard). |
+| **Regenerate the Changelog** | Generate in a throwaway `llm-mailroom` worktree, copy `README.md`, `unreleased.md`, and `2026/*.md` into `docs/changelog/`, apply the four site fixes, and update `SUMMARY.md` — see [Maintaining this site](docs/about-this-site/maintaining.md#changelog). |
 
 ---
 
