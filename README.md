@@ -50,6 +50,7 @@ mailroom-documentation/
     ├── experiment-reports/    # │
     ├── repository-guides/     # │
     ├── pipeline-reference-llm-mailroom/
+    ├── changelog/             # generated release notes (regenerate, never hand-edit)
     └── about-this-site/       # ┘  maintaining.md = the deep runbook for this site
 ```
 
