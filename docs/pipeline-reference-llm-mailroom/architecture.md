@@ -1,5 +1,9 @@
 # Architecture
 
+{% hint style="info" %}
+**Pipeline reference** is the canonical lookup for `llm-mailroom`: architecture, agents, configuration, API, deployment, and operations. Use it to find one exact fact. To learn the pipeline from start to end, read [The pipeline in depth](../the-pipeline-in-depth/running.md) first.
+{% endhint %}
+
 ## Overview
 
 Mailroom is a multi-agent legal document processing pipeline built on LangGraph. It ingests legal documents, classifies them, routes them to specialist agents for structured extraction, compiles matter records, and archives everything with a full audit trail.

@@ -1,5 +1,9 @@
 # Experiment reports
 
+{% hint style="info" %}
+**Experiment reports** indexes the measured results. The results themselves live in the sandbox and eval-environment repositories. For how scores are computed, go to [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md).
+{% endhint %}
+
 Measured results do not live on this site. They live in two repositories, and this section indexes both report roots **separated by source**, because they answer different questions and have an explicit ownership boundary between them.
 
 | Source | Report root | What it measures | Owns the write-ups |

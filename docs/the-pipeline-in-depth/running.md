@@ -1,5 +1,9 @@
 # Running the pipeline
 
+{% hint style="info" %}
+**The pipeline in depth** explains how a document moves through `llm-mailroom`: the commands, the flowchart, the schemas, and the scores. It teaches the pipeline in reading order. To look up one setting, agent, or endpoint, use the [Pipeline reference](../pipeline-reference-llm-mailroom/architecture.md).
+{% endhint %}
+
 This page lists the commands you need to install `llm-mailroom`, start it, push documents through it, evaluate it, and check its audit trail. Every command comes from the code or the existing docs in this repo. For the full list of settings, see [Configuration](../pipeline-reference-llm-mailroom/configuration.md). For a guided first run across the whole constellation, see [Getting started](../start-here/getting-started.md).
 
 All commands run from the repository root. Most scripts need `PYTHONPATH=src` because the code lives under `src/`.

@@ -1,5 +1,9 @@
 # Overview
 
+{% hint style="info" %}
+**Start here** is for readers who are new to the Mailroom. It covers what the system does, a first run, and the terms the other pages use. For exact settings and commands, go to the [Pipeline reference](../pipeline-reference-llm-mailroom/architecture.md).
+{% endhint %}
+
 ## What the Mailroom does
 
 The Mailroom is a document-processing system for legal and business paperwork. A document arrives (by upload, by watched folder, or by email), and the Mailroom:

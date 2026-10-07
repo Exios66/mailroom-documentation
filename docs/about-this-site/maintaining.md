@@ -1,5 +1,9 @@
 # Maintaining this site
 
+{% hint style="info" %}
+**About this site** is for maintainers of this GitBook. Readers of the pipeline docs do not need it.
+{% endhint %}
+
 **This repository — [Exios66/mailroom-documentation](https://github.com/Exios66/mailroom-documentation) — is the source of [The Digital Mailroom](https://mailroom-inc.gitbook.io/the-digital-mailroom/).** GitBook [Git Sync](https://gitbook.com/docs/getting-started/git-sync) publishes the site from the `docs/` folder. The pipeline that the site describes stays in [Exios66/llm-mailroom](https://github.com/Exios66/llm-mailroom).
 
 ## Publish a change

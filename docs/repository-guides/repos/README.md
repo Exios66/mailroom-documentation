@@ -1,5 +1,9 @@
 # All repositories
 
+{% hint style="info" %}
+**Repository guides** has one page per repository. Each page summarizes the repository and links to its own docs. For how the repositories connect, go to [The constellation](../../how-it-fits-together/architecture.md).
+{% endhint %}
+
 One page per repository: what it does, where it fits, how to start, and where its own docs live. Each guide summarizes and links. The repository's own README and `docs/` remain the source of truth.
 
 ## Start here by task

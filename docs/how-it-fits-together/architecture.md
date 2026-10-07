@@ -1,5 +1,9 @@
 # The constellation
 
+{% hint style="info" %}
+**How it fits together** covers the links between repositories: data, prompts, scores, traces, and team workflow. It does not describe the inside of one repository. For that, go to the [Repository guides](../repository-guides/repos/).
+{% endhint %}
+
 This page explains what flows between the repositories. For the inside of the pipeline itself (nodes, routing, thresholds), see [Pipeline architecture](../pipeline-reference-llm-mailroom/architecture.md).
 
 ## The big picture
