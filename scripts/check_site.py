@@ -9,7 +9,7 @@ It checks:
      sections shape (section-1 -> mailroom-docs, path /, directory ./docs).
   2. Every docs/SUMMARY.md entry points at a file, and every page under docs/
      is listed in SUMMARY.md (assets/ and .gitbook/ excepted).
-  3. Every relative link and image in a published page resolves to a file.
+  3. Every relative link and image (src and srcset) in a published page resolves to a file.
   4. Every #anchor matches a heading id on the LIVE GitBook page. GitBook
      builds its own heading ids (not GitHub's), so the live page is the truth.
      An anchor to a heading that is not live yet is reported as UNVERIFIED.
@@ -80,7 +80,7 @@ def ids_on_live_page(page: pathlib.Path) -> set[str]:
 for f in sorted([DOCS / "README.md"] + [DOCS / p for p in listed]):
     text = re.sub(r"```.*?```", "", f.read_text(), flags=re.S)  # ignore code blocks
     text = re.sub(r"`[^`\n]*`", "", text)  # ignore inline code
-    targets = re.findall(r"\]\(([^)\s]+)\)", text) + re.findall(r'src="([^"]+)"', text)
+    targets = re.findall(r"\]\(([^)\s]+)\)", text) + re.findall(r'(?:src|srcset)="([^"\s]+)"', text)
     for target in targets:
         if re.match(r"[a-z]+:", target):  # https:, mailto:, ...
             continue

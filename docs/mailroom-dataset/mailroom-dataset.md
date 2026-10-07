@@ -57,6 +57,8 @@ The five live classes match llm-mailroom's `taxonomy.yaml`: `insurance_claim`, `
 
 Δ vs frozen v8 (2,000 rows): correspondence +650, corporate records +411, contract +91, insurance +150, merger +0.
 
+<figure><picture><source srcset="../.gitbook/assets/chart-dataset-classes-dark.svg" media="(prefers-color-scheme: dark)"><img src="../.gitbook/assets/chart-dataset-classes-light.svg" alt="Bar chart of rows per class in v8 and v9.2. correspondence grows from 350 to 1,000 and corporate_record from 39 to 450. merger_agreement does not change."></picture><figcaption><p>Rows per class, v8 against v9.2. The table above holds the same values. Rebuild the chart with <code>scripts/build_charts.py</code>.</p></figcaption></figure>
+
 Full 55-stratum tables: [Classes and strata](classes-and-strata.md). Per-source cards: [Source corpora](source-corpora/).
 
 ## Configs

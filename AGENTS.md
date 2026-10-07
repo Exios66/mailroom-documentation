@@ -12,7 +12,7 @@ The site's deployment broke twice before this file existed (commits `6ac7930` an
 | Live site | <https://mailroom-inc.gitbook.io/the-digital-mailroom/> |
 | What the site describes | The `llm-mailroom` pipeline ([`Exios66/llm-mailroom`](https://github.com/Exios66/llm-mailroom)) and the repositories around it |
 | Publishing mechanism | GitBook **Git Sync**. A merge to `main` republishes the site. There is no build step and no CI. |
-| Scope of this repository | Documentation only: Markdown pages, the Git Sync config, site art, and one checker script. No pipeline code. |
+| Scope of this repository | Documentation only: Markdown pages, the Git Sync config, site art, generated charts, and three scripts (site checker, style report, chart builder). No pipeline code. |
 | Companion files | `README.md` (repository orientation) and the *published* runbook [`docs/about-this-site/maintaining.md`](docs/about-this-site/maintaining.md) |
 
 ---
@@ -45,6 +45,7 @@ The site's deployment broke twice before this file existed (commits `6ac7930` an
 | Add, move, rename, or delete a page | §10.1 – §10.3 |
 | Add a sidebar section | §10.4 |
 | Add or change art | §10.5 |
+| Add or update a chart | §10.9 |
 | Bump a version or dataset pin | §10.6 |
 | Regenerate the Changelog | §10.7 |
 | Check my change before I push | §11 |
@@ -76,7 +77,7 @@ Then:
 1. Read `gitbook-docs.yaml` and `docs/.gitbook.yaml` before any structural change. Compare them with §3. They must match exactly.
 2. Run the checker once (§11) so you know the starting state.
 3. State which harness you run under (Claude Code, Codex, Cursor, OpenCode, …) and which checkout you treat as canonical.
-4. Prefer read-only inspection until you know what you will change.
+4. Use read-only inspection until you know what to change.
 
 ---
 
@@ -147,7 +148,7 @@ This is already done. Repeat it only if the integration is lost.
 
 ## 4. The one hard rule: sections vs. root spaces
 
-A GitBook site is either a **sections** site (it has one or more sections, and every space is inside a section) or a **siteSpaces** site (flat, spaces at the top level). Never both. This site is a sections site. So:
+A GitBook site has one of two shapes. A **sections** site has one or more sections, and every space is inside a section. A **siteSpaces** site is flat: its spaces are at the top level. A site is never both. This site is a sections site. So:
 
 > **A space at the top level of `site.structure` is illegal here.**
 
@@ -292,6 +293,21 @@ The CodeRabbit review (`.coderabbit.yaml`) checks these:
 * Say what is unverified. Remove or correct a wrong claim. Do not soften it.
 * Every step has its prerequisite. Every command has its expected result. No "TODO", "TBD", or "see below" without a target.
 
+Measure the style of each page you edit:
+
+```bash
+python3 scripts/check_style.py docs/<page>.md -v
+```
+
+It prints one line per finding: `LONG` (a sentence over 25 words), `CONTRACT`, `FUTURE` ("will", "would"), `VAGUE` ("simply", "etc."), `MODAL` ("should", "might"). It is a report, not a gate. Fix every finding in the sentences you add or change. Run it with no arguments for a per-page summary.
+
+How to fix a `LONG` sentence:
+
+* Split it into two or three sentences. Keep one idea per sentence.
+* Turn a list inside a sentence ("a, b, c, d and e") into a bulleted list.
+* Turn a set of numbers inside a sentence into a table.
+* Put a condition first: "If X, do Y."
+
 ---
 
 ## 7. Links, images, and anchors
@@ -322,12 +338,21 @@ Never:
 | Dataset EDA figures | `Exios66/Mailroom-Corpus-EDA` `main` | `https://raw.githubusercontent.com/Exios66/Mailroom-Corpus-EDA/main/reports/figures/<file>.png` |
 | Sandbox report figures | `Exios66/local-mailroom-sandbox` `main` | A full `raw.githubusercontent.com` URL on `main` |
 | Interactive charts and dashboards | `exios66.github.io/Mailroom-Corpus-EDA` | `{% embed url="…" %}`. GitBook renders it as a frame. Do not write raw `<iframe>` HTML. |
+| Site charts built from page data | `docs/.gitbook/assets/chart-<name>-light.svg` and `-dark.svg`, written by `scripts/build_charts.py` | The `<picture>` form below. Never hand-edit the SVG. Follow §10.9. |
 
 Always give an image `alt` text. Use the `<figure>` form when the image needs a caption:
 
 ```html
 <figure><img src="../.gitbook/assets/banner.png" alt="What the image shows"><figcaption><p>Caption.</p></figcaption></figure>
 ```
+
+A site chart has a light and a dark file. Use the `<picture>` form, so GitBook shows the file that matches the reader's theme. Write the whole element on one line:
+
+```html
+<figure><picture><source srcset="../.gitbook/assets/chart-<name>-dark.svg" media="(prefers-color-scheme: dark)"><img src="../.gitbook/assets/chart-<name>-light.svg" alt="What the chart shows, with the key values"></picture><figcaption><p>Caption. The table above holds the same values.</p></figcaption></figure>
+```
+
+The `alt` text states the finding and the key values. A reader with a screen reader gets the chart from it.
 
 ### 7.3 Anchors: GitBook ids are not GitHub ids
 
@@ -344,7 +369,14 @@ Observed GitBook rules (verified on the live site, 2026-10-07):
 | `## 1. Pipeline at a glance` | `id-1.-pipeline-at-a-glance` | `1-pipeline-at-a-glance` |
 | ``### `free_quota` `` | `free_quota` | `free_quota` |
 
-In short: lower-case; `&` becomes `and`; a dash or space run becomes one `-`; `+` leaves `--`; commas split numbers into `-`; periods and underscores stay; a heading that starts with a digit gets the prefix `id-`.
+In short:
+
+* Letters become lower-case.
+* `&` becomes `and`.
+* A run of dashes or spaces becomes one `-`, but `+` leaves `--`.
+* A comma inside a number becomes `-`.
+* Periods and underscores stay.
+* A heading that starts with a digit gets the prefix `id-`.
 
 **Do not guess an id. Copy it from the live page:**
 
@@ -485,6 +517,27 @@ The Changelog section (`docs/changelog/`) is generated from llm-mailroom `CHANGE
 
 Edit `site.title`, and the section and space `title`, in `gitbook-docs.yaml`. Change nothing else in that file. Never change a `key`. Read §3 and §4 first.
 
+### 10.9 Add or update a chart
+
+Charts are static SVG files. GitBook strips scripts, so a chart cannot have hover tooltips. The Markdown table next to the chart is its table view. Keep that table.
+
+When a value in a charted table changes:
+
+1. Change the value in the page table.
+2. Change the same value in the data block of `scripts/build_charts.py`. The block names its source page.
+3. Run `python3 scripts/build_charts.py`. Expected: one `wrote …` line for each light and dark file.
+4. Open both SVG files and look at them. Labels must not overlap or run past the edge.
+5. Commit the page, the script, and the SVG files together.
+
+To add a chart:
+
+1. Chart only data that a page table already holds. A chart never carries a fact that the page text does not.
+2. Pick the form first: bars for amounts, bands for ranges, small multiples for metrics on different scales. Never two y-axes.
+3. Add a function and a data block to `scripts/build_charts.py`, and add it to `CHARTS`. Copy the existing functions: the same palette, fonts, gridlines, and legend rules.
+4. Use only the palette steps in `THEMES`. They passed the dataviz `validate_palette.js` checks for both modes. A new color needs a new validator run.
+5. Put the `<picture>` element (§7.2) on the page, after the table it draws.
+6. Run §11. The checker confirms that the `src` and `srcset` files exist.
+
 ---
 
 ## 11. Check before you push
@@ -501,7 +554,7 @@ It checks:
 
 1. `gitbook-docs.yaml` and `docs/.gitbook.yaml` parse, and the site keeps its shape (`section-1` → `mailroom-docs`, `path: /`, `./docs`).
 2. Every `SUMMARY.md` entry points at a file, and every page under `docs/` is listed (`docs/assets/` and `docs/.gitbook/` excepted).
-3. Every relative link and image in a published page resolves to a file.
+3. Every relative link and image (`src` and `srcset`) in a published page resolves to a file.
 4. Every `#anchor` exists as an id on the **live** page.
 
 | Output | Meaning | Action |
@@ -511,6 +564,12 @@ It checks:
 | `UNVERIFIED … anchor … is not on <url>` | The id is not on the live page | If the heading is new in this change, confirm it after the merge (§13). Otherwise the anchor is wrong: copy the real id (§7.3). |
 
 `--offline` skips the network. All anchors then show as `UNVERIFIED`.
+
+Then run the style report on each page you changed (§6.3):
+
+```bash
+python3 scripts/check_style.py docs/<page>.md -v
+```
 
 Then review your own diff:
 
@@ -604,9 +663,11 @@ GitBook republishes within a few minutes. Then:
 | `docs/README.md` | Yes (home) | Landing page. Header **LLM-MAILROOM** (from `SUMMARY.md`). |
 | `docs/**/*.md` | Yes, if listed | Pages |
 | `docs/changelog/` | Yes | Generated release notes. Regenerate, never hand-edit (four site fixes excepted). |
-| `docs/.gitbook/assets/` | Served | The three images pages reference: `banner.png`, `fumi.gif`, `hoot-icon.png` |
+| `docs/.gitbook/assets/` | Served | The images pages reference: `banner.png`, `fumi.gif`, `hoot-icon.png`, and the generated `chart-*-light.svg` / `chart-*-dark.svg` files |
 | `docs/assets/` | No (not listed) | Site art **source of truth** (full Fumi + Hermes set) |
 | `scripts/check_site.py` | No | The pre-push checker (§11) |
+| `scripts/check_style.py` | No | The STE style report (§6.3). Not a gate. |
+| `scripts/build_charts.py` | No | Writes the chart SVGs from its data blocks (§10.9) |
 | `plans/` | No | Implementation plans for docs work. Historical; not law. |
 | `.coderabbit.yaml` | No | CodeRabbit review rules for pull requests |
 | `.gitattributes` | No | `* text=auto` |
@@ -638,7 +699,7 @@ GitBook republishes within a few minutes. Then:
 
 * Put a space at the top level of `site.structure` (→ §4 error).
 * Change the `key` of the space or the section.
-* Set `path: docs` (the home would publish at `…/the-digital-mailroom/docs/`).
+* Set `path: docs` (the home then publishes at `…/the-digital-mailroom/docs/`).
 * Point `content.directory` at the repository root (`./`). That exports the whole repository as the space.
 * Commit a stray root content tree (`README.md`/`SUMMARY.md` copies, section folders, `.gitbook/assets/` at the root) or a GitBook-created `docs/gitbook-docs.yaml`. Delete them.
 * Change the Project directory away from the repository root.
@@ -719,7 +780,13 @@ Deliver:
 * **Fix shape:** the minimal diff to `gitbook-docs.yaml` or the `docs/` tree.
 * **Verification:** the commands run, their output, and the live-site check.
 
-When you dispatch another agent, give it this file, the scope boundaries (which files it may touch), and the evidence it must return (checker output, SHAs, live URLs) before you accept its work. Re-run the checker yourself on its result.
+When you dispatch another agent, give it three things:
+
+* this file;
+* the scope boundaries (which files it may touch);
+* the evidence it must return (checker output, SHAs, live URLs).
+
+Accept its work only with that evidence. Re-run the checker yourself on its result.
 
 ---
 
@@ -737,4 +804,4 @@ These rules apply to agent definitions across the family, not to files in this r
 
 ### TL;DR
 
-`docs/` is the site. `SUMMARY.md` decides what publishes. `gitbook-docs.yaml` at the root maps one space inside one section to `./docs`: **never move the space to the top level, never change a key.** Anchors use GitBook ids from the live page. The Changelog is generated. Run `scripts/check_site.py` before every push, and check the live page after every merge. `llm-mailroom`'s GitBook copy stays disconnected.
+`docs/` is the site. `SUMMARY.md` decides what publishes. `gitbook-docs.yaml` at the root maps one space inside one section to `./docs`: **never move the space to the top level, never change a key.** Anchors use GitBook ids from the live page. The Changelog is generated. Charts come from `scripts/build_charts.py`. Run `scripts/check_site.py` before every push, and check the live page after every merge. `llm-mailroom`'s GitBook copy stays disconnected.
