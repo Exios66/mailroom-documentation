@@ -22,7 +22,7 @@ The full chart below has many branches. Most documents take one of three routes,
 
 **3. The doubtful extraction (Lane B).** `extract` returns confidence from `low` up to `judge_band_high`. `judge_verify` checks completeness. A `complete` verdict goes on to `compile_report`. A `partial` or `incomplete` verdict goes to `arbiter`, which picks exactly one of three outcomes: accept with caveats (on to `compile_report`), re-extract (back through `retry_extract`, bounded by `arbiter_retry_max`), or `human_review`.
 
-Two things can interrupt any of these paths. A **transient provider error** retries the same node without spending the confidence budget, and sends the document to `human_review` after two repeats. A **conflict** with an archived record of the same class in the same matter diverts the document to `boss_escalation`: an `approved` decision continues to `compile_report`, and any other decision goes to `human_review`.
+Two things can interrupt any of these paths. A **transient provider error** retries the same node without spending the confidence budget, and sends the document to `human_review` once the transient limit (`_TRANSIENT_MAX_RETRIES = 2`) is exceeded. A **conflict** with an archived record of the same class in the same matter diverts the document to `boss_escalation`: an `approved` decision continues to `compile_report`, and any other decision goes to `human_review`.
 
 ## The full pipeline
 
