@@ -5,7 +5,7 @@ site:
     - type: section
       key: section-1
       title: Mailroom Inc. Docs
-      path: mailroom-inc.-docs
+      path: mailroom-inc
       description: ""
       icon: envelope-open-text
       default: true
