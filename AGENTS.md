@@ -196,12 +196,15 @@ Root-level site spaces can only exist in a non-sections site
 - `docs/.gitbook.yaml`
 - `landing/` (the static landing page + duplicated mascot assets)
 
+**Scope warning (verified 2026-10-06).** The mirror's `docs/` also still carries the **old site tree** — `start-here/`, `the-pipeline-in-depth/`, `how-it-fits-together/`, `mailroom-dataset/`, `repository-guides/`, `pipeline-reference-llm-mailroom/`, `about-this-site/`, `changelog/`, `constellation/` — which the monorepo package does **not** (`Exios66/llm-mailroom/docs` = 28 entries vs `packages/llm-mailroom/docs` = 13). The deletion-bearing sync removes **both** the five config entries above *and* that whole tree, so **run `status` first and read the drift before pushing** — never blind-push.
+
 **This repo is the one deployment. `llm-mailroom` must not be connected to GitBook.** Retiring its copy takes two steps — **step 1 is done; step 2 is outstanding** (the mirror still carries all five entries above):
 
 1. **GitBook UI — DONE (2026-10-06).** The operator disconnected the Git Sync integration on the old *"Mailroom Inc. Docs"* site. Never reconnect it.
 2. **Config removal (DMR-074 — never hand-edit the mirror):** the monorepo `packages/llm-mailroom` carries **no** GitBook config and **no** `landing/`, so this is a **deletion-bearing** delta. From a `LLM-Mailroom-Services/Digital-Mailroom` checkout:
 
    ```bash
+   python scripts/sync_packages.py status                        # DRY RUN — read the drift first
    python scripts/sync_packages.py push --package llm-mailroom   # WITHOUT --patch (adds deletions)
    ```
 
