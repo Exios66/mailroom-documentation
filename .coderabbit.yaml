@@ -1,0 +1,85 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+tone_instructions: >-
+  Be precise and brief. Cite the file and line that contradicts the finding.
+  Prefer one consolidated finding for a fact that is wrong in several places.
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+  auto_review:
+    enabled: true
+    drafts: true
+    base_branches:
+      - ".*"
+  path_filters:
+    - "!**/*.lock"
+    - "!**/assets/**"
+  path_instructions:
+    - path: "docs/SUMMARY.md"
+      instructions: |
+        This file is the GitBook table of contents. Only pages listed here publish.
+        Check that every entry links to a file that exists and that no page under
+        docs/ is missing from this list unless it is intentionally unpublished.
+        Do not rename the section or space keys.
+    - path: "docs/**/*.md"
+      instructions: |
+        Documentation audit (apply to every changed page, and to any page that
+        repeats a changed fact):
+        1. Links. Check that every relative link resolves to a file in this repository
+           and that every #anchor matches a heading on the target page. Check that
+           GitHub links point at a path that exists on the default branch of the
+           target repository.
+        2. References. Check that every file path, command, flag, environment
+           variable, class, function, config key and version named in the text exists
+           in the source it describes. If the source is not in this review, say that
+           it was not checked. Do not guess.
+        3. Stale content. Flag dates, version numbers, counts, test totals, model
+           names, dataset revisions and "currently" or "still" claims that the
+           changed code or neighbouring pages contradict. A dated fact needs an
+           "as of" date.
+        4. Inconsistency. When a fact appears on more than one page, check that all
+           copies agree (dataset pins, versions, counts, ports, defaults, names). Report
+           the pages that disagree, not only the changed one.
+        5. Incomplete information. Flag steps with no prerequisite, commands with no
+           expected result, options with no default, tables with an empty cell, and
+           "TODO", "TBD" or "see below" with no target.
+        6. Remove or correct claims instead of softening them. A claim that cannot be
+           verified must be marked as unverified.
+        This site publishes through GitBook Git Sync. Keep pages in plain Markdown
+        with GitBook blocks only where the neighbouring pages already use them. Write
+        in Simplified Technical English: imperative steps, short sentences, present
+        tense, no contractions. Check that a changed page still matches the upstream
+        repositories it describes (llm-mailroom, local-mailroom-sandbox,
+        mailroom-dataset on the Hub).
+    - path: "AGENTS.md"
+      instructions: |
+        This file is the maintenance contract for this repository. Check that every
+        rule matches the current layout (docs/SUMMARY.md, gitbook-docs.yaml) and the
+        published pages. Flag any rule that names a directory, script or section that
+        does not exist. This site has no Changelog section.
+    - path: "gitbook-docs.yaml"
+      instructions: |
+        Never change the section or space keys. Check that content.directory and
+        path settings still point at the docs folder, not the repository root.
+  tools:
+    markdownlint:
+      enabled: true
+    languagetool:
+      enabled: false
+    yamllint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    github-checks:
+      enabled: true
+finishing_touches:
+  docstrings:
+    enabled: false
+  unit_tests:
+    enabled: false
+chat:
+  auto_reply: true
