@@ -1,6 +1,23 @@
 # API
 
-Mailroom exposes a FastAPI server on port 8000 by default.
+Mailroom exposes a FastAPI server on port 8000 by default. The API is the producer side of the pipeline: it accepts documents, reports where each one is, lets a person resolve held documents, and exposes operator controls. It embeds the inbox watcher, so starting it also starts processing.
+
+## Which endpoint do I need?
+
+| I want to... | Call | Notes |
+| --- | --- | --- |
+| Check the service is up and its dependencies reachable | `GET /health` | Open without a token; does not spend completion tokens |
+| Submit a document | `POST /upload` | Returns an `upload_id`; the `doc_id` used below is minted when the watcher claims the file, so find it via `GET /queue` or the watcher logs |
+| See where one document is | `GET /status/{doc_id}` | Current stage and outcome |
+| See everything the pipeline did to it | `GET /audit/{doc_id}` | Hash-chained history, with chain validity |
+| List every document in a matter | `GET /matters/{matter_id}` | Matter is the grouping you set at upload |
+| See what is waiting in the queue | `GET /queue` | |
+| Work the human-review desk | `GET /review/queue`, `GET /lookup`, `GET /documents/{doc_id}/source`, then `POST /review/{doc_id}/resolve` | The REVIEW sequence: list, find, read the source, decide |
+| Check system health and stuck documents | `GET /ops/status` | Error rate by document type |
+| Run maintenance | `POST /ops/sweep`, `POST /ops/resume` | Operator actions |
+| Switch the relations clerk between modes | `GET` / `POST /api/relations/mode` | See [Agents](agents.md) |
+
+Every route is also mounted under `/v1`, and `/v1` is the current interface. Management routes other than health need a bearer token. Details of each call follow.
 
 ## Starting the API
 

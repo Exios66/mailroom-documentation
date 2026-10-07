@@ -57,7 +57,7 @@ curl http://localhost:8000/v1/status/{doc_id}
 curl http://localhost:8000/v1/audit/{doc_id}
 ```
 
-**What each command proves.** The `--mock` pilot confirms that the graph, storage and scoring wiring work, using a deterministic fake model, so it passes with no key and costs nothing. It says nothing about model quality. The upload call returns a `doc_id`; `status` shows how far that document has travelled, and `audit` returns its hash-chained history, one entry per stage. If a command fails with an import error, check that `PYTHONPATH=src` is set. If a real (non-mock) run fails immediately, the usual cause is a missing `OPENROUTER_API_KEY`.
+**What each command proves.** The `--mock` pilot confirms that the graph, storage and scoring wiring work, using a deterministic fake model, so it passes with no key and costs nothing. It says nothing about model quality. The upload call returns an `upload_id` and queues the file. The pipeline's `doc_id` is minted when the watcher claims it, so find it in `GET /v1/queue` or the watcher logs and substitute it into the `status` and `audit` commands. `status` shows how far that document has travelled, and `audit` returns its hash-chained history, one entry per stage. If a command fails with an import error, check that `PYTHONPATH=src` is set. If a real (non-mock) run fails immediately, the usual cause is a missing `OPENROUTER_API_KEY`.
 
 Every route is also mounted **without** the `/v1` prefix for backwards compatibility, but `/v1` is the current interface — see [API](../pipeline-reference-llm-mailroom/api.md).
 

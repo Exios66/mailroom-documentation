@@ -16,7 +16,7 @@ Terms that appear across the constellation's code, docs and commit messages.
 
 **Confidence gate.** The thresholds in `taxonomy.yaml` (`confidence.low`, `confidence.high`, `retry_max`) that decide whether a result proceeds, retries, or goes to review.
 
-**Ambiguous band.** The score range in which a deterministic result is not trusted either way, so the LLM judge is called. Clearly above or below the band, the judge is skipped. The band is tuned per field type: dates and ids are exact-after-normalize and never escalate, while names and entity lists trust only a perfect match and send near-misses to the judge. Set under `field_scoring` in `taxonomy.yaml`.
+**Ambiguous band.** The score range in which a deterministic field result is not trusted either way, so it is flagged for the LLM judge. In the pinned scoring library the global band `[0.5, 0.85]` decides. `taxonomy.yaml` also defines per-type bands (dates and ids never escalate; names and entity lists trust only perfect matches), but v0.19.1's `score_extraction` does not apply them; see [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md). Set under `field_scoring` in `taxonomy.yaml`.
 
 **By-class thresholds.** Per-class overrides of the global confidence gate (`confidence.by_class`). Once the sorter has assigned a class, that class's `high`, `low` and `judge_band_high` replace the global fallbacks (`0.97`, `0.88`, `0.95`). Contract, merger agreement and insurance claim use `0.98` / `0.90` / `0.97`.
 
