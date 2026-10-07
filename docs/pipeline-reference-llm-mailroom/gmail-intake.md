@@ -5,7 +5,7 @@ The mailroom's agent mailbox — `llmmailroom@gmail.com` — is a full second in
 Single-document uploads are handled by the **free OpenRouter triage team** (`openrouter/free` — the Free Models Router, $0): the core pipeline steps run without any paid agent. This guide is the complete operator/sender manual: how to enable the channel, how to format an upload email (subject-line contract included), every pathway a document can take from Gmail into the pipeline, and how to operate and troubleshoot the channel.
 
 {% hint style="warning" %}
-**Unreleased on `main` (after v0.8.0, as of 2026-10-07).** The Gmail sender authentication, loop guards, reply outbox, acknowledgment and digest replies, quarantine, and IMAP IDLE described below are on llm-mailroom `main`. They are not part of the v0.8.0 release. Each such item is marked "unreleased". See [Changelog: Unreleased](../changelog/unreleased.md).
+**Unreleased on `main` (after v0.8.0, as of 2026-10-07).** The Gmail sender authentication, loop guards, reply outbox, acknowledgment and digest replies, quarantine, IMAP IDLE, the free-quota breaker, and the triage result cache described below are on llm-mailroom `main`. They are not part of the v0.8.0 release. Each such item is marked "unreleased". See [Changelog: Unreleased](../changelog/unreleased.md).
 {% endhint %}
 
 ## In short
@@ -27,6 +27,7 @@ Code map:
 | Durable reply outbox (unreleased)                      | `src/pipeline/mail_outbox.py`     |
 | Watcher claim + triage dispatch + capability pre-check | `src/pipeline/watcher.py`         |
 | Free triage agent                                      | `src/agents/gmail_triage.py`      |
+| Triage result cache (unreleased)                       | `src/llm/result_cache.py`         |
 | Connectivity smoke test                                | `src/scripts/gmail_smoke_test.py` |
 | Environment variables                                  | [Configuration](configuration.md#gmail-intake-channel-hub-037) |
 
@@ -223,6 +224,8 @@ One accepted attachment per email (`route: triage`) and `MAILROOM_GMAIL_TRIAGE` 
 * **Advisory by design:** the triage read is the accurate intake log, never the final word. It never overrules pipeline agents (it only exists where no pipeline run happens).
 * **Review routes:** the lane has no retry loop and no reviewer, so it parks the document in `review/` (audit entry `triage_reviewed`) instead of archiving when the triage read's `primary_doc_class` is `unknown` (`triage_unknown_class`) or its confidence is missing or below the taxonomy `low` threshold for that class (`triage_low_confidence`).
 * **Fail-soft (HUB-049):** if the triage call itself fails (no `OPENROUTER_API_KEY`, a rate limit, a timeout, a provider error), intake is not blocked: the document parks in `review/` with an escalation reason starting `triage_llm_unavailable`, and the echo reports it. Only a later unexpected error parks to `failed/` (abort path).
+* **Free-quota breaker (unreleased on `main`, after v0.8.0, as of 2026-10-07):** when the shared free pool rate-limits the lane and the breaker is open, the call raises `FreeQuotaExhausted`. The lane then does not use a paid fallback and does not raise. It answers with its deterministic header pass and sets `degraded: free_quota` on the result. The document is parked with grounded entities and a `triage_free_quota_degraded` log event. For the thresholds and cooldown, see [Configuration: `free_quota`](configuration.md#free_quota).
+* **Triage result cache (unreleased on `main`, after v0.8.0, as of 2026-10-07):** the lane reuses a validated read when the same document comes again under the same model and the same full request. This covers a forwarded copy, a re-send after a reject, and a re-run. The cache key covers the model, the full system prompt (with skills and the JSON note), and the user message (with schema and boilerplate). The store is `<MAILROOM_BASE_DIR>/llm_result_cache.sqlite`. Entries expire after 30 days, and the cache sweeps expired rows on write. Only validated results are stored. A hit sets `debug.cache: "hit"` and logs `triage_cache_hit`. `MAILROOM_LLM_CACHE=0` turns the cache off. The cache is used by the Gmail triage agent only. See [Configuration](configuration.md#operational-and-tooling-knobs).
 * The lane never enters the LangGraph graph. The full chart is in [Pipeline flowchart](../the-pipeline-in-depth/flowchart.md#gmail-intake-path).
 
 ### Pathway B — capability handoff → the full paid pipeline
