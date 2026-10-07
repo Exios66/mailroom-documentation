@@ -16,7 +16,7 @@ The full GitBook breakdown — 55 strata, configs, source cards, EDA reports, an
 | Pinned revision          | `670e8bc6` (tag v9.2)                                                                                                       |
 | Frozen parent            | [`mailroom-corpus`](https://huggingface.co/datasets/Lucius-Morningstar/mailroom-corpus) v8, 2,000 rows, revision `eafe1ab4` |
 
-The published pin is `v9.2`. As of 2026-10-07, `llm-mailroom` 0.8.0 and the sandbox still read the predecessor tag `v9.1` (`ed7576b6`), so results from those two should name the pin they used. See [Mailroom dataset](../mailroom-dataset/mailroom-dataset.md).
+The published pin is `v9.2`. As of 2026-10-07, `llm-mailroom` 0.8.0 and the sandbox still read the predecessor tag `v9.1` (`bc9eab28`), so results from those two should name the pin they used. See [Mailroom dataset](../mailroom-dataset/mailroom-dataset.md).
 
 ### Classes and sources
 

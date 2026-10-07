@@ -9,7 +9,7 @@ The Hub calls this dataset **v1**. The corpus family's lineage calls it **v9**. 
 | If you want to... | Pin | Note |
 | --- | --- | --- |
 | Start new work | Hub tag `v9.2` → `670e8bc6` | The published pin |
-| Reproduce a SAND-37 or SAND-40 result, or match llm-mailroom 0.8.0 | Hub tag `v9.1` → `ed7576b6` | llm-mailroom (`FULL_CORPUS_REVISION` in `pipeline/hf_corpora.py`) and local-mailroom-sandbox (`FAMILY_HF_TAG`) still read `v9.1`, as of 2026-10-07 |
+| Reproduce a SAND-37 or SAND-40 result, or match llm-mailroom 0.8.0 | Hub tag `v9.1` → `bc9eab28` | llm-mailroom (`FULL_CORPUS_REVISION` in `pipeline/hf_corpora.py`) and local-mailroom-sandbox (`FAMILY_HF_TAG`) still read `v9.1`, as of 2026-10-07 |
 | Read the figures on these pages | — | Mailroom-Corpus-EDA `run_all.py` (P0–P6) made them on 2026-09-13, from an earlier v9 tip (`a7067844`) |
 
 The row counts, classes and strata are the same in `v9.1` and `v9.2`. Thus the figures stay valid for both tags. The `v9.1` quality revision moved `clause_count` and `maud_label_count` out of the blind `metadata` blob. These two values are now only in `ground_truth`.
