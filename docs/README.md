@@ -91,7 +91,7 @@ That system is spread across more than a dozen repositories: the pipeline itself
 
 ## The pipeline reference
 
-The pages below are the canonical documentation for the `llm-mailroom` pipeline package. They live in this repository's `docs/` folder and are also browsable locally with docmd (see the pipeline repository [README](https://github.com/Exios66/llm-mailroom#browsing-the-docs-locally)).
+The pages below are the canonical documentation for the `llm-mailroom` pipeline package. They live in this repository's `docs/` folder — this repository is the source of the GitBook; the pipeline itself stays in [`Exios66/llm-mailroom`](https://github.com/Exios66/llm-mailroom).
 
 | Document                                                                          | Description                                                                 |
 | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
