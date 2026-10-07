@@ -9,12 +9,12 @@ site:
       description: ""
       icon: envelope-open-text
       default: true
-      children: []
-    - type: space
-      key: mailroom-docs
-      title: Mailroom Inc. Docs
-      path: undefined
-      default: true
-      content:
-        directory: ./
-        language: en
+      children:
+        - type: space
+          key: mailroom-docs
+          title: Mailroom Inc. Docs
+          path: /
+          default: true
+          content:
+            directory: ./
+            language: en
