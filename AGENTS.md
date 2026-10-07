@@ -196,9 +196,9 @@ Root-level site spaces can only exist in a non-sections site
 - `docs/.gitbook.yaml`
 - `landing/` (the static landing page + duplicated mascot assets)
 
-**This repo is the one deployment. `llm-mailroom` must not be connected to GitBook.** To retire its copy:
+**This repo is the one deployment. `llm-mailroom` must not be connected to GitBook.** Retiring its copy takes two steps — **step 1 is done; step 2 is outstanding** (the mirror still carries all five entries above):
 
-1. **GitBook UI:** disconnect the Git Sync integration on the old *"Mailroom Inc. Docs"* GitBook site (Settings → Git Sync), or delete that site if it is unused.
+1. **GitBook UI — DONE (2026-10-06).** The operator disconnected the Git Sync integration on the old *"Mailroom Inc. Docs"* site. Never reconnect it.
 2. **Config removal (DMR-074 — never hand-edit the mirror):** the monorepo `packages/llm-mailroom` carries **no** GitBook config and **no** `landing/`, so this is a **deletion-bearing** delta. From a `LLM-Mailroom-Services/Digital-Mailroom` checkout:
 
    ```bash
