@@ -59,9 +59,10 @@ This site has a Changelog section under `docs/changelog/`. It is a generated cop
    ```
 
 3. Copy `README.md`, `unreleased.md`, and `2026/*.md` from the worktree `docs/changelog/` into `docs/changelog/` in this repo. Do **not** copy `SUMMARY.md`, `.gitbook.yaml`, or `.gitbook/`. Those files belong to the old nested space.
-4. Apply the two site fixes. These are the only edits you make to generated pages.
-   * Replace the generator hint "Regenerate with `PYTHONPATH=src python src/scripts/sync_gitbook_changelog.py`." with: `To regenerate them, follow "Changelog" in the Maintaining this site page.` The hint appears once in `README.md` and once in `unreleased.md`.
+4. Apply the three site fixes. These are the only edits you make to generated pages.
+   * Replace the generator hint "Regenerate with `PYTHONPATH=src python src/scripts/sync_gitbook_changelog.py`." with: `To regenerate them, follow "Changelog" in the Maintaining this site page.` The hint appears at the top of every generated page.
    * Replace the `Pipeline docs:` link to the retired *Mailroom Inc. Docs* site with `[The Digital Mailroom](https://mailroom-inc.gitbook.io/the-digital-mailroom/)`.
+   * Rewrite links that resolve only inside `llm-mailroom` (`](docs/….md)`, `](docs/wiki/)`, `](README.md)`, `](AGENTS.md)`) to full `https://github.com/Exios66/llm-mailroom/blob/main/…` URLs (`tree/main/docs/wiki/` for the wiki folder). The v0.7.0 entry carries such links.
 
    Release-entry text that mentions *Mailroom Inc. Docs* is history from `CHANGELOG.md`. Leave it.
 5. When a release adds a page, add its line to the Changelog block in `docs/SUMMARY.md`. Keep the order newest first.

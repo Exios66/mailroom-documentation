@@ -130,7 +130,7 @@ The three knobs people confuse (only `path` is a URL):
 | **Change the site title** | Edit `site.title` (and the section/first space `title`) in `gitbook-docs.yaml`. Do **not** touch any `key`. |
 | **Set the favicon** | GitBook **Customize → site icon** (upload `docs/.gitbook/assets/hoot-icon.png`). It is not a config field. |
 | **Bump the dataset pin** | Follow the [Maintaining this site](docs/about-this-site/maintaining.md) guide: `mailroom-dataset/` first, then `Overview` and `Data and corpora`. |
-| **Regenerate the Changelog** | Generate in a throwaway `llm-mailroom` worktree, copy `README.md`, `unreleased.md`, and `2026/*.md` into `docs/changelog/`, apply the two site fixes, and update `SUMMARY.md` — see [Maintaining this site](docs/about-this-site/maintaining.md#changelog). |
+| **Regenerate the Changelog** | Generate in a throwaway `llm-mailroom` worktree, copy `README.md`, `unreleased.md`, and `2026/*.md` into `docs/changelog/`, apply the three site fixes, and update `SUMMARY.md` — see [Maintaining this site](docs/about-this-site/maintaining.md#changelog). |
 
 ---
 
