@@ -2,37 +2,14 @@
 
 llm-mailroom does not fly alone. It is the pipeline at the center of a small constellation of governed repositories — each with its own repo, board discipline, and release train — plus derived artifacts hosted elsewhere. Since 2026-08-30 the whole constellation also lives as **one monorepo** ([`Digital-Mailroom`](https://github.com/LLM-Mailroom-Services/Digital-Mailroom)): every family repo is a git-subtree package under `packages/`, wired as a single `uv` workspace, with the monorepo as the **source of truth for active development**. This page maps who's who, what flows between them, and where the canonical state of each lives. (Links re-verified 2026-10-06; monorepo verified 2026-10-06. Corpus pin is Hub tag `v9.2` / `670e8bc6`; dojo pin is `v0.19.1`.)
 
-```
-                        ┌──────────────────────────────┐
-                        │          Digital-Mailroom        │
-                        │  THE MONOREPO — uv workspace │
-                        │  git-subtree packages + hub  │
-                        │  task board (TASKS.md)       │
-                        └──────────┬───────────────────┘
-            sync_packages.py      │ subtree pull / push
-            (status/pull/push)    ▼
-┌────────────────────────┐   ┌──────────────────────────────┐
-│  llm-entity-extraction │   │        llm-mailroom          │
-│  prompt-experiment loop│   │  (this repo — the pipeline)  │
-└──────────┬─────────────┘   └──────────┬───────────────────┘
-           │            ┌───────────────┴───────────────┐
-           ▼            ▼                               ▼
-┌────────────────────────┐   ┌──────────────────────────────┐
-│  llm-dojo-scoring      │◀──│        The-Mailroom          │
-│  scoring engine        │   │   pixel-art visual engine    │
-└────────────────────────┘   └──────────┬───────────────────┘
-                 │                      ▼
-                 │        (reads this repo's Langfuse project — US cloud:
-                 │         every envelope, badge, verdict, metric on screen)
-┌────────────────────────┐
-│ agent-mailroom |       │  sibling stand-alone mailrooms / sandboxes live
-│ local-mailroom-sandbox │  in the monorepo too (same law, independent train)
-└────────────────────────┘
+This page describes each neighbour from the point of view of llm-mailroom: what it gives to the pipeline, what it takes from it, and what breaks if the coupling drifts. For the diagram of all the flows, see [The constellation](../how-it-fits-together/architecture.md).
 
-corpus feeds:   Enron-Evaluation-Environment, claims-data-eda   (virtual members)
-derived site:   llm-mailroom-graph (graphify knowledge-graph site)
-HF datasets:    Lucius-Morningstar/* (published eval/corpus surfaces)
-```
+| Your question | Read |
+| --- | --- |
+| Where do I make a change that touches several repos? | [Digital-Mailroom — the monorepo](#digital-mailroom-the-monorepo-since-2026-08-30) |
+| Where do the production prompts come from? | [llm-entity-extraction — the sister loop](#llm-entity-extraction-the-sister-loop) |
+| How do I move the scoring pin? | [Auto-bump when dojo publishes](#auto-bump-when-dojo-publishes) |
+| What must I update when I rename a span or a class? | [The-Mailroom — the visual engine](#the-mailroom-the-visual-engine) (schema mirror duty) |
 
 ## At a glance
 
@@ -47,6 +24,8 @@ HF datasets:    Lucius-Morningstar/* (published eval/corpus surfaces)
 | [The-Mailroom](https://github.com/Exios66/The-Mailroom)                                 | Pixel-art visual engine + hosted Observatory Space — floor, review siding, Inbox enqueue, inspector, sessions, metrics — plus a TUI console                                                         | **Downstream visualizer** — Langfuse-only display; Inbox / REVIEW proxy this API via `MAILROOM_PIPELINE_URL` + token + `/v1` ([PR #30](https://github.com/Exios66/The-Mailroom/pull/30)) |
 | [agent-mailroom](https://github.com/Exios66/agent-mailroom)                             | Self-contained mailroom: one state machine per document, specialist agents at desks (Electron/TUI/live floor)                                                                                       | **Sibling implementation** — same doctrine, independent train; monorepo member (`packages/agent-mailroom`)                                                                               |
 | [local-mailroom-sandbox](https://github.com/Exios66/local-mailroom-sandbox)             | Local-first experiment sandbox (Ollama, vLLM, llama.cpp)                                                                                                                                            | **Sibling sandbox** — local-model experiments; monorepo member (`packages/local-mailroom-sandbox`)                                                                                       |
+| [eval-environment](https://github.com/LLM-Mailroom-Services/eval-environment) | Per-node evaluations, calibration, the frozen v1 prompt lineage and the GEPA prompt-mutation loop | **Downstream evaluator** — imports this repo as an editable path source; traces to Braintrust or local Phoenix, never to the production Langfuse project |
+| [mailroom-ml](https://github.com/LLM-Mailroom-Services/mailroom-ml) | ModernBERT document classifier (standalone contractor repo, not a monorepo member) | **Optional intake fast path** — lazily imported when `MAILROOM_BERT_INTAKE` is on; fail-open, so the pipeline runs without it |
 | [llm-mailroom-graph](https://exios66.github.io/llm-mailroom-graph/)                     | Interactive graphify knowledge graph of this codebase                                                                                                                                               | **Derived site** — build artifact only, never committed here                                                                                                                             |
 | [llm-entity-extraction-graph](https://exios66.github.io/llm-entity-extraction-graph/)   | Interactive graphify knowledge graph of the sister experiment loop                                                                                                                                  | **Derived site** — companion map of the sister repo's code structure                                                                                                                     |
 
@@ -126,8 +105,7 @@ PYTHONPATH=src python src/scripts/bump_dojo_scoring.py --apply --tag v0.19.1
 * **First-pass / STP metrics (production, no ground truth):** every finished run now emits the registered dojo score `success_rate` (0/1). It is 1 only when the document archived in one hop — no classify/extract retry, Lane A, arbiter, boss, human review, guardrail, parse/schema failure, or transient provider self-loop. Incoming live documents are zero-shot; this flag does **not** consult `class_correct`, field GT, or the hosted LLM-judge overlay (those stay eval-only). The-Mailroom metrics (pixel METRICS tab, hosted Observatory, TUI `m`) tile **FIRST PASS** (count) and **FIRST-PASS RATE** from that score, with a routing-path/`retried` fallback for traces emitted before the producer score existed. Do not flatten FIRST PASS into ARCHIVED (archived includes retries that later succeeded) or RECONSIDER (GT/judge overlay). Langfuse **Mailroom Performance** dashboard charts the live+pilot rate and count. `GET /ops/status` reports `first_pass` / `first_pass_rate` from the catalog.
 * **Live floor (The-Mailroom** [**PR #16**](https://github.com/Exios66/The-Mailroom/pull/16)**):** the visualizer re-enriches in-flight traces every poll and reads producer liveness from `GET /health` (`checks.watcher`, `inbox_pending`). This pipeline flushes after each graph node (`output.stage` on the span), embeds the inbox watcher in the API lifespan by default, and treats `on_moved` / `on_modified` inbox events so an upload appears on the floor within one poll tick. `MAILROOM_PIPELINE_URL` on the visualizer should point at this API (`http://127.0.0.1:8000` on a shared host, or the public producer Space URL when the Observatory is itself a Space).
 * **Inbox enqueue + Observatory cards (The-Mailroom** [**PR #30**](https://github.com/Exios66/The-Mailroom/pull/30)**):** Observatory **Queue a document** proxies multipart files to `POST /v1/upload` (202). Unconfigured visualizer returns 503 — no fabricated catalog row. Cards show classification hit/miss/pending and a headline strip; Langfuse snapshot cache (`MAILROOM_TRACE_CACHE_DIR`) is visualizer-side. Pairing knobs: `MAILROOM_PIPELINE_URL` + `MAILROOM_PIPELINE_TOKEN` + `MAILROOM_PIPELINE_API_PREFIX=/v1`. The-Mailroom `publish_space.py` copies those as Observatory Space secrets/variables. Checklist: [`deploy/space/PAIRING.md`](https://github.com/Exios66/llm-mailroom/tree/main/deploy/space/PAIRING.md).
-* \*\*REVIEW resolve (The-Mailroom [PR #18](https://github.com/Exios66/The-Mailroom/pull/18)
-  * [PR #20](https://github.com/Exios66/The-Mailroom/pull/20)):\*\* the visualizer proxies operator decisions to this API — never holds producer keys in the browser. REVIEW desk buttons (Approve / Reject / Requeue, class / subtype selects, Open original / text pane) call the producer so operators never type endpoints. Producer surface: `GET /lookup`, `GET /audit/{doc_id}`, `POST /review/{doc_id}/resolve` with `disposition=resume|record|requeue` (plus mailroom-local `complete`), optional `doc_type` / `doc_subclass` (written to the parked manifest on resume; stamped on the inbox sidecar on requeue), and `GET /documents/{doc_id}/source` (`?download=1` for original bytes). Set `MAILROOM_PIPELINE_URL` + `MAILROOM_PIPELINE_TOKEN` on the visualizer (not `MAILROOM_API_URL`, which is TUI → visualizer `:8001`). The producer must be **reachable from the visualizer process** — localhost `:8000` for a laptop pair, or the published Hugging Face Docker Space (`src/scripts/publish_space.py`, URL `https://lucius-morningstar-mailroom-producer.hf.space`) for the hosted Observatory. Local compose: `docker compose -f deploy/docker-compose.producer.yml --env-file .env up -d --build`. `GET /health` advertises `producer` / `review_resolve`. Full audit parse: `GET /audit` / `scripts/analyze_audit_db.py`.
+* **REVIEW resolve (The-Mailroom [PR #18](https://github.com/Exios66/The-Mailroom/pull/18), [PR #20](https://github.com/Exios66/The-Mailroom/pull/20)):** the visualizer proxies operator decisions to this API — never holds producer keys in the browser. REVIEW desk buttons (Approve / Reject / Requeue, class / subtype selects, Open original / text pane) call the producer so operators never type endpoints. Producer surface: `GET /lookup`, `GET /audit/{doc_id}`, `POST /review/{doc_id}/resolve` with `disposition=resume|record|requeue` (plus mailroom-local `complete`), optional `doc_type` / `doc_subclass` (written to the parked manifest on resume; stamped on the inbox sidecar on requeue), and `GET /documents/{doc_id}/source` (`?download=1` for original bytes). Set `MAILROOM_PIPELINE_URL` + `MAILROOM_PIPELINE_TOKEN` on the visualizer (not `MAILROOM_API_URL`, which is TUI → visualizer `:8001`). The producer must be **reachable from the visualizer process** — localhost `:8000` for a laptop pair, or the published Hugging Face Docker Space (`src/scripts/publish_space.py`, URL `https://lucius-morningstar-mailroom-producer.hf.space`) for the hosted Observatory. Local compose: `docker compose -f deploy/docker-compose.producer.yml --env-file .env up -d --build`. `GET /health` advertises `producer` / `review_resolve`. Full audit parse: `GET /audit` / `scripts/analyze_audit_db.py`.
 * **Governance:** fully governed member of the family — own `AGENTS.md`, own semver release train (v0.5.0), own test suite (never hits real Langfuse), own wiki. It is a downstream OBSERVER: dependency of no family repo — the coupling is the shared trace contract.
 
 ## Derived artifacts

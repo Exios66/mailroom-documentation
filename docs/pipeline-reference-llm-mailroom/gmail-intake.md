@@ -4,6 +4,14 @@ The mailroom's agent mailbox — `llmmailroom@gmail.com` — is a full second in
 
 Single-document uploads are handled by the **free OpenRouter triage team** (`openrouter/free` — the Free Models Router, $0): the core pipeline steps run without any paid agent. This guide is the complete operator/sender manual: how to enable the channel, how to format an upload email (subject-line contract included), every pathway a document can take from Gmail into the pipeline, and how to operate and troubleshoot the channel.
 
+## In short
+
+* **One email, one accepted attachment:** the free triage lane processes it. A free model classifies it and the lane archives it with hash-chained audit entries. It costs $0.
+* **Two or more attachments, or a document that the free lane cannot read:** each document goes through the full 13-node pipeline with paid agents.
+* **Each outcome comes back to the sender** as a reply on the same email thread: archived, in review, or failed, with the reason.
+
+Why two lanes: most emailed documents are short, text-based and alone in the email. A free model can classify them well enough to file them, so the paid agents are kept for the documents that need them: scans, images, long agreements and bundles. The free lane has no retry and no reviewer. For this reason, it sends any unknown class or low-confidence result to human review and does not guess. The triage result is advisory. It never replaces a pipeline decision, because a document that goes through the pipeline does not use the triage lane.
+
 > **Provider scope (mailroom-issues directive 2026-09-14):** the default provider is **OpenRouter** (`DEFAULT_PROVIDER=openrouter`). **vLLM and Modal exist only for local deployments** — the `local-mailroom-sandbox` (and self-hosted vLLM servers / local models) — and are never the default here. **Gmail triage has NO vLLM implementation**: the triage lane resolves through `openrouter/free` exactly as this guide describes. vLLM/Modal enter a pipeline run only when an operator explicitly points a local sandbox profile at them (`DEFAULT_PROVIDER=vllm` + `VLLM_BASE_URL` in the sandbox config) — there is no vLLM path in Gmail triage unless that local serving stack is configured and selected for the run.
 
 Code map:
