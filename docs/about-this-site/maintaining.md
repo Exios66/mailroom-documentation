@@ -1,8 +1,30 @@
 # Maintaining this site
 
-**This repository — [Exios66/mailroom-documentation](https://github.com/Exios66/mailroom-documentation) — is the source of [The Digital Mailroom](https://mailroom-inc.gitbook.io/the-digital-mailroom/).** GitBook [Git Sync](https://gitbook.com/docs/getting-started/git-sync) publishes the site straight from the `docs/` folder of this repo. The pipeline the site documents still lives in [Exios66/llm-mailroom](https://github.com/Exios66/llm-mailroom); only the published documentation moved here.
+**This repository — [Exios66/mailroom-documentation](https://github.com/Exios66/mailroom-documentation) — is the source of [The Digital Mailroom](https://mailroom-inc.gitbook.io/the-digital-mailroom/).** GitBook [Git Sync](https://gitbook.com/docs/getting-started/git-sync) publishes the site from the `docs/` folder. The pipeline that the site describes stays in [Exios66/llm-mailroom](https://github.com/Exios66/llm-mailroom).
 
-Git Sync reads its site config from [`gitbook-docs.yaml`](https://github.com/Exios66/mailroom-documentation/blob/main/gitbook-docs.yaml) at the **repository root**. The repository root is also GitBook's default **Project directory**, so the config is found with no hidden setting to keep in sync. The site holds a **single space** (`mailroom-docs`) reading `content.directory: ./docs` — the whole `docs/` folder is one GitBook book: `docs/README.md` is the landing page and `docs/SUMMARY.md` is the table of contents. The space is mounted at `path: /` **inside the site's single section** (`section-1`, the default section, which serves the site from the root URL), so pages publish at `…/the-digital-mailroom/{page}` and a merge to `main` replaces the site. The space **must stay inside the section**: once a site has a section, GitBook rejects any space listed at the top level of `site.structure` (`Root-level site spaces can only exist in a non-sections site`). The `docs` folder itself never appears as a navigation entry — the sidebar is just the book's own sections.
+## Publish a change
+
+1. Edit Markdown under `docs/` only.
+2. If you add a page, add a line for the page to `docs/SUMMARY.md`. GitBook publishes only the pages listed there.
+3. Use relative links between pages on this site. Use full GitHub URLs for other repositories.
+4. Merge to `main`. Git Sync republishes the site.
+5. Open the live page. Make sure that the page shows and its links resolve.
+
+Do not edit `gitbook-docs.yaml` for a content change. If you must change the site structure, read [`AGENTS.md`](https://github.com/Exios66/mailroom-documentation/blob/main/AGENTS.md) first.
+
+## Three rules that keep the site live
+
+| Rule | Why |
+| --- | --- |
+| Keep the space `mailroom-docs` **inside** the section `section-1` | The site has a section. GitBook then refuses a space at the top level of `site.structure`, with the error `Root-level site spaces can only exist in a non-sections site`. GitBook keeps the last good config, so the site stops updating. |
+| Never change a `key` (`section-1`, `mailroom-docs`) | GitBook reads a new key as a new node. It deletes the old node and imports a new one, with new IDs and broken links. |
+| Keep `content.directory: ./docs` and space `path: /` | `content.directory` is a folder. `path` is a URL. If `path` is `docs`, the home page publishes at `…/the-digital-mailroom/docs/`. |
+
+## How the pieces fit
+
+Git Sync reads the site config from [`gitbook-docs.yaml`](https://github.com/Exios66/mailroom-documentation/blob/main/gitbook-docs.yaml) at the **repository root**. The repository root is also GitBook's default **Project directory**, so no hidden setting points at the config.
+
+The site has **one space** (`mailroom-docs`). The space reads `content.directory: ./docs`, so the whole `docs/` folder is one GitBook book. `docs/README.md` is the landing page and `docs/SUMMARY.md` is the table of contents. The space is mounted at `path: /` inside the site's one section (`section-1`). Thus pages publish at `…/the-digital-mailroom/{page}`. The `docs` folder never shows as a sidebar entry.
 
 ## How it is built
 
