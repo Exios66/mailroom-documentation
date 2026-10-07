@@ -350,7 +350,7 @@ The-Mailroom (not this process) reads `MAILROOM_PIPELINE_URL`, `MAILROOM_PIPELIN
 
 ### Operational and tooling knobs
 
-Read by the code but not in the main table above (verified against llm-mailroom v0.8.0).
+Read by the code but not in the main table above (verified against llm-mailroom v0.8.0). Rows marked unreleased come from llm-mailroom `main` at `578db29`, after v0.8.0, as of 2026-10-07.
 
 | Variable | Default | Description |
 | -------- | ------- | ----------- |

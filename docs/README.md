@@ -71,6 +71,7 @@ That system is spread across more than a dozen repositories: the pipeline itself
 | Look up a term like "Lane A", "STP" or "virtual member"     | [Glossary](start-here/glossary.md)                                          |
 | Work on a specific repository                               | [Repository guides](repository-guides/repos/)                               |
 | Know which board, issue tracker or branch to use            | [Governance and workflow](how-it-fits-together/governance.md)               |
+| See what changed in each release, and what is unreleased    | [Changelog](changelog/README.md)                                            |
 
 ## The pipeline reference
 

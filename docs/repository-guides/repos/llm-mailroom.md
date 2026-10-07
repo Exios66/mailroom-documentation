@@ -9,6 +9,8 @@
 | Release       | v0.8.0                                                          |
 | Depends on    | llm-dojo-scoring (pinned), mailroom-ml (optional)               |
 
+llm-mailroom `main` carries unreleased Gmail intake hardening and LLM free-model resilience (after v0.8.0, as of 2026-10-07). See [Changelog: Unreleased](../../changelog/unreleased.md).
+
 ## What it does
 
 llm-mailroom runs one LangGraph state machine per document across 13 nodes: intake, classify, retry classify, review classify, extract, retry extract, judge, arbiter, human review, boss escalation, compile report, write catalog, archive. On the happy path a document costs two LLM calls (classify and extract). Everything else is a safety net that only fires when confidence is low or results conflict.
