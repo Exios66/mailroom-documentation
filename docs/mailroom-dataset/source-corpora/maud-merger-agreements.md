@@ -45,4 +45,4 @@ Wang, Steven H., et al. “MAUD: An Expert-Annotated Legal NLP Dataset for Merge
 * Tasks below \~25% coverage are weak supervision targets.
 * Most consumer model contexts cannot ingest these rows whole — plan for 131k+ context, retrieval, or chunked scoring.
 
-Strata table: [Classes and strata](../classes-and-strata.md#merger_agreement--152-rows-46). Length geometry: [EDA reports](../eda-reports.md#text-and-token-geometry-p3-figures-0407).
+Strata table: [Classes and strata](../classes-and-strata.md#merger_agreement-152-rows-4.6). Length geometry: [EDA reports](../eda-reports.md#text-and-token-geometry-p3-figures-04-07).

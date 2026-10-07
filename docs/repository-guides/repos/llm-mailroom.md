@@ -27,7 +27,7 @@ It exposes a FastAPI service (port 8000) that embeds the inbox watcher, accepts 
 
 ## Quick start
 
-See [Getting started, path 2](../../start-here/getting-started.md#2-run-the-pipeline-and-push-a-document-through-it).
+See [Getting started, path 2](../../start-here/getting-started.md#id-2.-run-the-pipeline-and-push-a-document-through-it).
 
 ## Its documentation
 

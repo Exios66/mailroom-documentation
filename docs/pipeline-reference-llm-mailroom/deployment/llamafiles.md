@@ -117,7 +117,7 @@ Service details: profile `local-llm` (shared with `src/config/docker`), containe
 
 ## Ollama instead
 
-Mode A also has an [Ollama](docker-deployment.md#mode-a--ollama-offline) path (`deploy/docker-compose.ollama.yml`, `DEFAULT_PROVIDER=ollama`, `OLLAMA_BASE_URL=http://ollama:11434/v1`). Both share the `local-llm` profile name, so they can be combined or swapped without renaming. Choosing between local runtimes is covered in [Local models](../local-models.md).
+Mode A also has an [Ollama](docker-deployment.md#mode-a-ollama-offline) path (`deploy/docker-compose.ollama.yml`, `DEFAULT_PROVIDER=ollama`, `OLLAMA_BASE_URL=http://ollama:11434/v1`). Both share the `local-llm` profile name, so they can be combined or swapped without renaming. Choosing between local runtimes is covered in [Local models](../local-models.md).
 
 ## Related
 

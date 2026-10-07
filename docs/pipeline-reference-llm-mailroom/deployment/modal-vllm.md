@@ -86,7 +86,7 @@ Per-tier knobs: `MODAL_VLLM_<TIER>_<KNOB>` (`MODEL`, `GPU`, `MAX_MODEL_LEN`, `MA
 
 Put the three printed URLs plus `MODAL_VLLM_API_TOKEN` in `.env` as `MODAL_FAST_URL` / `MODAL_EXTRACT_URL` / `MODAL_VISION_URL`, then bring up [`deploy/docker-compose.full.yml`](https://github.com/Exios66/llm-mailroom/blob/main/deploy/docker-compose.full.yml). The compose `app` uses `DEFAULT_PROVIDER=litellm` and sends every agent through the gateway to the taxonomy `tier:`. Runtime override: `MAILROOM_GATEWAY_TIERS=sorter=api,boss=fast`.
 
-Host compose, LiteLLM image pin, required secrets, and the smoke script: [Docker deployment — Mode G](docker-deployment.md#mode-g--full-stack-litellm--modal-gpu-tiers).
+Host compose, LiteLLM image pin, required secrets, and the smoke script: [Docker deployment — Mode G](docker-deployment.md#mode-g-full-stack-litellm--modal-gpu-tiers).
 
 ```bash
 PYTHONPATH=src python src/scripts/smoke_modal_tiers.py --check

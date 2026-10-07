@@ -198,7 +198,7 @@ railway up -m "mailroom producer"
 
 ## Full Docker stack (Mode G)
 
-Mode G runs the whole pipeline on one host: the mailroom app talks to a LiteLLM gateway, which routes each agent to a Modal GPU tier or to OpenRouter. This section is a short run guide. The full reference (services, startup order, every `.env` variable, tier defaults) is on [Docker deployment, Mode G](../pipeline-reference-llm-mailroom/deployment/docker-deployment.md#mode-g--full-stack-litellm--modal-gpu-tiers), and the Modal side (per-tier knobs, single-tier Mode M) is on [Modal + vLLM](../pipeline-reference-llm-mailroom/deployment/modal-vllm.md).
+Mode G runs the whole pipeline on one host: the mailroom app talks to a LiteLLM gateway, which routes each agent to a Modal GPU tier or to OpenRouter. This section is a short run guide. The full reference (services, startup order, every `.env` variable, tier defaults) is on [Docker deployment, Mode G](../pipeline-reference-llm-mailroom/deployment/docker-deployment.md#mode-g-full-stack-litellm--modal-gpu-tiers), and the Modal side (per-tier knobs, single-tier Mode M) is on [Modal + vLLM](../pipeline-reference-llm-mailroom/deployment/modal-vllm.md).
 
 Source files: [deploy/docker-compose.full.yml](https://github.com/Exios66/llm-mailroom/blob/main/deploy/docker-compose.full.yml), [deploy/litellm/config.yaml](https://github.com/Exios66/llm-mailroom/blob/main/deploy/litellm/config.yaml), [deploy/modal\_vllm.py](https://github.com/Exios66/llm-mailroom/blob/main/deploy/modal_vllm.py), [src/scripts/smoke\_modal\_tiers.py](https://github.com/Exios66/llm-mailroom/blob/main/src/scripts/smoke_modal_tiers.py).
 

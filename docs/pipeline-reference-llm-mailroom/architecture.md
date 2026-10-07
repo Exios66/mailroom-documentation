@@ -329,7 +329,7 @@ Every state transition writes an `AuditLogEntry` to the database. Each entry:
 * Is independent of Langfuse (the audit log is the compliance record)
 * Can be verified via the `/audit/{doc_id}` API endpoint or `schemas/audit.py:verify_chain()`
 
-**What the chain does and does not establish.** Because each hash covers the previous one, editing or deleting an entry in the middle of a chain is detectable: verification fails at that point. The hash is a plain SHA-256 with no secret key, so the chain makes tampering *evident*, not *impossible*. A party who can rewrite the table and recompute every later hash can produce a chain that verifies. Treat it as a detection control, and pair it with access control on the database and off-box backups (see [Postgres](deployment/postgres.md) and [Backup & Restore](deployment/README.md#backup--restore)) when the record must stand up to a hostile reader.
+**What the chain does and does not establish.** Because each hash covers the previous one, editing or deleting an entry in the middle of a chain is detectable: verification fails at that point. The hash is a plain SHA-256 with no secret key, so the chain makes tampering *evident*, not *impossible*. A party who can rewrite the table and recompute every later hash can produce a chain that verifies. Treat it as a detection control, and pair it with access control on the database and off-box backups (see [Postgres](deployment/postgres.md) and [Backup & Restore](deployment/README.md#backup-and-restore)) when the record must stand up to a hostile reader.
 
 ## Evaluators & Quality
 

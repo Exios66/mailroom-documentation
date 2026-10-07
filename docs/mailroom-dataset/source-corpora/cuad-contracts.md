@@ -51,4 +51,4 @@ Hendrycks, Dan, Collin Burns, Anya Chen, and Spencer Ball. “CUAD: An Expert-An
 * Treat `cuad_clause_labels` as gold for span-matching against CUAD's convention, not as universal legal truth.
 * EX-10 rows are source-native EDGAR exhibits without Atticus clause annotations.
 
-Strata table: [Classes and strata](../classes-and-strata.md#contract--600-rows-182).
+Strata table: [Classes and strata](../classes-and-strata.md#contract-600-rows-18.2).

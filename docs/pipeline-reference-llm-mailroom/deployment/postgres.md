@@ -112,7 +112,7 @@ SQLite's online backup is the default path; for Postgres use `pg_dump`:
 pg_dump -h localhost -U mailroom mailroom > backup/mailroom-$(date +%F).sql
 ```
 
-Restoring Postgres is the commented `psql` line in the restore procedure. The full sequence — stop the writer first, restore the DB *and* `/archive` and `/manifests` from the same point in time, then verify the audit chain — is in [Deployment — Backup & Restore](README.md#backup--restore). A restored catalog that disagrees with restored manifests breaks the hash chain, and `/v1/audit/<doc_id>` will report `chain_valid: false`.
+Restoring Postgres is the commented `psql` line in the restore procedure. The full sequence — stop the writer first, restore the DB *and* `/archive` and `/manifests` from the same point in time, then verify the audit chain — is in [Deployment — Backup & Restore](README.md#backup-and-restore). A restored catalog that disagrees with restored manifests breaks the hash chain, and `/v1/audit/<doc_id>` will report `chain_valid: false`.
 
 Backups contain confidential client documents: encrypt at rest and keep them off-host.
 
