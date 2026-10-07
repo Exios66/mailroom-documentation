@@ -136,6 +136,7 @@ Root-level site spaces can only exist in a non-sections site
 | `docs/SUMMARY.md` | Site navigation | **Only listed pages publish.** |
 | `docs/.gitbook/assets/` | GitBook-referenced images | `banner.png`, `fumi.gif`, `hoot-icon.png` — the copies pages reference. |
 | `docs/assets/` | Site art **source of truth** | Full Fumi + Hermes set; see `docs/assets/README.md`. |
+| `docs/changelog/` | Release notes (Changelog section) | Generated release notes; regenerate, never hand-edit. |
 | `README.md` / `AGENTS.md` (root) | Repo-only | **Never published** (outside `content.directory`). |
 
 ### `path` vs `directory` (the usual mix-up)
@@ -166,7 +167,6 @@ Root-level site spaces can only exist in a non-sections site
 - Set `path: docs` (→ home publishes at `…/the-digital-mailroom/docs/`).
 - Point `content.directory` at the repository root (`./`) — that re-exports the whole repo as the space.
 - Commit a stray root content tree (`README.md`, `SUMMARY.md`, section folders, `.gitbook/assets/` at the root) or a GitBook-recreated `docs/gitbook-docs.yaml` — delete them.
-- Add a `docs/changelog/` tree. This site has no Changelog section (§9).
 - Change the Project directory away from the repository root.
 
 ---
@@ -217,7 +217,7 @@ Track this as a `general` mission via `orchestrator-governor`; it is a sync unit
 ## 9. Dataset pin & generated content
 
 - **The pinned corpus revision** is a dated fact. Current: Hub tag **`v9.2` → `670e8bc6`** (as of 2026-10-06). It appears in `docs/start-here/overview.md`, `docs/mailroom-dataset/mailroom-dataset.md`, `docs/mailroom-dataset/configs.md`, and cross-references under `how-it-fits-together/` and `repository-guides/`. When it moves, update them together and re-date the fact. As of 2026-10-07 the `llm-mailroom` mirror (`FULL_CORPUS_REVISION`) and the sandbox (`FAMILY_HF_TAG`) still read the predecessor tag `v9.1` (commit `bc9eab28`, data commit `ed7576b6`), and SAND-37/40 results were measured on it — say so wherever a result is quoted.
-- **Changelog:** this site has no Changelog section and `docs/changelog/` does not exist. `sync_gitbook_changelog.py` in `llm-mailroom` targets the older disconnected "Mailroom Inc. Docs" site. Do not run it for this site.
+- **Changelog:** this site has a Changelog section under `docs/changelog/`. It is generated from llm-mailroom `CHANGELOG.md` with `sync_gitbook_changelog.py`. Never hand-edit it, except for the two site fixes in [`docs/about-this-site/maintaining.md#changelog`](docs/about-this-site/maintaining.md#changelog). Do not copy the generator's `SUMMARY.md`, `.gitbook.yaml`, or `.gitbook/` into this repo.
 
 ---
 
