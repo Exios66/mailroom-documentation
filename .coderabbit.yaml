@@ -66,6 +66,11 @@ reviews:
       instructions: |
         Never change the section or space keys. Check that content.directory and
         path settings still point at the docs folder, not the repository root.
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
   tools:
     markdownlint:
       enabled: true
@@ -77,10 +82,5 @@ reviews:
       enabled: true
     github-checks:
       enabled: true
-finishing_touches:
-  docstrings:
-    enabled: false
-  unit_tests:
-    enabled: false
 chat:
   auto_reply: true
