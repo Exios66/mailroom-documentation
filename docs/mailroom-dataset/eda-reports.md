@@ -60,7 +60,13 @@ Character lengths from [`text_length_stats_by_type.csv`](https://github.com/Exio
 | `insurance_claim`  |        692 |    288 |   2,921 |   5,678 |              173 |
 | `correspondence`   |        526 |    264 |   1,490 |  26,209 |              131 |
 
-Merger agreements **exceed common 32k/65k contexts**. Insurance claims are uniformly short.
+Merger agreements are the long pole: the median is about 21,000 tokens by the ÷4 estimate. Insurance claims and correspondence are short.
+
+{% hint style="warning" %}
+**The two token tables do not agree.** By the ÷4 estimate, the longest document (252,135 characters) is about 63,000 tokens, so every document fits 65,536 tokens. The budget table below shows 165 documents above 65,536 tokens. Thus the budget table counts tokens with a method that gives more tokens than the ÷4 estimate. Legal text often tokenizes at fewer than 4 characters per token. Before you choose a context window, count tokens with the tokenizer of the model that you use.
+{% endhint %}
+
+**What this means for the pipeline.** The merger agreement specialist reads at most `max_input_chars: 100000` characters (`taxonomy.yaml`, as of 2026-10-07). The median merger agreement is 84,547 characters, and the 95th percentile is 124,430. Thus a large minority of merger agreements is cut before extraction. A field that appears only after the cut gets no value. When you examine a low recall on a merger field, first check where the field occurs in the document.
 
 Token-budget coverage ([`token_budget_coverage.csv`](https://github.com/Exios66/Mailroom-Corpus-EDA/blob/main/reports/tables/token_budget_coverage.csv)):
 
