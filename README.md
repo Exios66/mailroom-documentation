@@ -13,7 +13,7 @@ Live site: **https://mailroom-inc.gitbook.io/the-digital-mailroom/**
 | It **is** | It **is not** |
 | --- | --- |
 | The source of the published GitBook site | The pipeline source — that is [`Exios66/llm-mailroom`](https://github.com/Exios66/llm-mailroom) |
-| Docs-only: Markdown, the site config, and site art | A home for code, notebooks, deploy configs, or CI |
+| Docs-only: Markdown, the site config, site art, and one pre-push checker (`scripts/check_site.py`) | A home for pipeline code, notebooks, deploy configs, or CI |
 | The **one** GitBook deployment for the whole constellation | A second deployment running alongside `llm-mailroom`'s stale one |
 | A standalone repository — direct commits here are expected and correct | A `packages/*` mirror of the monorepo (see [Governance](#governance)) |
 
@@ -27,6 +27,9 @@ Live site: **https://mailroom-inc.gitbook.io/the-digital-mailroom/**
 mailroom-documentation/
 ├── gitbook-docs.yaml          # Site-wide Git Sync config. Project directory = repo root.
 ├── .gitattributes             # `* text=auto` (LF normalization)
+├── .coderabbit.yaml           # CodeRabbit review rules for pull requests
+├── scripts/check_site.py      # Pre-push checker: config shape, SUMMARY.md, links, anchors
+├── plans/                     # Implementation plans for docs work (not published)
 ├── README.md                  # THIS FILE — repo orientation (not published)
 ├── AGENTS.md                  # Deployment/update/config law (not published)
 └── docs/                       # The entire GitBook space (content.directory: ./docs)
@@ -120,12 +123,15 @@ The three knobs people confuse (only `path` is a URL):
 4. **Date facts that drift.** Versions, pins, and counts carry an "as of" date.
 5. **Assets:** `docs/assets/` is the source of truth; `docs/.gitbook/assets/` holds the copies GitBook pages actually reference. Keep them in sync when art changes.
 6. **Never hand-edit the generated Changelog** — regenerate it with the recipe in [Maintaining this site](docs/about-this-site/maintaining.md#changelog).
+7. **Link to headings with GitBook ids, not GitHub ids** — copy the id from the live page ([`AGENTS.md`](AGENTS.md) §7.3).
+8. **Run the checker before every push:** `uv run --no-project --with pyyaml python3 scripts/check_site.py`. The last line must read `CHECK-OK`.
 
 ### Common tasks
 
 | Task | Do this |
 | --- | --- |
-| **Add a page** | Create the `.md` under the right `docs/<section>/` folder, add a line to `docs/SUMMARY.md`, push to `main`. |
+| **Check before pushing** | `uv run --no-project --with pyyaml python3 scripts/check_site.py` — fix every `ERROR`; confirm any `UNVERIFIED` anchor after the merge. |
+| **Add a page** | Create the `.md` under the right `docs/<section>/` folder, add a line to `docs/SUMMARY.md`, run the checker, push to `main`. |
 | **Move/rename a page** | Move the file, update its `SUMMARY.md` line and any relative links, push. (GitBook follows the path, not the file — no redirect is automatic.) |
 | **Add or refresh art** | Drop the file in `docs/assets/` (or `docs/assets/mascot/`), copy the GitBook-referenced variant into `docs/.gitbook/assets/`, update the page's relative `src`, push. Regenerating the mascot itself is done in `llm-mailroom` (`src/scripts/build_mascot.py`). |
 | **Change the site title** | Edit `site.title` (and the section/first space `title`) in `gitbook-docs.yaml`. Do **not** touch any `key`. |
