@@ -85,6 +85,26 @@
 * [Testing](pipeline-reference-llm-mailroom/testing.md)
 * [Sister repositories](pipeline-reference-llm-mailroom/sister-repos.md)
 
+## Changelog
+
+* [Changelog](changelog/README.md)
+  * [Unreleased](changelog/unreleased.md)
+  * [v0.8.0](changelog/2026/v0-8-0.md)
+  * [v0.7.1](changelog/2026/v0-7-1.md)
+  * [v0.7.0](changelog/2026/v0-7-0.md)
+  * [v0.6.0](changelog/2026/v0-6-0.md)
+  * [v0.5.0](changelog/2026/v0-5-0.md)
+  * [v0.4.1](changelog/2026/v0-4-1.md)
+  * [v0.4.0](changelog/2026/v0-4-0.md)
+  * [v0.3.2](changelog/2026/v0-3-2.md)
+  * [v0.3.1](changelog/2026/v0-3-1.md)
+  * [v0.3.0](changelog/2026/v0-3-0.md)
+  * [Released backlog — v0.4.0 → v0.6.0 era](changelog/2026/released-backlog-v0-4-0-v0-6-0-era.md)
+  * [0.2.2](changelog/2026/0-2-2.md)
+  * [0.2.1](changelog/2026/0-2-1.md)
+  * [0.2.0](changelog/2026/0-2-0.md)
+  * [0.1.0](changelog/2026/0-1-0.md)
+
 ## About this site
 
 * [Maintaining this site](about-this-site/maintaining.md)
