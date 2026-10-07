@@ -26,7 +26,7 @@ Both report roots are live `main` branches that move as experiments land. Direct
 Two results are comparable only if the conditions match. Before you put two figures side by side, check these items:
 
 1. **Same leg.** Do not compare a sandbox GPU cost with an API cost unless the report says that both legs used the same documents.
-2. **Same dataset revision.** SAND-37 and SAND-40 used `v9.1` (`bc9eab28`). The published pin is `v9.2` (`670e8bc6`). The row counts are equal, but a result must state its revision.
+2. **Same dataset revision.** SAND-37 and SAND-40 used `v9.1` (tag commit `bc9eab28`, data commit `ed7576b6`). The published pin is `v9.2` (`670e8bc6`). The row counts are equal, but a result must state its revision.
 3. **Same mode.** A `mock` run measures the pipeline machinery, not a model. Do not quote a mock run as an accuracy result.
 4. **Enough cases.** eval-environment marks runs with fewer than 10 cases as exploratory. One error in such a run moves accuracy by 10 points or more.
 5. **Same scorer.** A score comes from one version of `llm-dojo-scoring`. If the scorer version changed between runs, the same output can get a different score.

@@ -4,7 +4,7 @@
 
 **Why the labels are in a separate config.** A model under test must not see the answers. The `default` config holds only the text. The `ground_truth` config holds the labels. The evaluation code joins the two configs on `filename` after the model answers. If labels were in the same rows as the text, one careless prompt could leak them to the model.
 
-Pin the revision (`v9.2` / `670e8bc6`). Never read the live tip. To reproduce results measured on llm-mailroom 0.8.0, pin `v9.1` (`bc9eab28`). See [Which revision to use](mailroom-dataset.md#which-revision-to-use).
+Pin the revision (`v9.2` / `670e8bc6`). Never read the live tip. To reproduce results measured on llm-mailroom 0.8.0, pin `v9.1` (`bc9eab28`; its parquet data commit is `ed7576b6`). See [Which revision to use](mailroom-dataset.md#which-revision-to-use).
 
 ```python
 from datasets import load_dataset

@@ -8,7 +8,7 @@ The interactive hub is [`reports/dashboard/mailroom-reports.html`](https://githu
 
 ## SAND-37 — specialist grid score and cost
 
-Qwen3-8B-AWQ on vLLM, NVIDIA L4, Hub `Lucius-Morningstar/mailroom-dataset` @ `bc9eab28`. Start here: [SAND-37-MASTER-SCORE-COST-CARD.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/reports/SAND-37/SAND-37-MASTER-SCORE-COST-CARD.md). Detail: [SAND-37-MASTER-APPENDIX.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/reports/SAND-37/SAND-37-MASTER-APPENDIX.md). Index: [reports/SAND-37/README.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/reports/SAND-37/README.md).
+Qwen3-8B-AWQ on vLLM, NVIDIA L4, Hub `Lucius-Morningstar/mailroom-dataset` @ `ed7576b6` (data commit of tag `v9.1`). Start here: [SAND-37-MASTER-SCORE-COST-CARD.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/reports/SAND-37/SAND-37-MASTER-SCORE-COST-CARD.md). Detail: [SAND-37-MASTER-APPENDIX.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/reports/SAND-37/SAND-37-MASTER-APPENDIX.md). Index: [reports/SAND-37/README.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/reports/SAND-37/README.md).
 
 Key findings from the master card:
 

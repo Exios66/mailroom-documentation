@@ -216,7 +216,7 @@ Track this as a `general` mission via `orchestrator-governor`; it is a sync unit
 
 ## 9. Dataset pin & generated content
 
-- **The pinned corpus revision** is a dated fact. Current: Hub tag **`v9.2` → `670e8bc6`** (as of 2026-10-06). It appears in `docs/start-here/overview.md`, `docs/mailroom-dataset/mailroom-dataset.md`, `docs/mailroom-dataset/configs.md`, and cross-references under `how-it-fits-together/` and `repository-guides/`. When it moves, update them together and re-date the fact. As of 2026-10-07 the `llm-mailroom` mirror (`FULL_CORPUS_REVISION`) and the sandbox (`FAMILY_HF_TAG`) still read the predecessor tag `v9.1` (`bc9eab28`), and SAND-37/40 results were measured on it — say so wherever a result is quoted.
+- **The pinned corpus revision** is a dated fact. Current: Hub tag **`v9.2` → `670e8bc6`** (as of 2026-10-06). It appears in `docs/start-here/overview.md`, `docs/mailroom-dataset/mailroom-dataset.md`, `docs/mailroom-dataset/configs.md`, and cross-references under `how-it-fits-together/` and `repository-guides/`. When it moves, update them together and re-date the fact. As of 2026-10-07 the `llm-mailroom` mirror (`FULL_CORPUS_REVISION`) and the sandbox (`FAMILY_HF_TAG`) still read the predecessor tag `v9.1` (commit `bc9eab28`, data commit `ed7576b6`), and SAND-37/40 results were measured on it — say so wherever a result is quoted.
 - **Changelog:** this site has no Changelog section and `docs/changelog/` does not exist. `sync_gitbook_changelog.py` in `llm-mailroom` targets the older disconnected "Mailroom Inc. Docs" site. Do not run it for this site.
 
 ---
