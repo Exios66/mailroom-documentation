@@ -1,0 +1,50 @@
+# Experiment reports
+
+Measured results do not live on this site. They live in two repositories, and this section indexes both report roots **separated by source**, because they answer different questions and have an explicit ownership boundary between them.
+
+| Source | Report root | What it measures | Owns the write-ups |
+| ------ | ----------- | ---------------- | ------------------- |
+| **local-mailroom-sandbox** | [`reports/`](https://github.com/Exios66/local-mailroom-sandbox/tree/main/reports) | Self-hosted Modal + vLLM serving: GPU posture, throughput, latency, tokens/s/GPU, GPU $ per document | [`Exios66/local-mailroom-sandbox`](https://github.com/Exios66/local-mailroom-sandbox) |
+| **eval-environment** | [`reports/`](https://github.com/LLM-Mailroom-Services/eval-environment/tree/main/reports) | Hosted OpenRouter API legs, GEPA prompt evolution, ModernBERT classifier training, and the run-level experiment log | [`LLM-Mailroom-Services/eval-environment`](https://github.com/LLM-Mailroom-Services/eval-environment) |
+
+The split is deliberate, not accidental. eval-environment's own [`reports/api-comparisons/README.md`](https://github.com/LLM-Mailroom-Services/eval-environment/blob/main/reports/api-comparisons/README.md) defines its API leg as "metric-for-metric against the Modal/vLLM leg reports kept in the sandbox repo". The two trees are the two halves of one cost-versus-quality comparison, so **a figure is only meaningful if you know which leg produced it.**
+
+## Where to start
+
+* **Cost, throughput and latency on your own GPUs** → [Run reports](../repository-guides/repos/local-mailroom-sandbox/local-mailroom-sandbox-reports.md), curated from the sandbox `reports/` tree.
+* **Per-run evaluation results across models and specialists** → [eval-environment reports](eval-environment-reports.md).
+* **How a score is defined in the first place** → [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md).
+* **Which repository owns what** → [Repository index](../how-it-fits-together/repo-index.md) and [Sister repositories](../pipeline-reference-llm-mailroom/sister-repos.md).
+* **Corpus statistics** → [EDA reports](../mailroom-dataset/eda-reports.md), which is a *different* artifact from an experiment report (see below).
+
+{% hint style="warning" %}
+Both report roots are live `main` branches that move as experiments land. Directory inventories and counts on these pages were read on **2026-10-06** against the tips current that day. The authoritative state is the repository, not this index — follow the root link rather than trusting a number here.
+{% endhint %}
+
+## The two legs of the same comparison
+
+| | Modal / vLLM leg | OpenRouter API leg |
+| - | ---------------- | ------------------- |
+| Reports live in | `local-mailroom-sandbox/reports/` | `eval-environment/reports/` |
+| Hardware | Your own L4/A100 GPUs, `mailroom-vllm` | Hosted provider, no GPU |
+| Named study | SAND-32, SAND-37 | SAND-027 Leg B |
+| Cost unit | GPU $ per document | API $ per document |
+| Canonical write-up | [SAND-37 master card](https://github.com/Exios66/local-mailroom-sandbox/blob/main/reports/SAND-37/SAND-37-MASTER-SCORE-COST-CARD.md) | [API-LEG-MASTER-REPORT.md](https://github.com/LLM-Mailroom-Services/eval-environment/blob/main/reports/api-comparisons/API-LEG-MASTER-REPORT.md) |
+
+Because the two legs share a naming stem (`RUN-<wave>-<CLASS>`), you can pair them directly. **Do not quote a cost from one leg as if it described the other** — GPU $ and API $ are not interchangeable, and the two report trees deliberately keep them apart.
+
+## What is *not* here
+
+Three kinds of measured output are easy to mistake for experiment reports, and each has its own home:
+
+| Artifact | Home | Why it is separate |
+| -------- | ---- | ----------------- |
+| Corpus statistics and EDA tables | [EDA reports](../mailroom-dataset/eda-reports.md) | Describes the *dataset*, not a model run |
+| Generated per-commit plots | [Visualizations](../mailroom-dataset/visualizations.md) | Derived figures, regenerated rather than hand-edited |
+| Scoring rules and metric definitions | [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md) | Defines results; does not report them |
+
+The site also has a fourth measured-output surface outside both report roots: the sandbox hub page `reports/dashboard/mailroom-reports.html`, mirrored to [mailroom-issues/reports](https://github.com/LLM-Mailroom-Services/mailroom-issues/tree/main/reports) and the static site [llm-mailroom-services.github.io/mailroom-issues](https://llm-mailroom-services.github.io/mailroom-issues/). That mirror is **exported from** the sandbox, not authored; the sandbox copy is canonical.
+
+## In this section
+
+* [eval-environment reports](eval-environment-reports.md) — the hosted API leg, GEPA, ModernBERT and the experiment log.

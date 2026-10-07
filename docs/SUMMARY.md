@@ -36,6 +36,14 @@
 * [EDA reports](mailroom-dataset/eda-reports.md)
 * [Visualizations](mailroom-dataset/visualizations.md)
 
+## Experiment reports
+
+* [Overview](experiment-reports/experiment-reports.md)
+* [local-mailroom-sandbox reports](repository-guides/repos/local-mailroom-sandbox/local-mailroom-sandbox-reports.md)
+  * [reports/ on GitHub](https://github.com/Exios66/local-mailroom-sandbox/tree/main/reports)
+* [eval-environment reports](experiment-reports/eval-environment-reports.md)
+  * [reports/ on GitHub](https://github.com/LLM-Mailroom-Services/eval-environment/tree/main/reports)
+
 ## Repository guides
 
 * [All repositories](repository-guides/repos/README.md)
@@ -48,7 +56,6 @@
   * [mailroom-ml](repository-guides/repos/mailroom-ml.md)
   * [local-mailroom-sandbox](repository-guides/repos/local-mailroom-sandbox/README.md)
     * [Documentation](repository-guides/repos/local-mailroom-sandbox/local-mailroom-sandbox-docs.md)
-    * [Run reports](repository-guides/repos/local-mailroom-sandbox/local-mailroom-sandbox-reports.md)
     * [Visuals](repository-guides/repos/local-mailroom-sandbox/local-mailroom-sandbox-visuals.md)
   * [The-Mailroom](repository-guides/repos/the-mailroom.md)
   * [agent-mailroom](repository-guides/repos/agent-mailroom.md)
