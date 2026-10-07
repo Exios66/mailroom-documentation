@@ -7,7 +7,7 @@
 | Repository          | [LLM-Mailroom-Services/eval-environment](https://github.com/LLM-Mailroom-Services/eval-environment) (package `mailroom-evals`) |
 | Viewer              | [eval-environment.vercel.app](https://eval-environment.vercel.app)                                                             |
 | Pipeline under test | llm-mailroom, resolved as an editable path source                                                                              |
-| Dataset             | `mailroom-dataset` pinned to `ed7576b6`                                                                                        |
+| Dataset             | `mailroom-dataset` pinned to `670e8bc6`                                                                                        |
 
 ## What it does
 

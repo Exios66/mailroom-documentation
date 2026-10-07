@@ -13,7 +13,7 @@ Full compose matrix for llm-mailroom: OpenRouter, local Ollama/llamafile, BERT i
 | [`deploy/docker-compose.llamafile.yml`](https://github.com/Exios66/llm-mailroom/blob/main/deploy/docker-compose.llamafile.yml) | Mode A overlay: llamafile sidecar                                                |
 | [`deploy/docker-compose.full.yml`](https://github.com/Exios66/llm-mailroom/blob/main/deploy/docker-compose.full.yml)           | Mode G — app, ops-monitor, watchdog, postgres, LiteLLM gateway, optional Phoenix |
 | [`deploy/docker-compose.producer.yml`](https://github.com/Exios66/llm-mailroom/blob/main/deploy/docker-compose.producer.yml)   | The-Mailroom REVIEW pairing (reachable producer)                                 |
-| [`deploy/llamafile/`](https://github.com/Exios66/llm-mailroom/tree/main/deploy/llamafile/README.md)                            | llamafile sidecar image (pinned binary) + entrypoint                             |
+| [`deploy/llamafile/`](https://github.com/Exios66/llm-mailroom/tree/main/deploy/llamafile)                                    | llamafile sidecar image (pinned binary) + entrypoint                             |
 | [`deploy/models/`](https://github.com/Exios66/llm-mailroom/tree/main/deploy/models/README.md)                                  | Host staging for GGUF / ModernBERT weights — never committed                     |
 
 The root [`Dockerfile`](https://github.com/Exios66/llm-mailroom/blob/main/Dockerfile) is a multi-stage build (builder → model → runtime). It runs as non-root (`mailroom`, uid 10001) and ships a `HEALTHCHECK` against `/health`. Compose sets `security_opt: no-new-privileges` and `user: 10001:10001`.

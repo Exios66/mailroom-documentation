@@ -2,7 +2,7 @@
 
 `mailroom-dataset` ships five Hugging Face configs. The first two are the evaluation contract every repository joins. The other three are ingress-simulation extras.
 
-Pin the revision (`v9.1` / `ed7576b6`). Never read the live tip.
+Pin the revision (`v9.2` / `670e8bc6`). Never read the live tip.
 
 ## `default` (blind)
 

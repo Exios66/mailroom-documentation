@@ -2,30 +2,11 @@ $schema: https://api.gitbook.com/gitbook-docs.yaml
 site:
   title: The Digital Mailroom
   structure:
-    - type: section
-      key: section-1
+    - type: space
+      key: mailroom-docs
       title: The Digital Mailroom
-      path: the-digital-mailroom
+      path: /
       default: true
-      children:
-        - type: space
-          key: mailroom-docs
-          title: The Digital Mailroom
-          path: undefined
-          default: true
-          content:
-            directory: ./
-            language: en
-    - type: section
-      key: section-2
-      title: Landing Page
-      path: landing-page
-      children:
-        - type: space
-          key: space-1
-          title: Landing Page
-          path: landing-page
-          default: true
-          draft: true
-          content:
-            directory: null
+      content:
+        directory: ./docs
+        language: en

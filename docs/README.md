@@ -4,7 +4,7 @@
 
 One LangGraph state machine per document. Specialist LLM agents per document class. Hash-chained audit log. Provider-agnostic LLM layer. Traced end-to-end.
 
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/) [![Pipeline](https://img.shields.io/badge/LangGraph-13--node%20state%20machine-4C8CBF)](https://langchain-ai.github.io/langgraph/) [![LLM layer](https://img.shields.io/badge/LLM-OpenRouter%20|%20Ollama%20|%20vLLM-8A2BE2)](https://github.com/Exios66/llm-mailroom#llm-providers) [![Tracing](https://img.shields.io/badge/tracing-Langfuse%20|%20Braintrust%20|%20Phoenix-F5A623)](https://github.com/Exios66/llm-mailroom#observability) [![Storage](https://img.shields.io/badge/storage-SQLite--first-lightgrey)](https://github.com/Exios66/llm-mailroom#quick-start) [![Release](https://img.shields.io/badge/release-v0.8.0-2EA043)](https://github.com/LLM-Mailroom-Services/Digital-Mailroom/releases/tag/v0.8.0) [![Contributor](https://img.shields.io/badge/contributor-Exios66-blue)](https://github.com/Exios66) [![Contributor](https://img.shields.io/badge/contributor-grantmooslin-blue)](https://github.com/grantmooslin) [![Organization](https://img.shields.io/badge/org-LLM--Mailroom--Services-24292F)](https://github.com/LLM-Mailroom-Services)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/) [![Pipeline](https://img.shields.io/badge/LangGraph-13--node%20state%20machine-4C8CBF)](https://langchain-ai.github.io/langgraph/) [![LLM layer](https://img.shields.io/badge/LLM-OpenRouter%20|%20Ollama%20|%20vLLM-8A2BE2)](https://github.com/Exios66/llm-mailroom#llm-providers) [![Tracing](https://img.shields.io/badge/tracing-Langfuse%20|%20Braintrust%20|%20Phoenix-F5A623)](https://github.com/Exios66/llm-mailroom#observability) [![Storage](https://img.shields.io/badge/storage-SQLite--first-lightgrey)](https://github.com/Exios66/llm-mailroom#quick-start) [![Release](https://img.shields.io/badge/release-v0.8.0-2EA043)](https://github.com/Exios66/llm-mailroom/releases/tag/v0.8.0) [![Contributor](https://img.shields.io/badge/contributor-Exios66-blue)](https://github.com/Exios66) [![Contributor](https://img.shields.io/badge/contributor-grantmooslin-blue)](https://github.com/grantmooslin) [![Organization](https://img.shields.io/badge/org-LLM--Mailroom--Services-24292F)](https://github.com/LLM-Mailroom-Services)
 
 <figure><img src=".gitbook/assets/banner.png" alt="Mailroom — a great horned owl postal worker sorting wax-sealed legal documents into bins by lamplight"><figcaption><p>The LLM-Mailroom masthead: the night-shift owl at the sorting desk.</p></figcaption></figure>
 
@@ -53,23 +53,6 @@ New: the pipeline in depth.
 | [Pipeline flowchart](the-pipeline-in-depth/flowchart.md)                | Every node and routing condition in one diagram, plus the Gmail and review-resolve paths. |
 | [Extraction schemas](the-pipeline-in-depth/extraction-schemas.md)       | The fields each specialist extracts, their types, and how they are normalized.            |
 | [Scoring and performance](the-pipeline-in-depth/scoring-and-metrics.md) | How specialist extractions are scored, and every measured result on record.               |
-
-The pipeline reference:
-
-| Page                                                                      | What it covers                                                               |
-| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| [Architecture](pipeline-reference-llm-mailroom/architecture.md)           | The 13-node graph, routing, and the auxiliary lanes.                         |
-| [Agents](pipeline-reference-llm-mailroom/agents.md)                       | Sorter, five specialists, judge, arbiter, and boss.                          |
-| [Configuration](pipeline-reference-llm-mailroom/configuration.md)         | `taxonomy.yaml`, thresholds, and environment variables.                      |
-| [API](pipeline-reference-llm-mailroom/api.md)                             | Upload, status, and audit endpoints on the FastAPI server.                   |
-| [Local models](pipeline-reference-llm-mailroom/local-models.md)           | Cutting agents over to Ollama or vLLM.                                       |
-| [Deployment](pipeline-reference-llm-mailroom/deployment/)                 | Laptop install, Railway, Hugging Face Spaces, and backup.                    |
-| [Docker](pipeline-reference-llm-mailroom/deployment/docker-deployment.md) | Full compose matrix: Modes B / Mixed / A / M / G, producer image, BERT args. |
-| [Modal + vLLM](pipeline-reference-llm-mailroom/deployment/modal-vllm.md)  | Remote GPU serve (`mailroom-vllm`), cutover, and Mode G tiers.               |
-| [Gmail intake](pipeline-reference-llm-mailroom/gmail-intake.md)           | Mailbox polling, the free triage lane, and reply echoes.                     |
-| [Testing](pipeline-reference-llm-mailroom/testing.md)                     | Hermetic pytest suite, pilots, and evaluators.                               |
-| [Sister repos](pipeline-reference-llm-mailroom/sister-repos.md)           | How the mailroom fits into its constellation.                                |
-| [Mailroom dataset](mailroom-dataset/mailroom-dataset.md)                  | Canonical corpus: 55 strata, configs, EDA reports, and figures.              |
 
 ## Where to start
 
