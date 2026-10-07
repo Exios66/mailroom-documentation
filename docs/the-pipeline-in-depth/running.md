@@ -217,7 +217,7 @@ The deploy prints one URL per tier (`fast`, `extract`, `vision`). `MODAL_VLLM_TI
 
 ### 2. Fill `.env`
 
-The compose file stops with an error unless these are set: `MAILROOM_API_TOKEN`, `LITELLM_MASTER_KEY`, `MODAL_FAST_URL`, `MODAL_EXTRACT_URL`, `MODAL_VISION_URL`. `POSTGRES_PASSWORD` is also required (the Postgres image will not start without it). Add `MODAL_VLLM_API_TOKEN` (the bearer you deployed with), `OPENROUTER_API_KEY` only if an agent is on the `api` tier, and `LANGFUSE_*` keys for Langfuse Cloud tracing. The commented block at the end of `.env.example` lists them all. The compose file sets `DEFAULT_PROVIDER=litellm` and `LITELLM_BASE_URL=http://llm-gateway:4000/v1` for every mailroom process.
+The compose file stops with an error unless these are set: `MAILROOM_API_TOKEN`, `LITELLM_MASTER_KEY`, `MODAL_FAST_URL`, `MODAL_EXTRACT_URL`, `MODAL_VISION_URL`. `POSTGRES_PASSWORD` is also required (the Postgres image does not start without it). Add `MODAL_VLLM_API_TOKEN` (the bearer you deployed with), `OPENROUTER_API_KEY` only if an agent is on the `api` tier, and `LANGFUSE_*` keys for Langfuse Cloud tracing. The commented block at the end of `.env.example` lists them all. The compose file sets `DEFAULT_PROVIDER=litellm` and `LITELLM_BASE_URL=http://llm-gateway:4000/v1` for every mailroom process.
 
 ### 3. Start the stack
 

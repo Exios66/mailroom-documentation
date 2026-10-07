@@ -2,7 +2,12 @@
 
 This page explains two things:
 
-1. **How the pipeline scores its own work.** How each document specialist's extraction is compared with ground truth field by field, how those field scores become a document score and a per-specialist suite score, how classification is scored, how the LLM judges and the arbiter are asked to grade, and how confidence and scores decide whether a document is archived automatically or sent for review.
+1. **How the pipeline scores its own work.** This part covers five topics:
+   * how the scorer compares each specialist's extraction with ground truth, field by field;
+   * how field scores become a document score and a per-specialist suite score;
+   * how the scorer grades classification;
+   * how the LLM judges and the arbiter grade;
+   * how confidence and scores send a document to the archive or to review.
 2. **What has actually been measured.** The recorded accuracy, F1, latency and cost numbers that exist today, each with its source file, run id, date and model. It also lists the metrics the pipeline emits at runtime and where to look at them.
 
 Short version: the scoring logic is well defined and lives mostly in the [llm-dojo-scoring](https://github.com/Exios66/llm-dojo-scoring) package. Measured results are **thin**. Most numbers come from isolated per-agent runs in the sibling [eval-environment](https://github.com/LLM-Mailroom-Services/eval-environment) repo (20 to 100 documents per run, late September 2026). This repo has no recorded end-to-end scorecard for the current release (0.8.0).
@@ -59,7 +64,13 @@ field_types:
   maud_clauses: entity_list:free_text
 ```
 
-A field with no mapped type gets a heuristic type from its name: a list value is an `entity_list`; a name containing `date` is `date`; names containing `value`, `amount`, `fee`, `price`, `cost`, `total` (and a few others) are `money`; names containing `number`, `id`, `docket`, `reference` or `filing` are `id`; everything else is `name`.
+A field with no mapped type gets a heuristic type from its name:
+
+* A list value is an `entity_list`.
+* A name that contains `date` is `date`.
+* A name that contains `value`, `amount`, `fee`, `price`, `cost`, `total` (and a few others) is `money`.
+* A name that contains `number`, `id`, `docket`, `reference` or `filing` is `id`.
+* Every other field is `name`.
 
 The fields `confidence` and `reasoning` are never scored.
 
@@ -80,14 +91,23 @@ Every rule returns a score from 0 to 1. Source: [`llm_dojo_scoring/field_scoring
 
 **Date rules, in order:**
 
-1. If the expected text holds no real date (a blank template line such as `_____ day of ________` or a bare label), an empty prediction scores 1.0 and any prediction scores 0.0.
+1. If the expected text holds no real date, an empty prediction scores 1.0 and any prediction scores 0.0. Examples: a blank template line such as `_____ day of ________`, or a bare label.
 2. If the expected date phrase appears inside the prediction (or the other way round), score 1.0.
-3. If both parse: same date is 1.0; same year and month is 0.67; within 45 days is 0.67; same year or same month only is 0.33; otherwise 0.0.
+3. If both parse, the score is:
+
+   | Match | Score |
+   | --- | ---: |
+   | Same date | 1.0 |
+   | Same year and month | 0.67 |
+   | Within 45 days | 0.67 |
+   | Same year only, or same month only | 0.33 |
+   | Any other pair | 0.0 |
+
 4. If either side does not parse, fall back to the `name` rule.
 
 **Containment fields.** These fields are scored with the `containment` rule when their type is `name` or `free_text`: `governing_law`, `term_length`, `renewal_terms`, `subject_matter`.
 
-**Partial-label fields.** For these list fields the ground truth is a sample, not a full list, so the field score is **recall** (ground-truth coverage) instead of F1: `parties`, `keywords`, `cuad_clauses`, `maud_clauses`, `claim_checklist`, `action_items`. Role words in the label set (`seller`, `buyer`, `licensee` and similar) count as matched when the prediction names any party.
+**Partial-label fields.** For these list fields, the ground truth is a sample, not a full list. So the field score is **recall** (ground-truth coverage), not F1: `parties`, `keywords`, `cuad_clauses`, `maud_clauses`, `claim_checklist`, `action_items`. Role words in the label set (`seller`, `buyer`, `licensee` and similar) count as matched when the prediction names any party.
 
 **Embedding rescue.** `taxonomy.yaml` turns on `embedding_enabled: true` with `sentence-transformers/all-MiniLM-L6-v2`. For `name` and `free_text` scores below **0.7** (`embedding_rescue_below`), the scorer also computes embedding cosine similarity and keeps the higher of the two. It never lowers a score.
 
@@ -109,7 +129,7 @@ f1        = 2 * precision * recall / (precision + recall)   (0 when matched = 0)
 * Only expected fields with a non-null, non-empty value are scored. A null expectation is not a requirement.
 * A missing prediction for a required field scores 0.0 (except the blank-date case above).
 * **`overall_score` is the plain mean of the per-field scores** (rounded to 4 places), or `None` if no field was scored.
-* `ambiguous_fields` lists every field whose score falls inside the ambiguous band `0.5 <= score <= 0.85`. `needs_judge_review` is true when that list is not empty.
+* `ambiguous_fields` lists every field in the ambiguous band `0.5 <= score <= 0.85`. `needs_judge_review` is true when that list is not empty.
 
 ```
 overall_score = sum(field_scores) / count(field_scores)
@@ -128,7 +148,7 @@ The mean is (1.00 + 1.00 + 0.50 + 0.00) / 4 = **0.625**. Notice what moved the s
 
 > **Note on `type_bands`.** `taxonomy.yaml` defines per-type bands (`date: never`, `id: never`, `money: [0.675, 0.938]`, `free_text: [0.6, 0.95]`, `name: [0.5, 1.0]`, `entity_list: [0.5, 1.0]`) and comments say they were calibrated by [`scripts/calibrate_field_scoring.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/scripts/calibrate_field_scoring.py). In the pinned v0.21.0, these bands are read by the library function `field_is_ambiguous`, but `score_extraction` checks only the global `ambiguous_band` \[0.5, 0.85]. The pipeline does not call `field_is_ambiguous`. So in practice the global band decides `needs_judge_review`.
 
-**Factuality audit.** When the source text is available (`factuality_verification.enabled: true`), every field the model filled in is checked, including fields with no ground-truth label. A predicted item is "true" when it matches a ground-truth label at the 0.6 threshold or when at least **70%** of its tokens (`token_coverage: 0.7`) appear in the source document. This gives `verified_precision` and `hallucination_rate` per field. The document-level values are means over audited fields.
+**Factuality audit.** When the source text is available (`factuality_verification.enabled: true`), every field the model filled in is checked, including fields with no ground-truth label. A predicted item is "true" in one of two cases. It matches a ground-truth label at the 0.6 threshold, or at least **70%** of its tokens (`token_coverage: 0.7`) appear in the source document. This gives `verified_precision` and `hallucination_rate` per field. The document-level values are means over audited fields.
 
 ### Specialist suites
 
@@ -150,9 +170,9 @@ How a suite score is built (`score_with_suite` in [`observability/suite_scoring.
 
 A suite score is per document. Run-level numbers (for example "overall 0.5104" in the results below) are means of per-document `overall_score` over the run, as computed by the eval harness.
 
-**Honesty gaps.** Some suites carry an `honest_gap` note that is copied into the trace comment. The main one: insurance ground truth from CMS DE-SynPUF is all `approved` with empty `denial_reasons`, so `determination_consistency` is always 1.0 on those rows and is **not** treated as a quality KPI there (`determination_consistency_is_quality`). See [`observability/honest_gaps.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/honest_gaps.py) and the [Agents](../pipeline-reference-llm-mailroom/agents.md) page.
+**Honesty gaps.** Some suites carry an `honest_gap` note that is copied into the trace comment. The main one is insurance: every CMS DE-SynPUF ground-truth row is `approved` with empty `denial_reasons`. So `determination_consistency` is always 1.0 on those rows. It is **not** a quality KPI there (`determination_consistency_is_quality`). See [`observability/honest_gaps.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/honest_gaps.py) and the [Agents](../pipeline-reference-llm-mailroom/agents.md) page.
 
-**Ground truth.** [`observability/extraction_gt.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/extraction_gt.py) builds ground truth per class. Hub labels (CUAD clauses, MAUD questions, CMS columns) always win. Remaining schema fields are filled by conservative regexes over the source text ([`observability/posthoc_gt.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/posthoc_gt.py)), and the provenance is recorded so a regex fill is never presented as an official label.
+**Ground truth.** [`observability/extraction_gt.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/extraction_gt.py) builds ground truth per class. Hub labels (CUAD clauses, MAUD questions, CMS columns) always win. Conservative regexes over the source text fill the remaining schema fields ([`observability/posthoc_gt.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/posthoc_gt.py)). The scorer records the provenance, so a regex fill never shows as an official label.
 
 ### Run-level diagnostics
 
@@ -231,6 +251,8 @@ The sorter and specialists report their own confidence (0 to 1). Thresholds come
 | `corporate_record` |   0.96 |  0.86 |              0.94 |
 | `correspondence`   |   0.95 |  0.85 |              0.92 |
 
+<figure><picture><source srcset="../.gitbook/assets/chart-extraction-routing-dark.svg" media="(prefers-color-scheme: dark)"><img src="../.gitbook/assets/chart-extraction-routing-light.svg" alt="Banded bar chart of extraction confidence per class. Below low, extraction retries. From low to judge_band_high, the LLM judge reviews. At judge_band_high and above, the document is accepted."></picture><figcaption><p>Extraction confidence bands per class. The table above holds the same values. Rebuild the chart with <code>scripts/build_charts.py</code>.</p></figcaption></figure>
+
 Other knobs: `retry_max: 2`, `arbiter_retry_max: 2`, `judge_max_passes: 3`.
 
 ```mermaid
@@ -258,8 +280,8 @@ flowchart TD
 Key points, all from [`graph/routing.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/graph/routing.py):
 
 * **Auto-accept** means: classification confidence at least `high`, extraction schema-valid and not hollow, extraction confidence at least `judge_band_high` (judge skipped), or the judge says `complete`, or the arbiter says `accept_with_caveats`.
-* On pilot runs with ground truth, a class that misses ground truth is sent to Lane A even at high confidence, and extraction coverage below `low` (`coverage_below_floor` in [`pipeline/reconsideration.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/pipeline/reconsideration.py)) triggers a retry.
-* **The deterministic field scores do not route documents inside the graph.** They are only computed on grounded runs, after the run, and they decide whether the hosted judge fires and which reconsideration causes are recorded (`extraction_needs_judge_review`, `extraction_miss` when `overall_score < low`).
+* On pilot runs with ground truth, a class that misses ground truth goes to Lane A, even at high confidence. Extraction coverage below `low` triggers a retry (`coverage_below_floor` in [`pipeline/reconsideration.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/pipeline/reconsideration.py)).
+* **The deterministic field scores do not route documents inside the graph.** The pipeline computes them only on grounded runs, after the run. They decide whether the hosted judge fires. They also decide which reconsideration causes the pipeline records (`extraction_needs_judge_review`, and `extraction_miss` when `overall_score < low`).
 * `success_rate` (first-pass straight-through processing) is 1 only when the document archived in one pass with no retry, Lane A, arbiter, boss, human review, guardrail, parse or schema failure, or transient self-loop (`first_pass_success` in [`observability/scores.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/scores.py)).
 
 For the full graph, see [Pipeline flowchart](flowchart.md) and [Operational procedure](../pipeline-reference-llm-mailroom/operational-procedure.md).
@@ -325,7 +347,7 @@ Each cell is overall score (run id prefix; the full id adds `-eval-<task>`). Run
 
 > **Note.** The master report files the merger run `20260927T022750Z-eval-merger_agreement` under `qwen3-8b`, but the eval-environment [INDEX.md](https://github.com/LLM-Mailroom-Services/eval-environment/blob/main/reports/api-comparisons/INDEX.md) records its model as `qwen/qwen3.7-flash`. Treat that cell with care.
 
-Example latency for the slower 8B model: `qwen/qwen3-8b` contracts run `20260927T035621Z-eval-contracts` recorded latency mean 177,560.9 ms and p95 285,038.9 ms per document ([report](https://github.com/LLM-Mailroom-Services/eval-environment/blob/main/reports/api-comparisons/qwen3-8b/contracts/RUN-20-CONTRACT-QWEN3-8B-REPORT.md)).
+Example latency for the slower 8B model: the `qwen/qwen3-8b` contracts run `20260927T035621Z-eval-contracts` recorded these values per document. Mean latency was 177,560.9 ms and p95 was 285,038.9 ms ([report](https://github.com/LLM-Mailroom-Services/eval-environment/blob/main/reports/api-comparisons/qwen3-8b/contracts/RUN-20-CONTRACT-QWEN3-8B-REPORT.md)).
 
 ### Sorter (classification)
 
@@ -344,7 +366,14 @@ The pipeline can call a ModernBERT classifier from [mailroom-ml](../repository-g
 | M9b, run tag `20261006-021245`    | 323 held-out docs |   0.9505 (307/323) |                0.6287 (193/307) |     0.0152 | [mailroom-ml `reports/M9a-REPORT-20261006-021245.md`](https://github.com/LLM-Mailroom-Services/mailroom-ml/blob/main/reports/M9a-REPORT-20261006-021245.md)                      |
 | Run 3 (`eval_full_test_20260927`) | 323 held-out docs |             0.9257 |                          0.5117 |     0.0155 | [eval-environment `SORTER-VS-MODERNBERT-323.md`](https://github.com/LLM-Mailroom-Services/eval-environment/blob/main/reports/modernbert/comparisons/SORTER-VS-MODERNBERT-323.md) |
 
-The same comparison report estimates ModernBERT at about $1×10⁻⁶ per document (CPU floor) and about 0.075 s per document warm, against $0.0075 per document and about 33 s per document for the `qwen/qwen3-8b` API sorter run. It warns that 0.70 (n=20) and 0.9257 (n=323) are **not** a paired comparison.
+The same comparison report gives these estimates:
+
+| Sorter | Cost per document | Time per document |
+| --- | ---: | ---: |
+| ModernBERT (CPU floor, warm) | about $1×10⁻⁶ | about 0.075 s |
+| `qwen/qwen3-8b` API sorter run | $0.0075 | about 33 s |
+
+The report warns that 0.70 (n=20) and 0.9257 (n=323) are **not** a paired comparison.
 
 ### Older numbers in this repo's CHANGELOG
 
@@ -377,7 +406,7 @@ Chosen by `OBSERVABILITY_PROVIDER` ([`observability/tracing.py`](https://github.
 
 ### Scores written to every run
 
-From `emit_pipeline_scores` and `compute_run_metrics` in [`observability/scores.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/scores.py). These are computed for every finished run and saved to the catalog; they are attached to the Langfuse trace only when Langfuse is the active backend.
+From `emit_pipeline_scores` and `compute_run_metrics` in [`observability/scores.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/scores.py). The pipeline computes these for every finished run and saves them to the catalog. It attaches them to the Langfuse trace only when Langfuse is the active backend.
 
 | Name                                                                                                                             | Type                                |
 | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
@@ -401,7 +430,13 @@ At import, every name in `SCORE_CONFIGS` is checked against the llm-dojo-scoring
 
 ### Where to view them
 
-* **Langfuse dashboards**, synced by [`scripts/sync_dashboards.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/scripts/sync_dashboards.py). There are four: "Mailroom Quality" per prompt over time, "Production Health" for the judges (Qwen and DeepSeek), "Mailroom Quality" for completion, correctness, accuracy and latency, and "Mailroom Performance" for throughput, errors, tokens, cost and latency. The exact titles are in the script.
+* **Langfuse dashboards**, synced by [`scripts/sync_dashboards.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/scripts/sync_dashboards.py). There are four:
+  * "Mailroom Quality" per prompt over time;
+  * "Production Health" for the judges (Qwen and DeepSeek);
+  * "Mailroom Quality" for completion, correctness, accuracy and latency;
+  * "Mailroom Performance" for throughput, errors, tokens, cost and latency.
+
+  The exact titles are in the script.
 * **Langfuse evaluator scores** from `mailroom-pipeline-judge` and `mailroom-pipeline-quality` on each trace.
 * **Phoenix** at `http://localhost:6006` when running locally (`phoenix serve`).
 * **API**: `GET /health` and `GET /ops/status` include tracing flush health; `/ops/status` also reports stuck documents and error rate by document type. See [API](../pipeline-reference-llm-mailroom/api.md).

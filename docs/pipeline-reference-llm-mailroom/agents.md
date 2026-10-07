@@ -59,7 +59,7 @@ Key design points:
 * `system_prompt()` fetches the **Langfuse-managed prompt** (`mailroom-<agent_name>`, production label) via `llm/prompts.py:get_managed_prompt`, falling back to the identical template shipped in code when Langfuse is unavailable — behavior never depends on the observability backend being up. Sync templates with `scripts/sync_prompts.py`.
 * `_call_structured()` uses `response_format={"type": "json_object"}` and appends boilerplate that guarantees the literal token `json` in the messages (some providers reject requests without it) and embeds the JSON schema in the prompt.
 * Every LLM call goes through `llm/retry.py:retry_chat_completion` (transient failures only: connection errors, timeouts, 429, 5xx) and a `max_tokens` cap from the agent's `taxonomy.yaml` entry.
-* When a managed prompt is active, it's passed to the OpenAI call as `langfuse_prompt=`, linking each generation to its exact prompt version in the trace UI.
+* When a managed prompt is active, the client passes it to the OpenAI call as `langfuse_prompt=`, linking each generation to its exact prompt version in the trace UI.
 * Every agent has a distinct system prompt ("personality") aligned with its role
 
 ### Vendored agents and which prompt runs in production
@@ -110,7 +110,7 @@ The Sorter is a **vendored LangChain agent** (`agents/sorter.py` re-exports `lan
 | **Output**      | Independent `doc_type` + `contract_subtype` + `doc_subclass` + `confidence`   |
 | **Personality** | Independent second opinion; agreement is computed by the graph, not the model |
 
-Fires only where the pipeline would previously have pinged a human. Independence is the point: the reviewer never sees the sorter's label. The graph node compares the two opinions and either applies the reviewer's class or escalates to human review.
+Fires only where the pipeline previously sent the document to a human. Independence is the point: the reviewer never sees the sorter's label. The graph node compares the two opinions and either applies the reviewer's class or escalates to human review.
 
 ***
 
@@ -230,7 +230,7 @@ The Contracts Specialist is also a **vendored LangChain agent** (`agents/contrac
 
 ### 5. Compliance specialist (removed 2026-09-15)
 
-Removed in commit `59c47401` (2026-09-15), which deleted the docclass arm: the compliance specialist module, its extraction schema, its prompts, and its eval fixtures were all removed — nothing is retained as inert machinery for local eval packs. The five-class taxonomy is final (`contract`, `corporate_record`, `correspondence`, `merger_agreement`, `insurance_claim`), with `unknown` (human review) for everything else; documents that would have been classified as compliance filings route as `unknown`. Do not recreate this specialist or its schema.
+Removed in commit `59c47401` (2026-09-15), which deleted the docclass arm: the compliance specialist module, its extraction schema, its prompts, and its eval fixtures were all removed — nothing is retained as inert machinery for local eval packs. The five-class taxonomy is final (`contract`, `corporate_record`, `correspondence`, `merger_agreement`, `insurance_claim`), with `unknown` (human review) for everything else; documents of the retired compliance-filing type route as `unknown`. Do not recreate this specialist or its schema.
 
 ***
 
@@ -303,7 +303,7 @@ Happy-path LLM calls stop at classify + extract. `compile_report` is a **procedu
 | **Output**      | Archive path + audit log entry        |
 | **Personality** | Quiet, exhaustive, never skips a step |
 
-The Archivist is NOT an LLM agent — it's a procedural function that:
+The Archivist is NOT an LLM agent. It is a procedural function that:
 
 1. Moves the file to `/archive/<matter_id>/<doc_type>/`
 2. Writes the manifest as a JSON sidecar

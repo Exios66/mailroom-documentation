@@ -16,7 +16,7 @@ Terms that appear across the constellation's code, docs and commit messages.
 
 **Confidence gate.** The thresholds in `taxonomy.yaml` (`confidence.low`, `confidence.high`, `retry_max`) that decide whether a result proceeds, retries, or goes to review.
 
-**Ambiguous band.** The score range in which a deterministic field result is not trusted either way, so it is flagged for the LLM judge. In the pinned scoring library the global band `[0.5, 0.85]` decides. `taxonomy.yaml` also defines per-type bands (dates and ids never escalate; names and entity lists trust only perfect matches), but v0.21.0's `score_extraction` does not apply them; see [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md). Set under `field_scoring` in `taxonomy.yaml`.
+**Ambiguous band.** The score range in which a deterministic field result is not trusted either way, so it is flagged for the LLM judge. In the pinned scoring library the global band `[0.5, 0.85]` decides. `taxonomy.yaml` also defines per-type bands: dates and ids never escalate, and names and entity lists trust only perfect matches. v0.21.0's `score_extraction` does not apply these bands; see [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md). Set under `field_scoring` in `taxonomy.yaml`.
 
 **By-class thresholds.** Per-class overrides of the global confidence gate (`confidence.by_class`). Once the sorter has assigned a class, that class's `high`, `low` and `judge_band_high` replace the global fallbacks (`0.97`, `0.88`, `0.95`). Contract, merger agreement and insurance claim use `0.98` / `0.90` / `0.97`.
 
@@ -100,7 +100,7 @@ Terms that appear across the constellation's code, docs and commit messages.
 
 **Producer.** The llm-mailroom API when it is serving other tools (The-Mailroom's Inbox and REVIEW desk).
 
-**Schema mirror duty.** The rule that The-Mailroom updates its pipeline schema files in the same change window as any pipeline change to spans, nodes, agents, classes, thresholds or judge scores.
+**Schema mirror duty.** The rule that The-Mailroom updates its pipeline schema files in the same change window as the pipeline change. It applies to changes to spans, nodes, agents, classes, thresholds or judge scores.
 
 **Vendored snapshot.** A tracked copy of another package's code inside a repo (local-mailroom-sandbox's `vendor/`), so it runs without network access.
 

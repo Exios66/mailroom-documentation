@@ -1,6 +1,6 @@
 # Governance and workflow
 
-The constellation runs on a small set of shared rules. They exist so that several people and several AI agents can work in parallel without overwriting each other or claiming work is done when it is not.
+The constellation runs on a small set of shared rules. With these rules, several people and AI agents can work in parallel. They do not overwrite each other, and they do not report unfinished work as done.
 
 ## The working agreement (every repository)
 
@@ -19,7 +19,7 @@ The constellation runs on a small set of shared rules. They exist so that severa
 4. If the repository keeps a hand-written changelog, put the entry in the same commit. Reference the card in the message (`DMR-0NN: <summary>`).
 5. Close the card only with evidence: green tests, a clean working tree and the commit hashes.
 
-The rules are mechanical on purpose. With several people and several AI agents sharing checkouts, "who owns this" and "is it really done" need answers that anyone can verify from the board and the git log, not from memory.
+The rules are mechanical on purpose. Several people and AI agents share checkouts. So "who owns this" and "is it really done" need answers that anyone can verify from the board and the git log, not from memory.
 
 ## Which board, which tracker
 
@@ -61,7 +61,7 @@ From the hub's [Board Governance](https://github.com/LLM-Mailroom-Services/Digit
 
 * Commit messages reference the card: `DMR-0NN: <summary>`.
 * Stage explicit paths only (`git add <paths>`), never `git add .`, because the monorepo is a shared checkout.
-* Critical or cross-package cards get a linked GitHub issue; lane moves are mirrored as issue comments and the issue closes in the same commit that archives the card.
+* A critical or cross-package card gets a linked GitHub issue. Each lane move is mirrored as an issue comment. The issue closes in the same commit that archives the card.
 * `python scripts/board_state.py check` validates the board; edits made on the served board are pulled back with `board_state.py pull-issues --apply`.
 
 ## Releases and syncing
@@ -69,7 +69,7 @@ From the hub's [Board Governance](https://github.com/LLM-Mailroom-Services/Digit
 1. Develop in `Digital-Mailroom/packages/<name>`.
 2. When cutting a release of a package, push it to its `Exios66/<name>` repository with `python scripts/sync_packages.py push --package <name>`.
 3. Tag the release in the upstream repo. Deployments (Docker, Railway, Hugging Face Spaces) install from that tag.
-4. Bump the pins in dependent packages. llm-mailroom's dojo pin is bumped automatically by a workflow when llm-dojo-scoring publishes; inside the monorepo, run `src/scripts/bump_dojo_scoring.py` by hand at release time.
+4. Bump the pins in dependent packages. When llm-dojo-scoring publishes, a workflow bumps llm-mailroom's dojo pin. Inside the monorepo, run `src/scripts/bump_dojo_scoring.py` by hand at release time.
 
 Changes made directly in a standalone repo come back into the monorepo with `sync_packages.py pull`. Docs that describe the constellation are maintained in the standalone repo and arrive in the monorepo the same way.
 

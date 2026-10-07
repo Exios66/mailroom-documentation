@@ -74,7 +74,7 @@ docker compose -f src/config/docker/docker-compose.yml \
   up -d postgres clickhouse langfuse-server
 ```
 
-Required in `.env` before the stack will start:
+The stack does not start until `.env` sets:
 
 ```bash
 NEXTAUTH_SECRET=...      # compose fails fast if unset
@@ -99,7 +99,7 @@ Use `src/config/docker/docker-compose.yml`, not the Mode G stack. The Mode G [`d
 
 ## Scores in Langfuse
 
-Trace wiring also pushes results, not just calls: [`langfuse_field_scoring.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/langfuse_field_scoring.py) and [`scores.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/scores.py) write per-field and per-document scores onto the active trace. Definitions live in [Scoring and performance](../../the-pipeline-in-depth/scoring-and-metrics.md).
+Trace wiring pushes results as well as calls: [`langfuse_field_scoring.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/langfuse_field_scoring.py) and [`scores.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/scores.py) write per-field and per-document scores onto the active trace. Definitions live in [Scoring and performance](../../the-pipeline-in-depth/scoring-and-metrics.md).
 
 ## Pulling traces offline
 

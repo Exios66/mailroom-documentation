@@ -85,7 +85,7 @@ deploy/models/
 2. The compose mount makes it available at `/models/llamafile/<file>` read-only.
 3. Point `LLAMAFILE_MODEL` at the **in-container** path, not the host path.
 
-The alternative, if you would rather not reference the host checkout, is to pre-seed a named volume once with `docker compose cp`.
+If you do not want to reference the host checkout, pre-seed a named volume once with `docker compose cp`.
 
 ## Run it
 

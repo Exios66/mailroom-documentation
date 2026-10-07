@@ -249,7 +249,7 @@ If the pipeline logs `APIConnectionError` or `ConnectError`:
     ```
 2. Confirm `OLLAMA_BASE_URL` / `VLLM_BASE_URL` matches the service (defaults: `http://localhost:11434/v1`, `http://localhost:8000/v1`). Note the **`/v1` suffix is required** — the OpenAI SDK appends `/chat/completions`, so omitting it produces a 404/connection error.
 3. If running Ollama **on the host** (not Docker), make sure it exposes the OpenAI-compatible endpoint: `OLLAMA_HOST=0.0.0.0 ollama serve`.
-4. If agents still resolve to OpenRouter, check `DEFAULT_PROVIDER` isn't overriding: `PYTHONPATH=src python src/scripts/cutover.py --list` shows the effective provider per agent.
+4. If agents still resolve to OpenRouter, make sure `DEFAULT_PROVIDER` does not override them: `PYTHONPATH=src python src/scripts/cutover.py --list` shows the effective provider per agent.
 
 ### HTTP 404 on `/models` or `/chat/completions`
 
@@ -268,7 +268,7 @@ Some local models struggle with strict JSON schema mode. If you see `_parse_erro
 `agents/base.py:_call_structured` deliberately embeds the literal token `json` in both the system and user messages (some providers gate `response_format: json_object` on that word). If a **local** provider still rejects the request:
 
 1. Check whether the provider supports `response_format` at all — some local serving stacks only accept it for specific models.
-2. If your local model doesn't support `json_object`, prefer a model that does (Qwen family), or route the offending agent back to OpenRouter.
+2. If your local model does not support `json_object`, use a model that does (Qwen family), or route the offending agent back to OpenRouter.
 3. vLLM: use an engine version that supports `guided_json`/structured output and confirm the model is served with a compatible chat template.
 
 ### Vision pages not being sent
@@ -276,15 +276,15 @@ Some local models struggle with strict JSON schema mode. If you see `_parse_erro
 Page images are only attached when the agent's model matches a `vision.models` substring in `taxonomy.yaml`. If your local model accepts images but pages never appear:
 
 1. Add the model substring to `vision.models` (e.g. `"qwen"`, `"llava"`).
-2. Confirm `MAILROOM_VISION_ENABLED` isn't forcing vision off.
-3. Confirm `pymupdf` (fitz) is installed — it's required for PDF→image rendering (`llm/vision.py`). Without it, `_render_doc_pages` is skipped regardless of config.
+2. Confirm that `MAILROOM_VISION_ENABLED` does not force vision off.
+3. Confirm `pymupdf` (fitz) is installed. PDF→image rendering requires it (`llm/vision.py`). Without it, `_render_doc_pages` is skipped regardless of config.
 
 ### Slow inference
 
 * Use quantized models (`qwen3:7b-q4_K_M` for GGUF quants)
 * Enable GPU passthrough in Docker Compose
 * Reduce context window (per-agent `max_input_chars` overrides run from **12,000** chars for the sorter/reviewer up to **100,000** for the contracts specialist; the global fallback when an agent sets none is **25,000** — see [Configuration](configuration.md). Set yours accordingly)
-* Check the model actually runs on GPU: `docker exec mailroom-ollama ollama ps` (a CPU-only model will be listed without a GPU line)
+* Check the model actually runs on GPU: `docker exec mailroom-ollama ollama ps` (a CPU-only model shows no GPU line)
 
 ### OOM / out-of-memory
 

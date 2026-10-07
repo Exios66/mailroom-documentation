@@ -74,7 +74,7 @@ pip install -e ".[dev]"
 
 ## 3. Database
 
-**Nothing to do** — SQLite tables are auto-created on first use. You'll see `data/mailroom.db` (catalog + audit log) appear after the first document is processed. `data/checkpoints.db` (LangGraph crash-resume state) is **opt-in**: set `MAILROOM_CHECKPOINTER=sqlite` to use the on-disk SqliteSaver; the default checkpointer is in-memory (MemorySaver), so no checkpoint file is written.
+**Nothing to do** — SQLite tables are auto-created on first use. `data/mailroom.db` (catalog + audit log) appears after the pipeline processes the first document. `data/checkpoints.db` (LangGraph crash-resume state) is **opt-in**: set `MAILROOM_CHECKPOINTER=sqlite` to use the on-disk SqliteSaver; the default checkpointer is in-memory (MemorySaver), so no checkpoint file is written.
 
 If you opted for Postgres, start it and initialize:
 
@@ -166,12 +166,12 @@ Do not run an embedded watcher and a dedicated watcher together. Only one watche
 ### Database
 
 * **Default:** a local SQLite file (`data/mailroom.db`). Back it up along with `data/checkpoints.db` (present only when `MAILROOM_CHECKPOINTER=sqlite` is on) and `/archive`.
-* The audit log is append-only — size will grow over time.
+* The audit log is append-only. Its size grows over time.
 * For higher volume or multi-process setups, switch to Postgres via `DATABASE_URL` and consider partitioning `audit_log` by date for long-term retention.
 
 ### Security
 
-* Encrypt `/archive` at rest and the SQLite files at rest (filesystem encryption, cloud KMS, etc.)
+* Encrypt `/archive` at rest and the SQLite files at rest (for example filesystem encryption or a cloud KMS)
 * Access-control the FastAPI endpoints (API keys, OAuth, or network-level)
 * Access-control the Langfuse UI (it exposes full document content in traces)
 * Do not expose Postgres or ClickHouse ports publicly (if you run them for Langfuse)
@@ -326,7 +326,7 @@ Restore all artifacts from **one** backup date. The audit chain links each entry
 
 * [ ] Archives + manifests + catalog DB backed up from the same point in time
 * [ ] Audit chain verified after every restore
-* [ ] Backups stored off-host (cloud object storage, WORM bucket, etc.)
+* [ ] Backups stored off-host (for example cloud object storage or a WORM bucket)
 * [ ] Test a restore at least quarterly — an untested backup is not a backup
 * [ ] Encrypt backups at rest (they contain confidential client documents)
 
@@ -465,4 +465,4 @@ With no `LANGFUSE_SECRET_KEY` or `BRAINTRUST_API_KEY`, `auto` falls through to t
 
 * OpenRouter: verify `OPENROUTER_API_KEY` and check usage/credits at openrouter.ai
 * Ollama: verify the model is pulled (`ollama pull qwen3:7b`) and the service is running
-* Check `DEFAULT_PROVIDER` env var isn't accidentally overriding your intended provider
+* Check `DEFAULT_PROVIDER` env var does not override your intended provider

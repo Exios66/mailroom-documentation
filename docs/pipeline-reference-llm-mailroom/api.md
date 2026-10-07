@@ -606,7 +606,7 @@ The Mailroom API is versioned under `/v1`. Unversioned routes remain as aliases 
 
 ### Guidance for API consumers
 
-* Prefer `/v1/...` for all new integrations. Unversioned routes will be removed after the deprecation window (see `CHANGELOG.md`).
+* Prefer `/v1/...` for all new integrations. The project removes unversioned routes after the deprecation window (see `CHANGELOG.md`).
 * Do not depend on undocumented response fields — only fields documented in this reference are stable.
 * Breaking changes are announced in `CHANGELOG.md` under the "Breaking changes" section of the release.
 * Every management endpoint except `GET /health` and `GET /v1/health` requires `Authorization: Bearer $MAILROOM_API_TOKEN` (or a token from `MAILROOM_API_TOKENS`), including `GET /matters/{matter_id}` and `GET /v1/matters/{matter_id}`. `MAILROOM_API_TOKEN_REVOKED` subtracts retired keys.
@@ -630,6 +630,6 @@ POST /v1/ops/sweep
 POST /v1/ops/resume
 ```
 
-The unversioned routes (`GET /health`, `POST /upload`, …) continue to work during the deprecation window, then will be removed.
+The unversioned routes (`GET /health`, `POST /upload`, …) work during the deprecation window. After the window, the project removes them.
 
 **Operator UX:** prefer The-Mailroom Observatory / pixel REVIEW desk (Approve / Reject / Requeue, class/subtype selects, Open original) and Inbox **Queue a document** over typing these paths. The visualizer proxies through `MAILROOM_PIPELINE_URL` + `MAILROOM_PIPELINE_TOKEN` + `MAILROOM_PIPELINE_API_PREFIX=/v1`. For local producer try-it-out without the visualizer, use Swagger at `/docs`. Two-Space pair: [`deploy/space/PAIRING.md`](https://github.com/Exios66/llm-mailroom/tree/main/deploy/space/PAIRING.md).

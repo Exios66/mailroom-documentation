@@ -202,7 +202,7 @@ archive/ # successful durable archive
 manifests/ # per-document manifests
 ```
 
-Operators should not manually move live documents between bins to force state transitions; routing belongs to the graph. Source: [`src/graph/routing.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/graph/routing.py).
+Do not move live documents between bins by hand to force a state change. The graph owns routing. Source: [`src/graph/routing.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/graph/routing.py).
 
 ## 9. Routine operations checklist
 

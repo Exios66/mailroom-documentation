@@ -58,9 +58,9 @@ New: the pipeline in depth.
 
 **One place to learn the Mailroom constellation: the llm-mailroom pipeline and every repository built around it.**
 
-The Mailroom reads legal and business documents, works out what each one is, pulls the important fields out of it, and files it in an archive with a tamper-evident audit trail. A team of specialist LLM agents does the work, one state machine per document.
+The Mailroom reads legal and business documents. It identifies the type of each document and extracts the important fields. Then it files the document in an archive with a tamper-evident audit trail. A team of specialist LLM agents does the work, one state machine per document.
 
-That system is spread across more than a dozen repositories: the pipeline itself, a scoring library, an evaluation harness, corpus builders, a local sandbox, two visualizers, an ML classifier, and the monorepo that ties them together. This site is the front door to all of them.
+That system uses more than a dozen repositories. They include the pipeline, a scoring library, an evaluation harness, corpus builders, and a local sandbox. They also include two visualizers, an ML classifier, and the monorepo that connects them. This site is the front door to all of them.
 
 | If you want to...                                           | Read                                                                        |
 | ----------------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -94,7 +94,7 @@ The pages below are the canonical documentation for the `llm-mailroom` pipeline 
 
 ## Meet Fumi
 
-<figure><img src=".gitbook/assets/fumi.gif" alt="Fumi in her postal uniform while Hermes the owl blinks on her shoulder" width="192"><figcaption><p>Fumi (文, "letter") is the mailroom's head maid — a USPS-style carrier uniform, a mini cap on her headdress, a leather satchel, and Hermes checking postmarks from her shoulder.</p></figcaption></figure>
+<figure><img src=".gitbook/assets/fumi.gif" alt="Fumi in her postal uniform while Hermes the owl blinks on her shoulder" width="192"><figcaption><p>Fumi (文, "letter") is the mailroom's head maid. She wears a USPS-style carrier uniform, a mini cap, and a leather satchel. Hermes checks postmarks from her shoulder.</p></figcaption></figure>
 
 <figure><img src=".gitbook/assets/hoot-icon.png" alt="Hermes, the pixel owl on Fumi's shoulder" width="96"><figcaption><p>Hermes is the pixel owl on Fumi's shoulder and the night-shift owl's junior colleague on the banner.</p></figcaption></figure>
 

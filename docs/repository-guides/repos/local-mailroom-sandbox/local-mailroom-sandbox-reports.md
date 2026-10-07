@@ -13,10 +13,17 @@ Qwen3-8B-AWQ on vLLM, NVIDIA L4, Hub `Lucius-Morningstar/mailroom-dataset` @ `ed
 Key findings from the master card:
 
 1. **2×L4 at C32 raises throughput +99% at +0.4% cost per document** on the same 250 documents (Experiment 2 → 3). Median latency rises ×1.4–1.8. GPU count and client concurrency changed together.
-2. **Larger runs cost less per document.** n = 100 vs n = 50 cuts GPU cost per document 19% on the four unchanged specialists (Experiment 3 → 4); 1 of 400 failed (0.25%).
-3. **Merger is the quality gap; the † settings narrow it.** MAUD accuracy 0.035 → 0.140 and coverage 23% → 69% on the same 50 agreements (35 better, 1 worse), at 4.5× GPU cost per agreement.
+2. **Larger runs cost less per document.** On the four unchanged specialists, n = 100 cuts GPU cost per document by 19% against n = 50 (Experiment 3 → 4). 1 of 400 documents failed (0.25%).
+3. **Merger is the quality gap; the † settings narrow it.** On the same 50 agreements, MAUD accuracy rises 0.035 → 0.140 and coverage rises 23% → 69% (35 better, 1 worse). GPU cost per agreement is 4.5×.
 
-**SAND-040 (Experiment 4)** ran on one 32K-window deploy: correspondence, insurance claims and corporate records 100/100 ok, contracts 99/100, merger † 50/50. The † merger cell reads each whole agreement in chunks (47,000-character windows, 6,500 overlap) with the `merger_agreement_specialist_maud_v1` prompt, Qwen3 sampling (temperature 0.7, top_p 0.8, top_k 20, presence penalty 1.0) and a 6,144-token cap, so its p50 latency is about 1,044 s against 92 s for the head-and-tail read. The earlier 64K YaRN validation probes appear only as a matched-document appendix in the master appendix, never in the pooled columns.
+**SAND-040 (Experiment 4)** ran on one 32K-window deploy: correspondence, insurance claims and corporate records 100/100 ok, contracts 99/100, merger † 50/50. The † merger cell reads each whole agreement in chunks. Its settings:
+
+* 47,000-character windows with 6,500 characters of overlap;
+* the `merger_agreement_specialist_maud_v1` prompt;
+* Qwen3 sampling: temperature 0.7, top_p 0.8, top_k 20, presence penalty 1.0;
+* a 6,144-token output cap.
+
+So its p50 latency is about 1,044 s, against 92 s for the head-and-tail read. The earlier 64K YaRN validation probes appear only as a matched-document appendix in the master appendix, never in the pooled columns.
 
 | Experiment | Board card | Posture        | GPUs | Concurrency |     Docs / class |
 | ---------- | ---------- | -------------- | ---: | ----------: | ---------------: |
@@ -44,7 +51,7 @@ Metered Modal session total across the four experiments: **$3.39** for 1,050 doc
 
 ## SAND-045 — chunked ground-truth labeler
 
-A labeling job, not a benchmark: `Qwen/Qwen3-14B-AWQ` on two L4 replicas (app `sandbox-vllm-gt-labeler`, `mailroom_sandbox.gt_labeler`) fills unfinished ground-truth fields for Hub tag `v9.1` in chunks of 40 documents under a $2 projected cap. Golden CUAD and MAUD labels are never requested. The first live wave labeled the 91 SEC EDGAR EX-10 rows missing `cuad_clause_labels`: 78 accepted as verbatim CUAD maps, 13 left unaccepted below the quality floor. Journal: [`reports/gt-labeler/`](https://github.com/Exios66/local-mailroom-sandbox/tree/main/reports/gt-labeler).
+This is a labeling job, not a benchmark. `Qwen/Qwen3-14B-AWQ` runs on two L4 replicas (app `sandbox-vllm-gt-labeler`, `mailroom_sandbox.gt_labeler`). It fills unfinished ground-truth fields for Hub tag `v9.1`, in chunks of 40 documents, under a $2 projected cap. Golden CUAD and MAUD labels are never requested. The first live wave labeled the 91 SEC EDGAR EX-10 rows that had no `cuad_clause_labels`. The job accepted 78 as verbatim CUAD maps. It did not accept 13, which were below the quality floor. Journal: [`reports/gt-labeler/`](https://github.com/Exios66/local-mailroom-sandbox/tree/main/reports/gt-labeler).
 
 ## SAND-032 — Qwen3-8B-AWQ knob ladder on Modal L4
 
@@ -52,7 +59,7 @@ Program summary: [QWEN3-L4-LADDER-SUMMARY.md](https://github.com/Exios66/local-m
 
 Frozen L5 vs L0 baseline (correspondence n=20, 1×L4): **−44% wall, −43% $/doc at equal quality**. Frozen engine: AWQ-marlin, `kv_cache_dtype=fp8`, thinking off, `max_num_seqs=16`, CUDA graphs `[1,2,4,8,16]`. Scale-out correspondence n=100: **2×L4 is 2.06× faster at flat $/doc**.
 
-Largest serving lever: **set `max_inputs` = `max_num_seqs` per container** (Modal fills one container up to `max_inputs` before routing; 64 vs 32 turned a 2×L4 fleet into one hot replica).
+Largest serving lever: **set `max_inputs` = `max_num_seqs` per container**. Modal fills one container up to `max_inputs` before it routes to the next. A value of 64 instead of 32 turned a 2×L4 fleet into one hot replica.
 
 <figure><img src="https://raw.githubusercontent.com/Exios66/local-mailroom-sandbox/main/reports/serving/figures/sand032-ladder.svg" alt="SAND-032 knob ladder small multiples"><figcaption><p>SAND-032 knob ladder (L0 → frozen L5).</p></figcaption></figure>
 
