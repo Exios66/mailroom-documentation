@@ -44,7 +44,7 @@ sandbox pilot --local   # real local model
 | `sandbox watch [--web]`                                              | Mailroom-themed live view of a run (WATCHDOG panel: auth, stall, engine, spend, length alerts) |
 | `sandbox run card [--master]`                                        | Score-and-cost cards per cell, and the SAND-37 master card + appendix  |
 | `sandbox runbook list / show / check / write`                        | Operator runbooks generated from `config/runbooks/catalog.yaml`        |
-| `sandbox traces export / pack`                                       | Local span mirror: pack as Parquet, upload to a synced folder, verify, prune |
+| `sandbox traces export / pack`                                       | Local span mirror. `export` writes `export.json`. `pack` writes a Parquet archive; upload needs `SANDBOX_TRACE_UPLOAD_DIR` and pruning needs `--prune` |
 | `sandbox metrics compare`, `sandbox modernbert status / eval`        | Serving metrics comparison; run the mailroom-ml ModernBERT eval        |
 | `sandbox subagents list / sync / doctor / propagate`                 | Family coding-subagent roster and harness health                       |
 | `sandbox cutover --profile <p> --model <m>`                          | Point agents at a local model                                          |

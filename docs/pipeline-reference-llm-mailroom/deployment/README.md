@@ -282,6 +282,8 @@ Schedule a daily snapshot via cron:
   cp -R data/manifests backup/$(date +\%Y-\%m-\%d)/manifests
 ```
 
+The SQLite `.backup` calls do not coordinate with the two `cp -R` copies. Stop the API, the watcher and the ops monitor before this sequence. Start them again after both copies finish. Otherwise the backup can mix states and fail the audit-chain check on restore.
+
 Retain a rotation window (e.g. 30–90 days) sized to your compliance requirements. The audit log is append-only — backups are the only way to reconstruct it.
 
 ### Postgres backup

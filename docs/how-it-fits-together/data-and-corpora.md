@@ -52,7 +52,7 @@ The pipeline itself does not depend on the `datasets` library; it loads the corp
 
 * **Pin a revision.** Never read the live tip of a dataset. Code records the revision it used so results are reproducible.
 * **Keep labels blind.** The model under test only ever sees the `default` config. Labels live in a separate config precisely so that a missed filter cannot hand the answers to the model.
-* **One split rule.** Across the whole family, `md5(filename) % 10 == 0` means test, so a document is in the same split in every dataset that contains it. Because the split is a pure function of the filename, no repository needs to store or share a split file, and a training copy can never leak a test document by being rebuilt.
+* **One split rule.** Across the whole family, `md5(filename) % 10 == 0` means test, so a document is in the same split in every dataset that contains it. Because the split is a pure function of the filename, no repository needs to store or share a split file. A training builder must still apply the rule to exclude test rows.
 * **Subclasses are strata, not classes.** `expected_subclass` is a second-level label (for example `all_cash` under `merger_agreement`). It is not promoted to a top-level class unless the pipeline's taxonomy adopts it.
 * **Retired classes stay retired.** `compliance_filing`, `court_opinion` and `due_diligence` are no longer live classes.
 

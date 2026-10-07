@@ -34,7 +34,7 @@ Three ideas recur in every entry below:
 
 ## Agent Architecture
 
-All agents inherit from `agents/base.py:BaseAgent` and share a common interface:
+Native agents inherit from `agents/base.py:BaseAgent` and share a common interface. The vendored Sorter, Contracts Specialist and Merger Agreement Specialist instead build a LangChain `ChatOpenAI` with structured output (see below):
 
 ```python
 class BaseAgent(ABC):
@@ -434,7 +434,7 @@ The lane runs on the **free OpenRouter triage team** (`openrouter/free`, the Fre
 
 **Capability pre-check + honest handoff.** Before the lane runs, a deterministic, LLM-free check (`pipeline/watcher.py:_triage_capability_check`) verifies the free team can actually handle the single document — no doomed runs. Documents beyond the free models' reach are handed off to the full paid pipeline: image-only inputs (`image_requires_vision`), scanned PDFs with no direct text (`scanned_pdf_requires_transcription`), unreadable inputs, or a deterministic text length above the `gmail_triage` `max_input_chars` budget (`exceeds_free_budget:N>M`) — **merger agreements are typically excessively long and almost always exceed the free models' classification capability**. The handoff reason rides `intake.triage_handoff` onto the terminal manifest and the completion echo ("triage handoff: … — handled by the full pipeline"). Every canonical doc type — contract, merger\_agreement, insurance\_claim, corporate\_record, correspondence — is validated through the lane (test matrix) and accepted when within the free capability envelope.
 
-The triage read is **advisory by design** and never overrules the pipeline agents (it is only dispatched on single-document Gmail instances, where no pipeline run happens — the overrule guard is the standing invariant). Audit entries use their own namespaced section (`triage_ingested` / `triage_classified` / `triage_archived`) so the stored audits are never conflated with the pipeline's `ingested`/`classified`/`extracted`/`archived` vocabulary. Fails soft: no `OPENROUTER_API_KEY`, rate limit, or provider error ever blocks intake (logged; the document parks to `failed/`). Output is clamped to the live taxonomy vocabulary by `validate_triage` (unknown class → `unknown`, confidence 0.0–1.0, ≤6 keywords, 300-char gist). Registration: `llm/prompts.py:prompt_templates()` (synced with `scripts/sync_prompts.py`), agent config in `config/taxonomy.yaml`.
+The triage read is **advisory by design** and never overrules the pipeline agents (it is only dispatched on single-document Gmail instances, where no pipeline run happens — the overrule guard is the standing invariant). Audit entries use their own namespaced section (`triage_ingested` / `triage_classified` / `triage_archived`) so the stored audits are never conflated with the pipeline's `ingested`/`classified`/`extracted`/`archived` vocabulary. Fails soft: no `OPENROUTER_API_KEY`, rate limit, or provider error ever blocks intake (logged; the document parks in `review/` with reason `triage_llm_unavailable`). Output is clamped to the live taxonomy vocabulary by `validate_triage` (unknown class → `unknown`, confidence 0.0–1.0, ≤6 keywords, 300-char gist). Registration: `llm/prompts.py:prompt_templates()` (synced with `scripts/sync_prompts.py`), agent config in `config/taxonomy.yaml`.
 
 ***
 

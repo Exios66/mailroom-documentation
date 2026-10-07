@@ -15,9 +15,9 @@ Two files own it:
 
 ```
 app ──► llm-gateway (LiteLLM) ──https──► Modal mailroom-vllm-fast
-  │      :4000/v1                      └──► Modal mailroom-vllm-extract
-  │                                     └──► Modal mailroom-vllm-vision
-  └──► OpenRouter  (agents on the `api` tier only)
+         :4000/v1               ├──────► Modal mailroom-vllm-extract
+                                ├──────► Modal mailroom-vllm-vision
+                                └──────► OpenRouter  (agents on the `api` tier only)
 ```
 
 The `app` service sets `DEFAULT_PROVIDER=litellm` and `LITELLM_BASE_URL=http://llm-gateway:4000/v1`, and passes `LITELLM_API_KEY` the gateway's own master key.

@@ -95,7 +95,7 @@ All agents now use Ollama. The pipeline changes each agent's OpenRouter model na
 | `deepseek/deepseek-v4-pro` | `deepseek-r1:14b` | `qwen3:14b` | `deepseek-ai/DeepSeek-R1-Distill-Qwen-14B` |
 | `openrouter/free` | `qwen3:7b` | `qwen3:7b` | `Qwen/Qwen3-8B` |
 
-Pull each tag in the map before you start (`ollama pull qwen3:7b`). If a model has no entry in the map, the pipeline sends the name unchanged, and Ollama returns "model not found". Self-hosted providers are exempt from the `MAILROOM_LLM_FREE_ONLY` guard because they have no per-token price.
+Pull each tag in the map before you start (`ollama pull qwen3:7b`). If the Ollama library has no `qwen3:7b` tag, pull `qwen3:8b` and change the mapped tag in `taxonomy.yaml` to match. If a model has no entry in the map, the pipeline sends the name unchanged, and Ollama returns "model not found". Self-hosted providers are exempt from the `MAILROOM_LLM_FREE_ONLY` guard because they have no per-token price.
 
 ***
 
@@ -134,7 +134,8 @@ PYTHONPATH=src python src/scripts/cutover.py --validate --agent sorter
 PYTHONPATH=src python src/scripts/cutover.py --agent contracts_specialist --provider ollama --model qwen3:7b
 PYTHONPATH=src python src/scripts/cutover.py --validate --agent contracts_specialist
 
-# 5. If validation or the pilot fails, go back to the values that step 1 showed
+# 5. If validation or the pilot fails, restore the provider and model that step 1 showed
+#    (the values below are the shipped defaults; use your own recorded values if they differ)
 PYTHONPATH=src python src/scripts/cutover.py --agent sorter --provider openrouter --model qwen/qwen3.7-flash
 ```
 

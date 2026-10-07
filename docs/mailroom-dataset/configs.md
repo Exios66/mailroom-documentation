@@ -14,8 +14,9 @@ blind = load_dataset(REPO, "default", revision=REV, split="test").to_pandas()
 gt = load_dataset(REPO, "ground_truth", revision=REV, split="test").to_pandas()
 
 # 1. Send only blind["doc_text"] to the model.
-# 2. Join the answers to the labels after the run.
-scored = blind[["filename"]].merge(gt[["filename", "expected", "expected_subclass"]], on="filename")
+# 2. Collect the model outputs in a table `answers` with a `filename` column.
+# 3. Join the answers to the labels after the run.
+scored = answers.merge(gt[["filename", "expected", "expected_subclass"]], on="filename")
 ```
 
 ## `default` (blind)

@@ -6,7 +6,7 @@ Single-document uploads are handled by the **free OpenRouter triage team** (`ope
 
 ## In short
 
-* **One email, one accepted attachment:** the free triage lane processes it. A free model classifies it and the lane archives it with hash-chained audit entries. It costs $0.
+* **One email, one accepted attachment:** the free triage lane processes it for $0. The lane archives eligible results with hash-chained audit entries. It sends unknown or low-confidence results, and provider errors, to human review.
 * **Two or more attachments, or a document that the free lane cannot read:** each document goes through the full 13-node pipeline with paid agents.
 * **Each outcome comes back to the sender** as a reply on the same email thread: archived, in review, or failed, with the reason.
 
