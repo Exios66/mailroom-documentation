@@ -91,7 +91,7 @@ That system is spread across more than a dozen repositories: the pipeline itself
 
 ## The pipeline reference
 
-The pages below are the canonical documentation for the `llm-mailroom` pipeline package. They live at the root of this documentation repository and are also browsable locally with docmd (see the pipeline repository [README](https://github.com/Exios66/llm-mailroom#browsing-the-docs-locally)).
+The pages below are the canonical documentation for the `llm-mailroom` pipeline package. They live in this repository's `docs/` folder and are also browsable locally with docmd (see the pipeline repository [README](https://github.com/Exios66/llm-mailroom#browsing-the-docs-locally)).
 
 | Document                                                                          | Description                                                                 |
 | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -116,9 +116,9 @@ The pages below are the canonical documentation for the `llm-mailroom` pipeline 
 
 ## Related files
 
-* [`README.md`](https://github.com/Exios66/mailroom-documentation/blob/main/README.md) — this file; the site landing page
-* `SUMMARY.md` — the table of contents for this site
-* `gitbook-docs.yaml` — this site's GitBook configuration (live)
-* [`.gitbook/assets/`](https://github.com/Exios66/mailroom-documentation/tree/main/.gitbook/assets) — images and diagrams
+* `README.md` — this file; the site landing page (in `docs/`)
+* `SUMMARY.md` — the table of contents for this site (in `docs/`)
+* [`gitbook-docs.yaml`](https://github.com/Exios66/mailroom-documentation/blob/main/gitbook-docs.yaml) — this site's GitBook configuration (repository root)
+* [`.gitbook/assets/`](https://github.com/Exios66/mailroom-documentation/tree/main/docs/.gitbook/assets) — images and diagrams (under `docs/`)
 * [`about-this-site/maintaining.md`](about-this-site/maintaining.md) — how this site is built and kept current
 * [Exios66/llm-mailroom `README.md`](https://github.com/Exios66/llm-mailroom/blob/main/README.md) — the upstream pipeline repository's package overview

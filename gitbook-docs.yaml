@@ -1,6 +1,6 @@
 $schema: https://api.gitbook.com/gitbook-docs.yaml
 site:
-  title: Mailroom Inc. Docs
+  title: The Digital Mailroom
   structure:
     - type: section
       key: section-1
@@ -16,5 +16,5 @@ site:
           path: undefined
           default: true
           content:
-            directory: ./
+            directory: ./docs
             language: en
