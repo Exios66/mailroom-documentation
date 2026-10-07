@@ -1,6 +1,14 @@
 # Pipeline flowchart
 
-This page draws the whole llm-mailroom document pipeline as one flowchart, built directly from the code. It shows every node in the LangGraph state machine, every conditional edge with the condition that picks it, the ways a document can enter, the per-class specialist dispatch, the judge, arbiter and reviewer loops, the human-review and failure routes, and the work that happens after a document reaches a terminal stage (audit log, completion echo, relations scan).
+This page draws the whole llm-mailroom document pipeline as one flowchart, built directly from the code. It shows:
+
+* every node in the LangGraph state machine;
+* every conditional edge, with the condition that picks it;
+* the ways a document can enter;
+* the per-class specialist dispatch;
+* the judge, arbiter and reviewer loops;
+* the human-review and failure routes;
+* the work after a document reaches a terminal stage (audit log, completion echo, relations scan).
 
 If you want the prose explanation of each stage, read [Architecture](../pipeline-reference-llm-mailroom/architecture.md) and [Agents](../pipeline-reference-llm-mailroom/agents.md). For the Gmail channel in depth, read [Gmail intake](../pipeline-reference-llm-mailroom/gmail-intake.md). This page is the map.
 
@@ -8,7 +16,7 @@ If you want the prose explanation of each stage, read [Architecture](../pipeline
 
 * Rectangles with a plain name such as `classify` are LangGraph nodes. The name is the exact string passed to `workflow.add_node(...)` in [`src/graph/build_graph.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/graph/build_graph.py). The second line is the agent or helper that node calls.
 * Solid arrows are graph edges. The label is the condition, taken from the router function in [`src/graph/routing.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/graph/routing.py).
-* Dashed arrows are either a transient-error self-loop (labelled `transient`) or a side effect that runs outside the graph (audit writes, the Gmail echo, the relations scan).
+* A dashed arrow is one of two things. It is a transient-error self-loop (labelled `transient`), or a side effect outside the graph (audit writes, the Gmail echo, the relations scan).
 * `high`, `low`, `retry_max`, `judge_band_high`, `judge_max_passes` and `arbiter_retry_max` are values from the `confidence:` block of [`src/config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml). The numbers are in [Thresholds used by the routers](flowchart.md#thresholds-used-by-the-routers) below.
 * `transient` means a provider error that `llm/retry.is_transient_error` treats as temporary (connection error, timeout, rate limit, 5xx). Each node has its own counter (`transient_retries_<node>`). The router retries the same node while that counter is 2 or less (`_TRANSIENT_MAX_RETRIES = 2`), then sends the document to `human_review`. Transient retries never use up the confidence retry budget.
 
@@ -20,9 +28,14 @@ The full chart below has many branches. Most documents take one of three routes,
 
 **2. The doubtful classification (Lane A).** `classify` returns confidence from `low` up to `high`. The document goes to `retry_classify` first, while the retry budget (`retry_max`) lasts. If the confidence is still in that medium band, `review_classify` asks a second agent that has not seen the first answer. The document continues to `extract` only when the reviewer either agrees or overrides *and* its own confidence is at or above `high`. A low-confidence agreement, a disagreement or a reviewer error all go to `human_review`. Below `low` the document retries, and goes to review if retries run out.
 
-**3. The doubtful extraction (Lane B).** `extract` returns confidence from `low` up to `judge_band_high`. `judge_verify` checks completeness. A `complete` verdict goes on to `compile_report`. A `partial` or `incomplete` verdict goes to `arbiter`, which picks exactly one of three outcomes: accept with caveats (on to `compile_report`), re-extract (back through `retry_extract`, bounded by `arbiter_retry_max`), or `human_review`.
+**3. The doubtful extraction (Lane B).** `extract` returns confidence from `low` up to `judge_band_high`. `judge_verify` checks completeness. A `complete` verdict goes on to `compile_report`. A `partial` or `incomplete` verdict goes to `arbiter`. The arbiter picks exactly one of three outcomes:
 
-Two things can interrupt any of these paths. A **transient provider error** retries the same node without spending the confidence budget, and sends the document to `human_review` once the transient limit (`_TRANSIENT_MAX_RETRIES = 2`) is exceeded. A **conflict** with an archived record of the same class in the same matter diverts the document to `boss_escalation`: an `approved` decision continues to `compile_report`, and any other decision goes to `human_review`.
+* accept with caveats (on to `compile_report`);
+* re-extract (back through `retry_extract`, bounded by `arbiter_retry_max`);
+* `human_review`.
+
+
+Two things can interrupt any of these paths. A **transient provider error** retries the same node. It does not spend the confidence budget. After the transient limit (`_TRANSIENT_MAX_RETRIES = 2`), the document goes to `human_review`. A **conflict** is a clash with an archived record of the same class in the same matter. A conflict sends the document to `boss_escalation`. An `approved` decision continues to `compile_report`. Any other decision goes to `human_review`.
 
 ## The full pipeline
 
@@ -198,7 +211,7 @@ flowchart TD
 ### Things the chart compresses
 
 * **Router priority.** Each router checks its conditions in a fixed order and the first match wins. For `extract` and `retry_extract` the order in `after_extraction` is: transient error, unsupported type, conflict, schema invalid, hollow payload, ground-truth coverage below floor, then confidence. Only then does `after_extraction_gated` swap a `compile_report` result for `judge_verify` when `judge_gate` is true.
-* **`classify` medium band.** Since change L-9 in `routing.py`, a confidence in the band from `low` up to `high` goes to `retry_classify` first (while attempts are within `retry_max`), and only then to `review_classify`. Below `low` also goes to `retry_classify` while budget remains.
+* **`classify` medium band.** Since change L-9 in `routing.py`, a confidence from `low` up to `high` goes to `retry_classify` first, while attempts are within `retry_max`. Only then does it go to `review_classify`. Below `low` also goes to `retry_classify` while budget remains.
 * **Empty text.** If the document text is empty, `classify_node` sets `doc_type = unknown` and pushes `classification_attempts` past `retry_max`, so `after_classify` sends it straight to `human_review`.
 * **`judge_verify` can skip itself.** The node re-checks `judge_gate`. When the gate is off (for example an arbiter-approved re-extraction that came back with high confidence) it returns `judge_verdict = skipped`, which routes to `compile_report`.
 * **Interrupt pause.** `human_review` calls LangGraph `interrupt()`. The run stops there and `_execute_run` records it as a review park, not a failure. The approved/rejected edges only fire when someone resumes the paused thread (see [Human review resolve](flowchart.md#human-review-resolve)).
@@ -262,7 +275,7 @@ One row per LangGraph node, in the order they are registered in `build_graph()`.
 
 ## Gmail intake path
 
-The Gmail channel is a separate flow. The poller only writes files into the inbox. The watcher then decides, per file, whether it goes to the free triage lane (which never enters the LangGraph graph) or to the full pipeline above. Details and environment variables are in [Gmail intake](../pipeline-reference-llm-mailroom/gmail-intake.md).
+The Gmail channel is a separate flow. The poller only writes files into the inbox. The watcher then sends each file to one of two places: the free triage lane (outside the LangGraph graph), or the full pipeline above. Details and environment variables are in [Gmail intake](../pipeline-reference-llm-mailroom/gmail-intake.md).
 
 ```mermaid
 flowchart TD

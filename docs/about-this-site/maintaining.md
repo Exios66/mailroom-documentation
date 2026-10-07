@@ -7,8 +7,11 @@
 1. Edit Markdown under `docs/` only.
 2. If you add a page, add a line for the page to `docs/SUMMARY.md`. GitBook publishes only the pages listed there.
 3. Use relative links between pages on this site. Use full GitHub URLs for other repositories.
-4. Merge to `main`. Git Sync republishes the site.
-5. Open the live page. Make sure that the page shows and its links resolve.
+4. Run the checker from the repository root: `uv run --no-project --with pyyaml python3 scripts/check_site.py`. Fix every `ERROR` line. The last line must read `CHECK-OK`.
+5. Run the style report on each page you changed: `python3 scripts/check_style.py docs/<page>.md -v`. Fix the findings in the sentences you changed.
+6. If you changed a value that a chart shows, update the chart (see [Charts](#charts)).
+7. Merge to `main`. Git Sync republishes the site.
+8. Open the live page. Make sure that the page shows and its links resolve.
 
 Do not edit `gitbook-docs.yaml` for a content change. If you must change the site structure, read [`AGENTS.md`](https://github.com/Exios66/mailroom-documentation/blob/main/AGENTS.md) first.
 
@@ -38,7 +41,40 @@ The site has **one space** (`mailroom-docs`). The space reads `content.directory
 | `docs/assets/` | The **single source of truth** for the site's art — the full Fumi + Hermes mascot set (`mascot/`: `fumi.svg`, `fumi.gif`, `fumi.png`, `fumi-icon.png`, `fumi-sheet.png`, `hoot-icon.png`, and `source/fumi-base.png`), the masthead `banner.png`, `fumi/fumi.gif`, and `mailroom-pipeline.svg`. See `docs/assets/README.md` and `docs/assets/mascot/README.md`. |
 | Section folders under `docs/` (`start-here/`, `the-pipeline-in-depth/`, `how-it-fits-together/`, `mailroom-dataset/`, `repository-guides/`, `pipeline-reference-llm-mailroom/`, `changelog/`, `about-this-site/`) | Site content, grouped by the sections defined in `docs/SUMMARY.md`. |
 
-The site **content** lives entirely in the `docs/` folder — `docs/README.md` (landing), `docs/SUMMARY.md` (TOC), `docs/.gitbook/assets/`, `docs/assets/` (the Fumi + Hermes art), `docs/.gitbook.yaml` (the space's content config), and the section folders. The **repository root holds the site config (`gitbook-docs.yaml`) and `.gitattributes`** — nothing else. There is no `landing/` or root-level `assets/` folder in this repo; the site art lives under `docs/assets/` and `docs/.gitbook/assets/`.
+All site **content** lives in the `docs/` folder:
+
+* `docs/README.md` (landing) and `docs/SUMMARY.md` (TOC);
+* `docs/.gitbook/assets/` (images and charts that pages show);
+* `docs/assets/` (the Fumi + Hermes art);
+* `docs/.gitbook.yaml` (the space's content config);
+* the section folders.
+
+The **repository root holds no site content**. It holds:
+
+* the site config (`gitbook-docs.yaml`), `.gitattributes` and `.coderabbit.yaml`;
+* the repository-only `README.md` and `AGENTS.md`;
+* the scripts in `scripts/` (the site checker, the style report, and the chart builder);
+* implementation plans (`plans/`).
+
+There is no `landing/` or root-level `assets/` folder in this repo; the site art lives under `docs/assets/` and `docs/.gitbook/assets/`.
+
+## Charts
+
+Some pages show a chart next to a table. The charts are static SVG files in `docs/.gitbook/assets/`, one light and one dark (`chart-<name>-light.svg`, `chart-<name>-dark.svg`). A page shows them with a `<picture>` element, so the reader sees the file for their theme. GitBook strips scripts, so the charts have no hover. The table next to each chart holds the same values.
+
+| Chart | Page | Data |
+| --- | --- | --- |
+| `chart-dataset-classes` | [Mailroom dataset](../mailroom-dataset/mailroom-dataset.md) | Rows per class, v8 against v9.2 |
+| `chart-extraction-routing` | [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md) | Extraction confidence bands per class (`taxonomy.yaml`) |
+
+To change a charted value:
+
+1. Change the value in the page table.
+2. Change the same value in the data block of `scripts/build_charts.py`.
+3. Run `python3 scripts/build_charts.py` from the repository root.
+4. Look at both SVG files. Commit the page, the script and the SVG files together.
+
+Do not hand-edit an SVG file. The palette in the script passed the colorblind and contrast checks for both themes.
 
 ## Changelog
 
@@ -63,7 +99,7 @@ This site has a Changelog section under `docs/changelog/`. It is a generated cop
    * Replace the generator hint "Regenerate with `PYTHONPATH=src python src/scripts/sync_gitbook_changelog.py`." with: `To regenerate them, follow "Changelog" in the Maintaining this site page.` The hint appears at the top of every generated page.
    * Replace the `Pipeline docs:` link to the retired *Mailroom Inc. Docs* site with `[The Digital Mailroom](https://mailroom-inc.gitbook.io/the-digital-mailroom/)`.
    * Rewrite links that resolve only inside `llm-mailroom` (`](docs/….md)`, `](docs/wiki/)`, `](README.md)`, `](AGENTS.md)`) to full `https://github.com/Exios66/llm-mailroom/blob/main/…` URLs (`tree/main/docs/wiki/` for the wiki folder). The v0.7.0 entry carries such links.
-   * The generator gives the undated "Released backlog — v0.4.0 → v0.6.0 era" heading a placeholder date (`UNDATED_DATES`, `2026-08-18`) so that GitBook can sort it. Keep the `{% update date=… %}` attribute. Replace the prose claim "Released 2026-08-18." on its page with "Undated catch-up entry in `CHANGELOG.md`.", and ", released 2026-08-18." in its `README.md` card with " (undated catch-up entry in `CHANGELOG.md`).".
+   * The generator gives the undated "Released backlog — v0.4.0 → v0.6.0 era" heading a placeholder date (`UNDATED_DATES`, `2026-08-18`). GitBook needs the date to sort the entry. Keep the `{% update date=… %}` attribute. On its page, replace "Released 2026-08-18." with "Undated catch-up entry in `CHANGELOG.md`.". In its `README.md` card, replace ", released 2026-08-18." with " (undated catch-up entry in `CHANGELOG.md`).".
 
    Release-entry text that mentions *Mailroom Inc. Docs* is history from `CHANGELOG.md`. Leave it.
 5. When a release adds a page, add its line to the Changelog block in `docs/SUMMARY.md`. Keep the order newest first.
@@ -91,19 +127,20 @@ The Project directory, `content.directory`, and `path` are three different knobs
 | `path` | `gitbook-docs.yaml` | URL after the site slug | `/` (site home) |
 | space `key` | `gitbook-docs.yaml` | Stable identifier for the `mailroom-docs` space | `mailroom-docs` — **never change it** |
 
-`content.directory` is a **folder**; `path` is a **URL**. With the config at the repository root (the default Project directory), `content.directory: ./docs` points the space at the whole `docs/` book. Do not set `path: docs` — that would publish the home at `…/the-digital-mailroom/docs/` instead of the site root.
+`content.directory` is a **folder**; `path` is a **URL**. With the config at the repository root (the default Project directory), `content.directory: ./docs` points the space at the whole `docs/` book. Do not set `path: docs`. That value publishes the home at `…/the-digital-mailroom/docs/`, not at the site root.
 
-GitBook also replaces the markdown H1 with the `SUMMARY.md` link title. Keep that link as `* [LLM-MAILROOM](README.md)` so the GitBook page header reads **LLM-MAILROOM** and matches the `# LLM-MAILROOM` heading in `docs/README.md` (the previous `* [Welcome](README.md)` title is why the live home used to read **Welcome**).
+GitBook also replaces the markdown H1 with the `SUMMARY.md` link title. Keep that link as `* [LLM-MAILROOM](README.md)`. Then the GitBook page header reads **LLM-MAILROOM** and matches the `# LLM-MAILROOM` heading in `docs/README.md`. (The previous `* [Welcome](README.md)` title made the live home read **Welcome**.)
 
 GitBook's published favicon is the site icon in **Customize** ([icons, colors, and themes](https://gitbook.com/docs/manage-your-site/customization/icons-colors-and-themes)). Git Sync cannot set it: `gitbook-docs.yaml` has no favicon field. Upload `docs/.gitbook/assets/hoot-icon.png` (Hermes, the pixel owl).
 
 ## Rules for editing
 
-* **Link, don't copy.** Each repository's own README and docs stay canonical. A guide here summarizes what a newcomer needs to orient, then links to the source. This follows the llm-mailroom rule that docs content is never duplicated.
-* **Every new page goes in `docs/SUMMARY.md`.** A page that is not listed is not published. Operator recipes that belong on this site (Docker compose matrix, Modal + vLLM) live under `docs/` in their section folder and are listed here — `deploy/README.md` is a file index, not a GitBook page. Sandbox run reports and visuals are nested under the [local-mailroom-sandbox](../repository-guides/repos/local-mailroom-sandbox/) guide. The canonical corpus has its own top-level section ([Mailroom dataset](../mailroom-dataset/mailroom-dataset.md)); static PNGs stay on `Exios66/Mailroom-Corpus-EDA` `main` (`raw.githubusercontent.com`) and the live dashboard / Plotly charts / Hub viewer are iframes from `exios66.github.io/Mailroom-Corpus-EDA`.
+* **Link, do not copy.** Each repository's own README and docs stay canonical. A guide here summarizes what a newcomer needs to orient, then links to the source. This follows the llm-mailroom rule that docs content is never duplicated.
+* **Every new page goes in `docs/SUMMARY.md`.** A page that is not listed is not published. Operator recipes for this site (Docker compose matrix, Modal + vLLM) live in their section folder under `docs/`. List them in `SUMMARY.md`. The upstream `deploy/README.md` is a file index, not a GitBook page. Sandbox run reports and visuals are nested under the [local-mailroom-sandbox](../repository-guides/repos/local-mailroom-sandbox/) guide. The canonical corpus has its own top-level section ([Mailroom dataset](../mailroom-dataset/mailroom-dataset.md)). Static PNGs stay on `Exios66/Mailroom-Corpus-EDA` `main` (`raw.githubusercontent.com`). The live dashboard, the Plotly charts and the Hub viewer are GitBook `embed` blocks.
 * **Use relative links between pages on this site** (`pipeline-reference-llm-mailroom/architecture.md`, `../mailroom-dataset/mailroom-dataset.md`) and full GitHub URLs for anything in another repository. Every site page lives under `docs/`, so relative links stay within `docs/`.
+* **Link to a heading with its GitBook id, not its GitHub id.** GitBook builds its own heading ids: `## Backup & Restore` is `#backup-and-restore`, and `## 1. Pipeline at a glance` is `#id-1.-pipeline-at-a-glance`. Copy the id from the live page. The rules are in [`AGENTS.md`](https://github.com/Exios66/mailroom-documentation/blob/main/AGENTS.md) §7.3.
 * **Date facts that drift.** Versions, pins and counts carry an "as of" date; when a release moves them, update [Overview](../start-here/overview.md) and the affected guide.
-* **Reference the pipeline in `llm-mailroom`, don't relocate it.** The pipeline source, its `src/`, `deploy/`, notebooks and `CHANGELOG.md` live in [Exios66/llm-mailroom](https://github.com/Exios66/llm-mailroom) — GitHub URLs under `Exios66/llm-mailroom/...` and paths such as `pipeline-reference-llm-mailroom/...` describe the pipeline and stay as they are. Only the *published documentation site* is sourced from this repo.
+* **Reference the pipeline in `llm-mailroom`. Do not relocate it.** The pipeline source (`src/`, `deploy/`, notebooks and `CHANGELOG.md`) lives in [Exios66/llm-mailroom](https://github.com/Exios66/llm-mailroom). GitHub URLs under `Exios66/llm-mailroom/...` and paths such as `pipeline-reference-llm-mailroom/...` describe the pipeline. Keep them as they are. Only the *published documentation site* is sourced from this repo.
 * **Keep the GitHub wiki separate.** The `llm-mailroom` repository's own `docs/wiki/` remains wiki-only and is not mirrored on this site.
 
 ## When a repository changes

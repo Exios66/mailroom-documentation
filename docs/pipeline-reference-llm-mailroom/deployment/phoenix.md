@@ -13,7 +13,7 @@ Implementation: [`src/observability/phoenix_setup.py`](https://github.com/Exios6
 One OpenTelemetry `TracerProvider` is lazily initialised per process and emits spans over OTLP HTTP to `PHOENIX_ENDPOINT`. `instrument_openai_client` uses the OpenInference `OpenAIInstrumentor` (part of the `arize-phoenix` dependency set), so every LLM call lands as a nested span with model, token usage, latency and response.
 
 {% hint style="warning" %}
-**Phoenix traces LLM calls but not pipeline structure.** The node-level structured spans (`pipeline_trace` / `observation`) are **Langfuse-only** in the facade. With only Phoenix active, LLM generations still trace and `flush()` force-exports them, while the Langfuse-only helpers no-op — the pipeline runs identically, but you will not see one span per graph node. Choose [Langfuse](langfuse.md) if per-node visibility is the point.
+**Phoenix traces LLM calls but not pipeline structure.** The node-level structured spans (`pipeline_trace` / `observation`) are **Langfuse-only** in the facade. With only Phoenix active, LLM generations still trace and `flush()` force-exports them, while the Langfuse-only helpers no-op — the pipeline runs the same, but you do not see one span per graph node. Choose [Langfuse](langfuse.md) if per-node visibility is the point.
 {% endhint %}
 
 ## Configuration
@@ -25,7 +25,7 @@ One OpenTelemetry `TracerProvider` is lazily initialised per process and emits s
 | `PHOENIX_SERVICE_NAME` | `mailroom` | OpenTelemetry service name |
 | `PHOENIX_PROJECT` | `mailroom` | OpenInference project name |
 
-`phoenix_enabled()` reads `PHOENIX_TRACING`; set it to a falsy value to disable Phoenix even when another backend would have been selected.
+`phoenix_enabled()` reads `PHOENIX_TRACING`; set it to a falsy value to disable Phoenix. This applies even when the selection logic picks another backend.
 
 ## The Railway guard
 

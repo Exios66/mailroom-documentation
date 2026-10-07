@@ -61,7 +61,7 @@ The `"*"` entry forwards any provider-qualified slug to OpenRouter unchanged, so
 `config.yaml` comments each of these, and they are the settings you are most likely to "fix" by mistake:
 
 * **`num_retries: 0`** (both `litellm_settings` and `router_settings`). `llm/retry.py` is the mailroom's **single** retry layer (L-16/L-17). A second retry layer here multiplies calls on every failure. A cold-start `503` passes straight through and the pipeline's long cold-start backoff handles it.
-* **No tracing callbacks.** The mailroom traces every generation **client-side** — `langfuse.openai` / Phoenix OpenInference / Braintrust wrap the OpenAI client in `llm/client.py`. A LiteLLM Langfuse callback would double-log every call as an orphan trace outside the per-document `document-pipeline` trace.
+* **No tracing callbacks.** The mailroom traces every generation **client-side** — `langfuse.openai` / Phoenix OpenInference / Braintrust wrap the OpenAI client in `llm/client.py`. A LiteLLM Langfuse callback logs every call a second time, as an orphan trace outside the per-document `document-pipeline` trace.
 * **Fallbacks commented out.** Falling back from a GPU tier to its OpenRouter champion is available but off by default, because it turns a GPU outage into silent API spend.
 
 `drop_params: true` drops unknown OpenAI params per provider instead of erroring `400`, which is what lets provider-specific fields in `extra_body` (`chat_template_kwargs` for vLLM, `reasoning` for OpenRouter) pass through.

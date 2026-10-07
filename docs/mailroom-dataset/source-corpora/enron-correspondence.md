@@ -34,7 +34,7 @@ v9 added the `heuristic` path for subject-line-hydrated draws (`intent_status = 
 
 ## Subclass mix
 
-`email` dominates (557). Other subtypes sit in the 53–83 range except `attorney_demand` (3). Full table: [Classes and strata](../classes-and-strata.md#correspondence--1000-rows-303).
+`email` dominates (557). Other subtypes sit in the 53–83 range except `attorney_demand` (3). Full table: [Classes and strata](../classes-and-strata.md#correspondence-1-000-rows-30.3).
 
 Text length (EDA): mean **526 characters**, p50 264, max 26,209 — the short-text pole of the corpus.
 

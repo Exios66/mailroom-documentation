@@ -198,7 +198,7 @@ railway up -m "mailroom producer"
 
 ## Full Docker stack (Mode G)
 
-Mode G runs the whole pipeline on one host: the mailroom app talks to a LiteLLM gateway, which routes each agent to a Modal GPU tier or to OpenRouter. This section is a short run guide. The full reference (services, startup order, every `.env` variable, tier defaults) is on [Docker deployment, Mode G](../pipeline-reference-llm-mailroom/deployment/docker-deployment.md#mode-g--full-stack-litellm--modal-gpu-tiers), and the Modal side (per-tier knobs, single-tier Mode M) is on [Modal + vLLM](../pipeline-reference-llm-mailroom/deployment/modal-vllm.md).
+Mode G runs the whole pipeline on one host: the mailroom app talks to a LiteLLM gateway, which routes each agent to a Modal GPU tier or to OpenRouter. This section is a short run guide. The full reference (services, startup order, every `.env` variable, tier defaults) is on [Docker deployment, Mode G](../pipeline-reference-llm-mailroom/deployment/docker-deployment.md#mode-g-full-stack-litellm--modal-gpu-tiers), and the Modal side (per-tier knobs, single-tier Mode M) is on [Modal + vLLM](../pipeline-reference-llm-mailroom/deployment/modal-vllm.md).
 
 Source files: [deploy/docker-compose.full.yml](https://github.com/Exios66/llm-mailroom/blob/main/deploy/docker-compose.full.yml), [deploy/litellm/config.yaml](https://github.com/Exios66/llm-mailroom/blob/main/deploy/litellm/config.yaml), [deploy/modal\_vllm.py](https://github.com/Exios66/llm-mailroom/blob/main/deploy/modal_vllm.py), [src/scripts/smoke\_modal\_tiers.py](https://github.com/Exios66/llm-mailroom/blob/main/src/scripts/smoke_modal_tiers.py).
 
@@ -217,7 +217,7 @@ The deploy prints one URL per tier (`fast`, `extract`, `vision`). `MODAL_VLLM_TI
 
 ### 2. Fill `.env`
 
-The compose file stops with an error unless these are set: `MAILROOM_API_TOKEN`, `LITELLM_MASTER_KEY`, `MODAL_FAST_URL`, `MODAL_EXTRACT_URL`, `MODAL_VISION_URL`. `POSTGRES_PASSWORD` is also required (the Postgres image will not start without it). Add `MODAL_VLLM_API_TOKEN` (the bearer you deployed with), `OPENROUTER_API_KEY` only if an agent is on the `api` tier, and `LANGFUSE_*` keys for Langfuse Cloud tracing. The commented block at the end of `.env.example` lists them all. The compose file sets `DEFAULT_PROVIDER=litellm` and `LITELLM_BASE_URL=http://llm-gateway:4000/v1` for every mailroom process.
+The compose file stops with an error unless these are set: `MAILROOM_API_TOKEN`, `LITELLM_MASTER_KEY`, `MODAL_FAST_URL`, `MODAL_EXTRACT_URL`, `MODAL_VISION_URL`. `POSTGRES_PASSWORD` is also required (the Postgres image does not start without it). Add `MODAL_VLLM_API_TOKEN` (the bearer you deployed with), `OPENROUTER_API_KEY` only if an agent is on the `api` tier, and `LANGFUSE_*` keys for Langfuse Cloud tracing. The commented block at the end of `.env.example` lists them all. The compose file sets `DEFAULT_PROVIDER=litellm` and `LITELLM_BASE_URL=http://llm-gateway:4000/v1` for every mailroom process.
 
 ### 3. Start the stack
 

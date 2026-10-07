@@ -21,7 +21,7 @@ There is **no CUAD/MAUD-shaped external extraction benchmark** for this class. l
 
 ## Strata
 
-Largest: `charter_amendment` (80), `articles_of_incorporation` (62), `officer_certificate` (61). Smallest: `other` (3, zero test). Full table: [Classes and strata](../classes-and-strata.md#corporate_record--450-rows-136).
+Largest: `charter_amendment` (80), `articles_of_incorporation` (62), `officer_certificate` (61). Smallest: `other` (3, zero test). Full table: [Classes and strata](../classes-and-strata.md#corporate_record-450-rows-13.6).
 
 ## Attribution
 

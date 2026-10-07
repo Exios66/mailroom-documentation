@@ -277,7 +277,7 @@ free_quota:
 * While the breaker is open, free calls raise `FreeQuotaExhausted` and do not use the network. The breaker also raises it when the opening 429 is the last retry attempt, so the caller always sees the breaker and not a bare 429.
 * One successful free call closes the breaker and resets the trip count.
 * Paid models never use the breaker ([`llm/retry.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/llm/retry.py)).
-* The Gmail triage lane answers with its deterministic header pass (`degraded: free_quota`) when the breaker is open. See [Gmail intake](gmail-intake.md#pathway-a--single-document-upload--the-free-triage-lane).
+* The Gmail triage lane answers with its deterministic header pass (`degraded: free_quota`) when the breaker is open. See [Gmail intake](gmail-intake.md#pathway-a-single-document-upload-the-free-triage-lane).
 
 **`models` fallback (unreleased on `main`, as of 2026-10-07).** On an OpenRouter base URL, a free call sends the rest of the `free_model_swarm` chain as the `models` array, with `provider.require_parameters: true`, when the chain has more than one entry. `model` stays the primary, so `models` holds only the fallbacks. OpenRouter then does the fallback on the server. The shipped `free_model_swarm` has one entry (`openrouter/free`), so the array is not sent by default.
 
@@ -367,7 +367,7 @@ Read by the code but not in the main table above (verified against llm-mailroom 
 | `MAILROOM_HF_PILOT_GAP_S` | `1.5` (`0` with `--mock`) | Pause between documents in the HF pilot. |
 | `MAILROOM_FIELD_SCORING_EMBEDDING` | `0` in the HF pilot | `1` turns on embedding-based clause scoring, which spends OpenRouter quota at corpus scale. Lexical scoring always runs. |
 | `MAILROOM_HF_SPACE` | — | Hugging Face Space id used by `publish_space.py`. |
-| `MAILROOM_LLM_CACHE` | `1` (on) | Unreleased on `main` (after v0.8.0, as of 2026-10-07). `0`, `false`, `no` or `off` turns off the triage result cache, for reads and writes. The cache is the SQLite file `<MAILROOM_BASE_DIR>/llm_result_cache.sqlite` ([`llm/result_cache.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/llm/result_cache.py)). Entries expire after 30 days. It applies to the Gmail triage agent only. See [Gmail intake](gmail-intake.md#pathway-a--single-document-upload--the-free-triage-lane) |
+| `MAILROOM_LLM_CACHE` | `1` (on) | Unreleased on `main` (after v0.8.0, as of 2026-10-07). `0`, `false`, `no` or `off` turns off the triage result cache, for reads and writes. The cache is the SQLite file `<MAILROOM_BASE_DIR>/llm_result_cache.sqlite` ([`llm/result_cache.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/llm/result_cache.py)). Entries expire after 30 days. It applies to the Gmail triage agent only. See [Gmail intake](gmail-intake.md#pathway-a-single-document-upload-the-free-triage-lane) |
 
 ### Gmail intake channel (HUB-037)
 

@@ -4,11 +4,11 @@ This page is the operator procedure for the Mailroom pipeline. Use it when you r
 
 | You need to | Go to |
 | --- | --- |
-| Understand where a document can go | [1. Pipeline at a glance](#1-pipeline-at-a-glance) |
+| Understand where a document can go | [1. Pipeline at a glance](#id-1.-pipeline-at-a-glance) |
 | Know why a document is in review | [Review triggers](#review-triggers) |
 | Resolve a review item | [Operator review sequence](#operator-review-sequence) |
-| Start or end a shift | [9. Routine operations checklist](#9-routine-operations-checklist) |
-| Diagnose a stuck or failed document | [11. Symptoms and first checks](#11-symptoms-and-first-checks) |
+| Start or end a shift | [9. Routine operations checklist](#id-9.-routine-operations-checklist) |
+| Diagnose a stuck or failed document | [11. Symptoms and first checks](#id-11.-symptoms-and-first-checks) |
 
 Two rules govern every step on this page:
 
@@ -56,7 +56,7 @@ flowchart TD
 | **5. Catalog** | `catalog_write` | Persist document/matter metadata and extracted data. | SQLite/Postgres rows |
 | **6. Archive** | `archive` | Move source, write manifest sidecar, append hash-chained audit entry. | Archived document + audit |
 
-All **13** graph nodes appear above: the six phase rows account for `intake`, `classify`, `retry_classify`, `review_classify`, `extract`, `retry_extract`, `judge_verify`, `arbiter`, `boss_escalation`, `compile_report`, `catalog_write`, `archive` (12), plus **`human_review`** — the cross-cutting governance boundary that every phase can enter and that resumes into Extract. It has no phase of its own, so it is called out here rather than given a row; see [Human-review procedure](#4-human-review-procedure).
+All **13** graph nodes appear above: the six phase rows account for `intake`, `classify`, `retry_classify`, `review_classify`, `extract`, `retry_extract`, `judge_verify`, `arbiter`, `boss_escalation`, `compile_report`, `catalog_write`, `archive` (12), plus **`human_review`** — the cross-cutting governance boundary that every phase can enter and that resumes into Extract. It has no phase of its own, so it is called out here rather than given a row; see [Human-review procedure](#id-4.-human-review-procedure).
 
 **Auxiliary flows (outside the graph):**
 
@@ -202,7 +202,7 @@ archive/ # successful durable archive
 manifests/ # per-document manifests
 ```
 
-Operators should not manually move live documents between bins to force state transitions; routing belongs to the graph. Source: [`src/graph/routing.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/graph/routing.py).
+Do not move live documents between bins by hand to force a state change. The graph owns routing. Source: [`src/graph/routing.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/graph/routing.py).
 
 ## 9. Routine operations checklist
 

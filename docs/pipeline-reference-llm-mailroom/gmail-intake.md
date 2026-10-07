@@ -142,7 +142,7 @@ Attach:  claim_2026-03-14.pdf
 * Use descriptive filenames; the original filename rides the manifest, the audit chain, and the echo report.
 * Text-based PDFs (not scans) get the fastest, cheapest handling — see the capability handoff below.
 * Keep documents within the free triage input budget (\~12,000 characters of text) when you want the $0 lane to finish them; longer documents are automatically handed to the full paid pipeline.
-* Don't re-send a document "to try again" — every email is a new document. Recover parked documents from the review/failed bins (or the smoke-test tooling) instead; the Message-ID dedup prevents double-queuing of the same email, not of re-sent copies.
+* Do not re-send a document "to try again". Every email is a new document. Recover parked documents from the review/failed bins (or the smoke-test tooling) instead; the Message-ID dedup prevents double-queuing of the same email, not of re-sent copies.
 
 ***
 

@@ -85,7 +85,7 @@ deploy/models/
 2. The compose mount makes it available at `/models/llamafile/<file>` read-only.
 3. Point `LLAMAFILE_MODEL` at the **in-container** path, not the host path.
 
-The alternative, if you would rather not reference the host checkout, is to pre-seed a named volume once with `docker compose cp`.
+If you do not want to reference the host checkout, pre-seed a named volume once with `docker compose cp`.
 
 ## Run it
 
@@ -117,7 +117,7 @@ Service details: profile `local-llm` (shared with `src/config/docker`), containe
 
 ## Ollama instead
 
-Mode A also has an [Ollama](docker-deployment.md#mode-a--ollama-offline) path (`deploy/docker-compose.ollama.yml`, `DEFAULT_PROVIDER=ollama`, `OLLAMA_BASE_URL=http://ollama:11434/v1`). Both share the `local-llm` profile name, so they can be combined or swapped without renaming. Choosing between local runtimes is covered in [Local models](../local-models.md).
+Mode A also has an [Ollama](docker-deployment.md#mode-a-ollama-offline) path (`deploy/docker-compose.ollama.yml`, `DEFAULT_PROVIDER=ollama`, `OLLAMA_BASE_URL=http://ollama:11434/v1`). Both share the `local-llm` profile name, so they can be combined or swapped without renaming. Choosing between local runtimes is covered in [Local models](../local-models.md).
 
 ## Related
 

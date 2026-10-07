@@ -64,4 +64,4 @@ All three are fully synthetic with no real PII. `coverage_determination` is **pe
 * `insured_party` on SynPUF rows is a deterministic pseudonym from `DESYNPUF_ID`.
 * Synthetic-data caveats apply to every rendered EOB.
 
-Strata table: [Classes and strata](../classes-and-strata.md#insurance_claim--1100-rows-333).
+Strata table: [Classes and strata](../classes-and-strata.md#insurance_claim-1-100-rows-33.3).

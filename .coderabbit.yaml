@@ -61,7 +61,8 @@ reviews:
         This file is the maintenance contract for this repository. Check that every
         rule matches the current layout (docs/SUMMARY.md, gitbook-docs.yaml) and the
         published pages. Flag any rule that names a directory, script or section that
-        does not exist. This site has no Changelog section.
+        does not exist. The site has a generated Changelog section under docs/changelog/.
+        Anchors must use GitBook heading ids (as on the live site), not GitHub ids.
     - path: "gitbook-docs.yaml"
       instructions: |
         Never change the section or space keys. Check that content.directory and

@@ -28,7 +28,7 @@ Every issue gets four label families: `type/*`, `domain/*`, `priority/*`, `statu
 ## Its documentation
 
 * [README](https://github.com/LLM-Mailroom-Services/mailroom-issues/blob/main/README.md)
-* [docs/ROUTING.md](https://github.com/LLM-Mailroom-Services/mailroom-issues/blob/main/docs/ROUTING.md) — where an issue should be filed
+* [docs/ROUTING.md](https://github.com/LLM-Mailroom-Services/mailroom-issues/blob/main/docs/ROUTING.md) — where to file an issue
 * [docs/LABELS.md](https://github.com/LLM-Mailroom-Services/mailroom-issues/blob/main/docs/LABELS.md) — the label taxonomy
 * [docs/LIFECYCLE.md](https://github.com/LLM-Mailroom-Services/mailroom-issues/blob/main/docs/LIFECYCLE.md) — how an issue moves from triage to close
 * [docs/CONSTELLATION.md](https://github.com/LLM-Mailroom-Services/mailroom-issues/blob/main/docs/CONSTELLATION.md) — the repository map

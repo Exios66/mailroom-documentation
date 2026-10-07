@@ -13,7 +13,7 @@ Live site: **https://mailroom-inc.gitbook.io/the-digital-mailroom/**
 | It **is** | It **is not** |
 | --- | --- |
 | The source of the published GitBook site | The pipeline source — that is [`Exios66/llm-mailroom`](https://github.com/Exios66/llm-mailroom) |
-| Docs-only: Markdown, the site config, and site art | A home for code, notebooks, deploy configs, or CI |
+| Docs-only: Markdown, the site config, site art, generated charts, and three scripts (site checker, style report, chart builder) | A home for pipeline code, notebooks, deploy configs, or CI |
 | The **one** GitBook deployment for the whole constellation | A second deployment running alongside `llm-mailroom`'s stale one |
 | A standalone repository — direct commits here are expected and correct | A `packages/*` mirror of the monorepo (see [Governance](#governance)) |
 
@@ -27,13 +27,19 @@ Live site: **https://mailroom-inc.gitbook.io/the-digital-mailroom/**
 mailroom-documentation/
 ├── gitbook-docs.yaml          # Site-wide Git Sync config. Project directory = repo root.
 ├── .gitattributes             # `* text=auto` (LF normalization)
+├── .coderabbit.yaml           # CodeRabbit review rules for pull requests
+├── scripts/
+│   ├── check_site.py          # Pre-push checker: config shape, SUMMARY.md, links, anchors
+│   ├── check_style.py         # STE style report (long sentences, contractions, vague words)
+│   └── build_charts.py        # Writes the light/dark chart SVGs in docs/.gitbook/assets/
+├── plans/                     # Implementation plans for docs work (not published)
 ├── README.md                  # THIS FILE — repo orientation (not published)
 ├── AGENTS.md                  # Deployment/update/config law (not published)
 └── docs/                       # The entire GitBook space (content.directory: ./docs)
     ├── .gitbook.yaml          # Space content config: root ./, README.md, SUMMARY.md
     ├── README.md              # THE SITE LANDING PAGE (docs/, not root)
     ├── SUMMARY.md             # Table of contents — only listed pages are published
-    ├── .gitbook/assets/       # GitBook-referenced images: banner.png, fumi.gif, hoot-icon.png
+    ├── .gitbook/assets/       # GitBook-referenced images: banner.png, fumi.gif, hoot-icon.png, chart-*.svg (generated)
     ├── assets/                # SOURCE OF TRUTH for site art (the Fumi + Hermes set)
     │   ├── README.md          # Asset inventory
     │   ├── banner.png         # Masthead banner
@@ -116,16 +122,20 @@ The three knobs people confuse (only `path` is a URL):
 
 1. **Every page must be listed in `docs/SUMMARY.md`.** A file that is not listed is not published. This is the single most common "my page is missing" cause.
 2. **Use relative links between site pages** (`../mailroom-dataset/mailroom-dataset.md`) and **full GitHub URLs** for anything in another repository.
-3. **Link, don't copy.** Each repository's own README/docs stay canonical; a guide here summarizes and links, never duplicates.
+3. **Link, do not copy.** Each repository's own README/docs stay canonical; a guide here summarizes and links, never duplicates.
 4. **Date facts that drift.** Versions, pins, and counts carry an "as of" date.
-5. **Assets:** `docs/assets/` is the source of truth; `docs/.gitbook/assets/` holds the copies GitBook pages actually reference. Keep them in sync when art changes.
+5. **Assets:** `docs/assets/` is the source of truth; `docs/.gitbook/assets/` holds the copies GitBook pages actually reference. Keep them in sync when art changes. The `chart-*.svg` files are the exception: `scripts/build_charts.py` writes them, and they have no copy in `docs/assets/`.
 6. **Never hand-edit the generated Changelog** — regenerate it with the recipe in [Maintaining this site](docs/about-this-site/maintaining.md#changelog).
+7. **Link to headings with GitBook ids, not GitHub ids** — copy the id from the live page ([`AGENTS.md`](AGENTS.md) §7.3).
+8. **Run the checker before every push:** `uv run --no-project --with pyyaml python3 scripts/check_site.py`. The last line must read `CHECK-OK`.
 
 ### Common tasks
 
 | Task | Do this |
 | --- | --- |
-| **Add a page** | Create the `.md` under the right `docs/<section>/` folder, add a line to `docs/SUMMARY.md`, push to `main`. |
+| **Check before pushing** | `uv run --no-project --with pyyaml python3 scripts/check_site.py` — fix every `ERROR`; confirm any `UNVERIFIED` anchor after the merge. Then `python3 scripts/check_style.py docs/<page>.md -v` on each page you changed. |
+| **Update a chart** | Change the page table and the matching data block in `scripts/build_charts.py`, run `python3 scripts/build_charts.py`, and commit the page, script and SVGs together (`AGENTS.md` §10.9). |
+| **Add a page** | Create the `.md` under the right `docs/<section>/` folder, add a line to `docs/SUMMARY.md`, run the checker, push to `main`. |
 | **Move/rename a page** | Move the file, update its `SUMMARY.md` line and any relative links, push. (GitBook follows the path, not the file — no redirect is automatic.) |
 | **Add or refresh art** | Drop the file in `docs/assets/` (or `docs/assets/mascot/`), copy the GitBook-referenced variant into `docs/.gitbook/assets/`, update the page's relative `src`, push. Regenerating the mascot itself is done in `llm-mailroom` (`src/scripts/build_mascot.py`). |
 | **Change the site title** | Edit `site.title` (and the section/first space `title`) in `gitbook-docs.yaml`. Do **not** touch any `key`. |
