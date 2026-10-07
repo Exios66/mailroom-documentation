@@ -12,6 +12,17 @@ The Mailroom is a document-processing system for legal and business paperwork. A
 
 Every step is traced (Langfuse, Braintrust or Arize Phoenix), every prompt is versioned, and every claim about quality is backed by a deterministic score.
 
+### Why the pipeline is shaped this way
+
+The design follows from one constraint: a wrong answer about a contract or an insurance claim costs more than a slow answer. Four decisions fall out of it.
+
+* **Spend model calls only where they pay for themselves.** A clean document costs exactly two LLM generations: one by the sorter, one by the class specialist. Transcription, guardrails, the report, the catalog row and the audit entry are procedural code. The judge and the arbiter run only when an extraction lands in an ambiguous confidence band, so the expensive checks are reserved for the documents that need them.
+* **Make the confidence thresholds depend on the stakes.** The default gate sends a classification straight on at `0.97` or above and retries it below `0.88`. Contracts, merger agreements and insurance claims are held to a stricter `0.98` / `0.90`; corporate records (`0.96` / `0.86`) and correspondence (`0.95` / `0.85`) are held to a looser one. The values live in `config/taxonomy.yaml`, so changing a risk appetite is a config edit, not a code change.
+* **Never let a bad result pass silently.** Guardrails run after every LLM call. A violation does not raise an error; it lowers the confidence below the routing threshold, so the ordinary retry-or-review path handles it. A document that cannot be resolved lands in the `review` bin for a person, rather than being archived with a guess.
+* **Make the record trustworthy after the fact.** Each audit entry carries the hash of the one before it, so editing or deleting a past entry breaks the chain and `verify_chain` reports it. The model's work can be questioned later, and the log of what it did cannot be quietly rewritten.
+
+The same philosophy explains the optional ModernBERT fast path. It is *fail-open*: if the flag is off, the package is missing, or the model errors, intake continues with the deterministic clerk. A speed optimization is never allowed to become a new way for a document to fail.
+
 ## Why there are so many repositories
 
 The pipeline is only one part of the work. Around it sit the things a production LLM system needs: datasets with ground truth, a scoring library everyone agrees on, an experiment loop for prompts, an evaluation harness for each node, a cheaper ML classifier for easy documents, a way to run everything offline, and tools to watch it run. Each of those grew up as its own repository with its own release train.

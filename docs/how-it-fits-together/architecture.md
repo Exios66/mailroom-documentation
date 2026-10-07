@@ -52,6 +52,8 @@ flowchart TD
     PIPE -. "same doctrine, mirrored taxonomy" .-> AGENT
 ```
 
+How to read the diagram: a solid arrow is a hard dependency or a data flow that the receiving repo cannot work without. A dotted arrow is optional or doctrinal: the ModernBERT fast path can be switched off, and agent-mailroom mirrors the pipeline's taxonomy by convention rather than by importing it. Labels on the arrows name the coupling mechanism (a pin, a vendored copy, a path source, a trace), which tells you what breaks, and how, when the upstream side changes.
+
 All of these packages also live together in the [Digital-Mailroom](../repository-guides/repos/digital-mailroom.md) monorepo, which is where cross-repo changes are made. The diagram shows how the packages relate at runtime and release time, not where their code sits.
 
 ## The flows, one by one
