@@ -2,6 +2,16 @@
 
 Pick the path that matches what you came to do. Every path below can run without paid API keys first (mock mode), so you can see the machinery work before spending anything.
 
+| If you want to... | Take path |
+| --- | --- |
+| Contribute code across several repositories | 1 |
+| See a document move through the pipeline | 2 |
+| Run without any cloud model | 3 |
+| Measure how well one pipeline step performs | 4 |
+| Watch runs as they happen | 5 |
+| Score extraction output in your own code | 6 |
+| Deploy | 7 |
+
 Prerequisites for all paths: Python 3.11+, git, and [uv](https://docs.astral.sh/uv/) (pip works for the standalone repos).
 
 ## 1. Work across the whole constellation (recommended for contributors)
@@ -46,6 +56,8 @@ curl -X POST http://localhost:8000/v1/upload \
 curl http://localhost:8000/v1/status/{doc_id}
 curl http://localhost:8000/v1/audit/{doc_id}
 ```
+
+**What each command proves.** The `--mock` pilot confirms that the graph, storage and scoring wiring work, using a deterministic fake model, so it passes with no key and costs nothing. It says nothing about model quality. The upload call returns a `doc_id`; `status` shows how far that document has travelled, and `audit` returns its hash-chained history, one entry per stage. If a command fails with an import error, check that `PYTHONPATH=src` is set. If a real (non-mock) run fails immediately, the usual cause is a missing `OPENROUTER_API_KEY`.
 
 Every route is also mounted **without** the `/v1` prefix for backwards compatibility, but `/v1` is the current interface — see [API](../pipeline-reference-llm-mailroom/api.md).
 

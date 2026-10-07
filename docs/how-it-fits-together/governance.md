@@ -11,6 +11,16 @@ The constellation runs on a small set of shared rules. They exist so that severa
 * **Prompts are append-only.** New prompt versions are added; old ones are never edited in place.
 * **Pins are audited.** After an upstream release, the pin, the tag and the import-time version must agree.
 
+### What a change looks like in practice
+
+1. Read the board that owns the work and pick an `unassigned` card.
+2. Claim it before touching code, so the lane reads `assigned` or `in_progress` and nobody else starts the same job.
+3. Make the change, and run the tests for what you touched.
+4. Put the changelog entry in the same commit, and reference the card in the message (`DMR-0NN: <summary>`).
+5. Close the card only with evidence: green tests, a clean working tree and the commit hashes.
+
+The rules are mechanical on purpose. With several people and several AI agents sharing checkouts, "who owns this" and "is it really done" need answers that anyone can verify from the board and the git log, not from memory.
+
 ## Which board, which tracker
 
 | Work                                                                  | Where it is tracked                                                                                                                                                                                               | Card prefix  |
