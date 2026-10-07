@@ -18,9 +18,12 @@ llm-dojo-scoring replaced each project's local scoring code with one importable 
 | `id`          | Normalize, then exact match                                          |
 | `date`        | Parse to ISO, then exact match ("March 3, 2024" equals "03/03/2024") |
 | `money`       | Strip symbols, compare within one cent                               |
+| `label`       | Canonicalize, then exact match; no partial credit                    |
 | `name`        | Jaro-Winkler plus token-set ratio                                    |
 | `free_text`   | SQuAD-style token F1                                                 |
 | `entity_list` | Hungarian bipartite matching, then precision, recall and F1          |
+
+The `llm_dojo_scoring.intents` module holds the controlled `intent` vocabulary (`INTENT_LABELS`) and the `normalize_intent` mapper for `corporate_record`, `correspondence` and `insurance_claim`. The `production_prompts` catalog serves the five frozen v1 specialist prompts that llm-mailroom loads at runtime. The `production` family is a verbatim copy of the live llm-mailroom prompts, including the classification prompts, for dojo evaluation. The Sorter is not in the catalog; it stays on `sorter_v14` through `get_managed_prompt` (as of 2026-10-07).
 
 An optional embedding similarity "rescues" names and free text that are worded differently but mean the same thing. A blank prediction is never rescued.
 

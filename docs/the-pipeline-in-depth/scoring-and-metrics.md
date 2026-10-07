@@ -42,7 +42,7 @@ For the pipeline stages referenced below, see [Pipeline flowchart](flowchart.md)
 
 ### Field types
 
-Each field of each specialist schema has a scoring type, set in `doc_classes[].field_types` in [`config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml). For example, the `contract` class:
+Each field of each specialist schema has a scoring type, set in `doc_classes[].field_types` in [`config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml). For example, the `contract` class (the `intent` field of `corporate_record`, `correspondence` and `insurance_claim` has type `label`, as in `intent: label`):
 
 ```yaml
 field_types:
@@ -72,6 +72,7 @@ Every rule returns a score from 0 to 1. Source: [`llm_dojo_scoring/field_scoring
 | `id`                    | Uppercase, strip punctuation and whitespace, then exact match                                                                                                                                                                                                             | 1.0 or 0.0                                         |
 | `money`                 | Strip `$ € £` and commas, expand `K`/`M`/`B`, drop `USD`/ `DOLLARS`/ `EUROS`, parse to a float. Match when the difference is at most **0.01** (one cent). If either side does not parse, fall back to the `name` rule                                                     | 1.0 or 0.0 (or the `name` score)                   |
 | `date`                  | See the date rules below                                                                                                                                                                                                                                                  | 1.0, 0.67, 0.33 or 0.0 (or the `name` score)       |
+| `label`                 | Canonicalize both sides, then exact match. No partial credit. `score_label_field`. The scorer first maps `intent` through `normalize_intent` for the three classes that have a vocabulary | 1.0 or 0.0                                         |
 | `name`                  | Normalize (uppercase, strip punctuation and corporate suffixes such as `INC`, `LLC`, `LTD`). If all expected tokens appear in the prediction, score 1.0. Otherwise take the token-set ratio, and also Jaro-Winkler when the two share at least one token; keep the higher | 0.0 to 1.0                                         |
 | `free_text`             | SQuAD-style token F1 over lowercase token multisets                                                                                                                                                                                                                       | 0.0 to 1.0                                         |
 | `containment`           | Share of the **expected** text's tokens (stopwords removed) that appear in the prediction                                                                                                                                                                                 | 0.0 to 1.0                                         |
