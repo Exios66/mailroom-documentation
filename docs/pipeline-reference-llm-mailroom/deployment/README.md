@@ -211,7 +211,7 @@ HF_TOKEN=hf_... MAILROOM_API_TOKEN=change-me \
   PYTHONPATH=src python src/scripts/publish_space.py --repo Lucius-Morningstar/mailroom-producer
 ```
 
-Live Observatory (probed 2026-08-30): [`Lucius-Morningstar/mailroom-observatory`](https://huggingface.co/spaces/Lucius-Morningstar/mailroom-observatory) at `https://lucius-morningstar-mailroom-observatory.hf.space`. The matching producer Space was **not** on the Hub at that probe — publish it, then set The-Mailroom Space secrets to `https://lucius-morningstar-mailroom-producer.hf.space` and the same token. Keep the producer Space **public** so the Observatory can HTTP-call it; gate every non-health route with the bearer token. Space disk under `/data` is ephemeral — use the compose volume (or a VPS) when parked REVIEW files must survive sleep.
+Observatory Space (re-probed 2026-10-06): [`Lucius-Morningstar/mailroom-observatory`](https://huggingface.co/spaces/Lucius-Morningstar/mailroom-observatory) at `https://lucius-morningstar-mailroom-observatory.hf.space` — **paused**, returning *"The space is paused, ask a maintainer to restart it"*. The matching producer Space is still **not** on the Hub — publish it with the command above, then set The-Mailroom Space secrets to `https://lucius-morningstar-mailroom-producer.hf.space` and the same token. Keep the producer Space **public** so the Observatory can HTTP-call it; gate every non-health route with the bearer token. Space disk under `/data` is ephemeral — use the compose volume (or a VPS) when parked REVIEW files must survive sleep.
 
 See [`deploy/space/SPACE_README.md`](https://github.com/Exios66/llm-mailroom/tree/main/deploy/space/SPACE_README.md).
 

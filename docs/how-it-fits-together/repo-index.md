@@ -55,5 +55,6 @@ These live under the `LLM-Mailroom-Services` organization and track an `Exios66/
 | eval-environment viewer | [https://eval-environment.vercel.app](https://eval-environment.vercel.app)                                     |
 | Experiment log site     | [https://exios66.github.io/llm-entity-extraction/](https://exios66.github.io/llm-entity-extraction/)           |
 | The-Mailroom            | [https://exios66.github.io/The-Mailroom/](https://exios66.github.io/The-Mailroom/)                             |
-| Producer Space          | [https://lucius-morningstar-mailroom-producer.hf.space](https://lucius-morningstar-mailroom-producer.hf.space) |
+| Observatory Space       | [`Lucius-Morningstar/mailroom-observatory`](https://huggingface.co/spaces/Lucius-Morningstar/mailroom-observatory) — **paused as of 2026-10-06** (Hub returns "space is paused, ask a maintainer to restart it"); restart before relying on it |
+| Producer Space          | **Not published.** [`lucius-morningstar-mailroom-producer.hf.space`](https://lucius-morningstar-mailroom-producer.hf.space) does not exist on the Hub. Publish with `src/scripts/publish_space.py`, then set The-Mailroom's `MAILROOM_PIPELINE_URL`. See [Deployment](../pipeline-reference-llm-mailroom/deployment/README.md) |
 | Hugging Face datasets   | [https://huggingface.co/Lucius-Morningstar](https://huggingface.co/Lucius-Morningstar)                         |

@@ -346,12 +346,16 @@ Production runs additionally emit self-evident scores with no ground truth (`par
 [The-Mailroom](https://github.com/Exios66/The-Mailroom) is the Langfuse-only visualizer (pixel console, hosted Observatory, TUI). The hosted floor is a Docker Space (`mailroom-observatory`, port 7860). Inbox **Queue a document** and REVIEW resolve still need **this** API as a reachable producer ([PR #30](https://github.com/Exios66/The-Mailroom/pull/30)):
 
 ```
+# Set after publishing the producer Space — the URL below is the target name,
+# not a live endpoint (see the status note below).
 MAILROOM_PIPELINE_URL=https://lucius-morningstar-mailroom-producer.hf.space
 MAILROOM_PIPELINE_TOKEN=$MAILROOM_API_TOKEN
 MAILROOM_PIPELINE_API_PREFIX=/v1
 ```
 
-Live Observatory: [`Lucius-Morningstar/mailroom-observatory`](https://huggingface.co/spaces/Lucius-Morningstar/mailroom-observatory) (`https://lucius-morningstar-mailroom-observatory.hf.space`). `127.0.0.1:8000` works only when both processes share a host. Observatory `POST /api/inbox/enqueue` → producer `POST /v1/upload` (202). REVIEW → `POST /v1/review/{doc_id}/resolve`. `GET /health` advertises `producer`, `review_resolve`, and `inbox_upload`. Pairing checklist: [`deploy/space/PAIRING.md`](https://github.com/Exios66/llm-mailroom/tree/main/deploy/space/PAIRING.md).
+> **Status 2026-10-06.** Neither Space is serving traffic: `lucius-morningstar-mailroom-producer.hf.space` does not exist on the Hub (publish it with `src/scripts/publish_space.py`), and the Observatory is **paused** — `lucius-morningstar-mailroom-observatory.hf.space` returns *"The space is paused, ask a maintainer to restart it"*. The pairing contract below is what the code expects; it is not a live integration until both are up.
+
+Observatory Space: [`Lucius-Morningstar/mailroom-observatory`](https://huggingface.co/spaces/Lucius-Morningstar/mailroom-observatory) (`https://lucius-morningstar-mailroom-observatory.hf.space`). `127.0.0.1:8000` works only when both processes share a host. Observatory `POST /api/inbox/enqueue` → producer `POST /v1/upload` (202). REVIEW → `POST /v1/review/{doc_id}/resolve`. `GET /health` advertises `producer`, `review_resolve`, and `inbox_upload`. Pairing checklist: [`deploy/space/PAIRING.md`](https://github.com/Exios66/llm-mailroom/tree/main/deploy/space/PAIRING.md).
 
 ## Guardrails
 

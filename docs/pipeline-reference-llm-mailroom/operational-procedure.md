@@ -8,47 +8,47 @@ The Mailroom is a **13-node LangGraph state machine executed once per document**
 
 ```mermaid
 flowchart TD
-    A["1 · INGEST\ningest specialist: transcribe + clean + prepare"] --> B["2 · CLASSIFY\nSorterAgent + confidence routing"]
-    B -->|high confidence| C["3 · EXTRACT\nspecialist dispatch"]
-    B -->|retry / reviewer / unknown| H["HUMAN REVIEW\napprove · correct · reject"]
-    H -->|approved / corrected| C
-    C -->|clean result| D["4 · COMPILE\ndeterministic matter record"]
-    C -->|low / invalid| C2["retry_extract"]
-    C2 -->|passes| D
-    C -->|ambiguous completeness| J["JUDGE → ARBITER\ncompleteness + fix-list"]
-    J -->|stand| D
-    J -->|re-extract| C2
-    J -->|unresolvable| H
-    C -->|matter conflict| X["BOSS ESCALATION\nconflict adjudication"]
-    X -->|approved| D
-    X -->|review| H
-    D -->|success| E["5 · CATALOG\nSQLite documents + matters"]
-    D -->|compile failure| H
-    E --> F["6 · ARCHIVE\nfile + manifest + hash-chain audit"]
-    F --> R["RELATIONS\npost-archive association scan"]
-    H -->|rejected| Z["FAILED"]
+ A["1 · INGEST\ningest specialist: transcribe + clean + prepare"] --> B["2 · CLASSIFY\nSorterAgent + confidence routing"]
+ B -->|high confidence| C["3 · EXTRACT\nspecialist dispatch"]
+ B -->|retry / reviewer / unknown| H["HUMAN REVIEW\napprove · correct · reject"]
+ H -->|approved / corrected| C
+ C -->|clean result| D["4 · COMPILE\ndeterministic matter record"]
+ C -->|low / invalid| C2["retry_extract"]
+ C2 -->|passes| D
+ C -->|ambiguous completeness| J["JUDGE → ARBITER\ncompleteness + fix-list"]
+ J -->|stand| D
+ J -->|re-extract| C2
+ J -->|unresolvable| H
+ C -->|matter conflict| X["BOSS ESCALATION\nconflict adjudication"]
+ X -->|approved| D
+ X -->|review| H
+ D -->|success| E["5 · CATALOG\nSQLite documents + matters"]
+ D -->|compile failure| H
+ E --> F["6 · ARCHIVE\nfile + manifest + hash-chain audit"]
+ F --> R["RELATIONS\npost-archive association scan"]
+ H -->|rejected| Z["FAILED"]
 
-    GMAIL(["Gmail triage\nfree model swarm"]) -.->|single-doc| B
-    GMAIL -.->|multi-doc / over-budget| A
+ GMAIL(["Gmail triage\nfree model swarm"]) -.->|single-doc| B
+ GMAIL -.->|multi-doc / over-budget| A
 ```
 
 ### Six operator-visible phases
 
-| Phase           | Graph nodes                                                              | Operator meaning                                                                                                                                    | Primary artifact             |
+| Phase | Graph nodes | Operator meaning | Primary artifact |
 | --------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| **1. Intake**   | `intake`                                                                 | Claim file, ingest specialist transcribes PDFs/images, deterministic intake clerk normalizes text, gated LLM triage/clean/prepare, create manifest. | Manifest                     |
-| **2. Classify** | `classify`, `retry_classify`, `review_classify`                          | Determine a live class and confidence; ambiguous/unknown results are not silently remapped.                                                         | Classification state + trace |
-| **3. Extract**  | `extract`, `retry_extract`, `judge_verify`, `arbiter`, `boss_escalation` | Dispatch specialist, validate output, resolve ambiguity, adjudicate conflicts.                                                                      | Structured extraction        |
-| **4. Compile**  | `compile_report`                                                         | Deterministically assemble the matter record. **No reporter LLM call.**                                                                             | Matter record                |
-| **5. Catalog**  | `catalog_write`                                                          | Persist document/matter metadata and extracted data.                                                                                                | SQLite/Postgres rows         |
-| **6. Archive**  | `archive`                                                                | Move source, write manifest sidecar, append hash-chained audit entry.                                                                               | Archived document + audit    |
+| **1. Intake** | `intake` | Claim file, ingest specialist transcribes PDFs/images, deterministic intake clerk normalizes text, gated LLM triage/clean/prepare, create manifest. | Manifest |
+| **2. Classify** | `classify`, `retry_classify`, `review_classify` | Determine a live class and confidence; ambiguous/unknown results are not silently remapped. | Classification state + trace |
+| **3. Extract** | `extract`, `retry_extract`, `judge_verify`, `arbiter`, `boss_escalation` | Dispatch specialist, validate output, resolve ambiguity, adjudicate conflicts. | Structured extraction |
+| **4. Compile** | `compile_report` | Deterministically assemble the matter record. **No reporter LLM call.** | Matter record |
+| **5. Catalog** | `catalog_write` | Persist document/matter metadata and extracted data. | SQLite/Postgres rows |
+| **6. Archive** | `archive` | Move source, write manifest sidecar, append hash-chained audit entry. | Archived document + audit |
 
 **Auxiliary flows (outside the graph):**
 
 * **Gmail triage lane**: free OpenRouter model handles single-document Gmail uploads (classification + key extraction + archive) without paid agents. Multi-document emails and over-budget documents route to the full pipeline.
 * **Relations clerk**: post-archive deterministic association scan (same-matter, keyword Jaccard, party overlap, embedding cosine) with optional LLM judgment for ambiguous near-misses.
 
-The current design has two happy-path LLM generations: classification and extraction; report compilation is procedural. fileciteturn8file0L8-L24
+The current design has two happy-path LLM generations: classification and extraction; report compilation is procedural. Source: [`agents/reporter.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/agents/reporter.py) and the [Agents](agents.md) page.
 
 ## 2. Classification procedure
 
@@ -56,22 +56,22 @@ The current design has two happy-path LLM generations: classification and extrac
 2. `intake` creates the manifest and performs deterministic intake normalization.
 3. The sorter assigns a live class: `contract`, `merger_agreement`, `corporate_record`, `correspondence`, or `insurance_claim`.
 4. `unknown`, retired, empty, or unsupported labels go to human review; they are **not** coerced into a nearby class.
-5. Current global defaults are `high = 0.97`, `low = 0.88`, `retry_max = 2`; class-specific overrides take precedence. fileciteturn9file0L2-L6
+5. Current global defaults are `high = 0.97`, `low = 0.88`, `retry_max = 2`; class-specific overrides take precedence. Source: [`src/config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml) (`confidence` and `retry` blocks).
 6. High-confidence live classes proceed to extraction.
 7. Medium-band results receive a classification retry; an exhausted medium band can receive the Lane A reviewer second opinion.
 8. Results still below the low threshold are parked for human review after the retry budget.
 
 ### Current class-specific thresholds
 
-| Class              | High |  Low | Judge-band high |
+| Class | High | Low | Judge-band high |
 | ------------------ | ---: | ---: | --------------: |
-| `contract`         | 0.98 | 0.90 |            0.97 |
-| `merger_agreement` | 0.98 | 0.90 |            0.97 |
-| `insurance_claim`  | 0.98 | 0.90 |            0.97 |
-| `corporate_record` | 0.96 | 0.86 |            0.94 |
-| `correspondence`   | 0.95 | 0.85 |            0.92 |
+| `contract` | 0.98 | 0.90 | 0.97 |
+| `merger_agreement` | 0.98 | 0.90 | 0.97 |
+| `insurance_claim` | 0.98 | 0.90 | 0.97 |
+| `corporate_record` | 0.96 | 0.86 | 0.94 |
+| `correspondence` | 0.95 | 0.85 | 0.92 |
 
-These values live in `src/config/taxonomy.yaml`; operators should change configuration rather than embed routing constants in code. fileciteturn9file0L2-L6
+These values live in `src/config/taxonomy.yaml`; operators should change configuration rather than embed routing constants in code. Source: [`src/config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml).
 
 ## 3. Extraction procedure
 
@@ -82,9 +82,9 @@ These values live in `src/config/taxonomy.yaml`; operators should change configu
 5. A matter-level conflict routes to `boss_escalation`; conflicting source values are not silently resolved by recency or confidence.
 6. An extraction in the configured ambiguous completeness band enters the Judge/Arbiter lane.
 
-Current Judge/Arbiter controls include `arbiter_retry_max = 2` and `judge_max_passes = 3`. The Judge checks completeness; the Arbiter can stand the result, order re-extraction, or send the matter to human review. fileciteturn9file0L2-L6
+Current Judge/Arbiter controls include `arbiter_retry_max = 2` and `judge_max_passes = 3`. The Judge checks completeness; the Arbiter can stand the result, order re-extraction, or send the matter to human review. Source: [`src/config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml) (`judge` / `arbiter` blocks).
 
-The field scorer uses deterministic, type-aware matching and factuality verification. Its configured global ambiguous band is `[0.50, 0.85]`, with type-specific overrides. fileciteturn9file0L2-L6
+The field scorer uses deterministic, type-aware matching and factuality verification. Its configured global ambiguous band is `[0.50, 0.85]`, with type-specific overrides. Source: [llm-dojo-scoring `field_scoring.py` v0.19.1](https://github.com/Exios66/llm-dojo-scoring/blob/v0.19.1/llm_dojo_scoring/field_scoring.py); band table in [Configuration](configuration.md).
 
 ## 4. Human-review procedure
 
@@ -101,7 +101,7 @@ Human review is a **governance boundary**, not merely an error queue.
 * Boss escalation requires human review.
 * Report compilation fails.
 
-The review filesystem bin is the durable parking mechanism across process restarts; the in-memory LangGraph checkpoint is not assumed to survive a restart. fileciteturn5file1L29-L47
+The review filesystem bin is the durable parking mechanism across process restarts; the in-memory LangGraph checkpoint is not assumed to survive a restart. Source: [`src/pipeline/watcher.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/pipeline/watcher.py) and [`src/graph/routing.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/graph/routing.py).
 
 ### Operator review sequence
 
@@ -114,7 +114,7 @@ The review filesystem bin is the durable parking mechanism across process restar
 * **Correct/reconcile extraction** — record the authoritative field decision/notes; resume.
 * **Reject** — terminate the run into `failed` when processing should not continue.
 
-**3 — Record rationale.** Human decisions are attributable and auditable; the resolution is appended to the audit trail. fileciteturn5file5L97-L114
+**3 — Record rationale.** Human decisions are attributable and auditable; the resolution is appended to the audit trail. Source: [`src/schemas/audit.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/schemas/audit.py) and [`src/pipeline/review_resolve.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/pipeline/review_resolve.py).
 
 **4 — Resume.** Use the review-resolution API. If the original checkpoint is unavailable, `resume_from_review` reconstructs from the manifest and parked source.
 
@@ -139,42 +139,42 @@ After report assembly:
 5. Append the hash-chained audit entry.
 6. Mark the manifest `ARCHIVED`.
 
-The architecture treats filesystem bins as human-legible state and SQLite/catalog plus the hash-chained audit log as durable records. fileciteturn3file0L2-L2
+The architecture treats filesystem bins as human-legible state and SQLite/catalog plus the hash-chained audit log as durable records. Source: [`src/schemas/audit.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/schemas/audit.py) and [`src/schemas/manifest.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/schemas/manifest.py).
 
 ## 7. Operator API
 
-| Endpoint                            | Use                                |
+| Endpoint | Use |
 | ----------------------------------- | ---------------------------------- |
-| `GET /v1/health`                    | API/watcher health                 |
-| `POST /v1/upload`                   | Submit a document                  |
-| `GET /v1/queue`                     | Inspect queued/in-flight documents |
-| `GET /v1/review/queue`              | Inspect human-review work          |
-| `POST /v1/review/{doc_id}/resolve`  | Resolve a review item              |
-| `GET /v1/documents/{doc_id}/source` | Retrieve parked source             |
-| `GET /v1/status/{doc_id}`           | Inspect one document               |
-| `GET /v1/matters/{matter_id}`       | Inspect a matter                   |
-| `GET /v1/audit/{doc_id}`            | Inspect the audit trail            |
-| `GET /v1/ops/status`                | Operational health/metrics         |
-| `POST /v1/ops/sweep`                | Run ops sweep                      |
-| `POST /v1/ops/resume`               | Resume after an operational pause  |
+| `GET /v1/health` | API/watcher health |
+| `POST /v1/upload` | Submit a document |
+| `GET /v1/queue` | Inspect queued/in-flight documents |
+| `GET /v1/review/queue` | Inspect human-review work |
+| `POST /v1/review/{doc_id}/resolve` | Resolve a review item |
+| `GET /v1/documents/{doc_id}/source` | Retrieve parked source |
+| `GET /v1/status/{doc_id}` | Inspect one document |
+| `GET /v1/matters/{matter_id}` | Inspect a matter |
+| `GET /v1/audit/{doc_id}` | Inspect the audit trail |
+| `GET /v1/ops/status` | Operational health/metrics |
+| `POST /v1/ops/sweep` | Run ops sweep |
+| `POST /v1/ops/resume` | Resume after an operational pause |
 
-The repository API documentation identifies this `/v1` layout as the current interface. fileciteturn10file0L2-L35
+The repository API documentation identifies this `/v1` layout as the current interface. Source: the [API reference](api.md) on this site, and [`src/api/main.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/api/main.py) upstream.
 
 ## 8. Filesystem bins
 
 ```
 pipeline/
-├── inbox/       # new work
-├── processing/  # atomically claimed work
-├── classified/  # classification/working artifacts when used
-├── review/      # durable human-review parking
-└── failed/      # terminal rejected/failed work
+├── inbox/ # new work
+├── processing/ # atomically claimed work
+├── classified/ # classification/working artifacts when used
+├── review/ # durable human-review parking
+└── failed/ # terminal rejected/failed work
 
-archive/         # successful durable archive
-manifests/       # per-document manifests
+archive/ # successful durable archive
+manifests/ # per-document manifests
 ```
 
-Operators should not manually move live documents between bins to force state transitions; routing belongs to the graph. fileciteturn5file2L49-L64
+Operators should not manually move live documents between bins to force state transitions; routing belongs to the graph. Source: [`src/graph/routing.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/graph/routing.py).
 
 ## 9. Routine operations checklist
 
@@ -205,8 +205,8 @@ Operators should not manually move live documents between bins to force state tr
 2. **Confidence is routing evidence, not proof.** Acceptance also depends on deterministic guards and source evidence.
 3. **Conflicts require adjudication.** Do not resolve by recency alone.
 4. **Audit everything.** Human and terminal decisions must remain reconstructable.
-5. **Do not assume checkpoints survive restart.** Review bin + manifest are the durable recovery path. fileciteturn5file1L29-L47
-6. **Keep operational knobs in `src/config/taxonomy.yaml`.** fileciteturn9file0L2-L6
+5. **Do not assume checkpoints survive restart.** Review bin + manifest are the durable recovery path. Source: [`src/pipeline/watcher.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/pipeline/watcher.py).
+6. **Keep operational knobs in `src/config/taxonomy.yaml`.** Source: [`src/config/taxonomy.yaml`](https://github.com/Exios66/llm-mailroom/blob/main/src/config/taxonomy.yaml).
 
 ## Visual reference
 

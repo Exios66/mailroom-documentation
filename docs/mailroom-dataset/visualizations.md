@@ -4,7 +4,7 @@ Static PNGs and interactive Plotly charts from [Exios66/Mailroom-Corpus-EDA](htt
 
 Regenerate with `python run_all.py --phases P3 P4` in Mailroom-Corpus-EDA. Figure numbers match `reports/figures/` and `reports/SUMMARY_REPORT.md`.
 
-PNG base: `https://raw.githubusercontent.com/Exios66/Mailroom-Corpus-EDA/main/reports/figures/`. Interactive HTML: GitHub Pages copies of [`reports/figures_interactive/`](https://github.com/Exios66/Mailroom-Corpus-EDA/tree/main/reports/figures_interactive) (18 files). Site: [exios66.github.io/Mailroom-Corpus-EDA](https://exios66.github.io/Mailroom-Corpus-EDA/).
+Figures are tracked in [`reports/figures/`](https://github.com/Exios66/Mailroom-Corpus-EDA/tree/main/reports/figures) (30 PNGs) and embedded below from the `raw.githubusercontent.com` form of that path. Interactive HTML: GitHub Pages copies of [`reports/figures_interactive/`](https://github.com/Exios66/Mailroom-Corpus-EDA/tree/main/reports/figures_interactive) (18 files). Site: [exios66.github.io/Mailroom-Corpus-EDA](https://exios66.github.io/Mailroom-Corpus-EDA/).
 
 {% hint style="info" %}
 GitBook strips page scripts, so Plotly charts run inside iframes pointed at `exios66.github.io`. If a frame is blank, open the linked HTML.
