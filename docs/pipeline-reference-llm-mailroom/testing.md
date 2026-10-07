@@ -7,11 +7,19 @@ tests/
 ├── conftest.py                  # Shared fixtures and mocks
 ├── test_agents/
 │   ├── __init__.py
+│   ├── test_base.py             # BaseAgent contract
 │   ├── test_sorter.py           # Sorter agent unit tests
-│   └── test_specialists.py      # All specialist + Boss unit tests
+│   ├── test_specialists.py      # All specialist + Boss unit tests
+│   └── test_prompt_calibration.py
 ├── test_routing.py              # Confidence-based routing logic
 ├── test_audit_log.py            # Hash-chain integrity tests
 ├── test_pipeline_e2e.py         # End-to-end pipeline tests
+├── test_bert_intake.py          # ModernBERT fast-path lane (fail-open)
+├── test_merger_agreement_specialist.py
+├── test_gateway_tiers.py        # Mode G tier routing (LiteLLM + Modal)
+├── test_smoke_modal_tiers.py    # network-free tier contract
+├── test_status_notify.py        # watchdog / status email
+└── ...                          # ~95 modules in total; `pytest --collect-only -q` lists them
 └── fixtures/
     ├── contract/                # 3 sample contracts (MSA, NDA, ambiguous)
     ├── corporate_record/        # 2 sample corp records (bylaws, resolution)
@@ -58,7 +66,7 @@ pytest -v -s
 * Contracts Specialist: extraction accuracy, confidence scoring
 * Corporate Records Specialist: entity/record extraction
 * Correspondence Specialist: action item extraction
-* Compliance Specialist: filing type identification
+* Merger Agreement Specialist: MAUD consideration, parties, clauses
 * Insurance Claims Specialist: claim extraction, parse-error lane
 * Boss Agent: adjudication decisions, system metrics analysis
 
@@ -66,7 +74,7 @@ All LLM calls are **mocked** — tests assert schema conformance and confidence-
 
 ### Routing Tests (`test_routing.py`)
 
-**33 tests** covering every conditional edge:
+**38 tests** covering every conditional edge:
 
 * High confidence → proceed
 * Low confidence → retry → retry again → human review
@@ -76,7 +84,7 @@ All LLM calls are **mocked** — tests assert schema conformance and confidence-
 
 ### Audit Log Tests (`test_audit_log.py`)
 
-**11 tests** covering:
+**14 tests** covering:
 
 * Hash computation and chaining
 * Chain verification (valid chains)

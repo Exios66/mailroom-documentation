@@ -4,7 +4,7 @@ Measured GPU and specialist-grid results from [Exios66/local-mailroom-sandbox](h
 
 Parent guide: [local-mailroom-sandbox](./). Dedicated manuals: [Documentation](local-mailroom-sandbox-docs.md).
 
-The interactive hub is [`reports/dashboard/mailroom-reports.html`](https://github.com/Exios66/local-mailroom-sandbox/blob/main/reports/dashboard/mailroom-reports.html) (tabs: Overview · Specialists · Serving · API models · Modal vs API · Classifier · Data quality). Cross-repo markdown + SVG copies are published from that hub into [mailroom-issues/reports](https://github.com/LLM-Mailroom-Services/mailroom-issues/tree/main/reports) and the static site [https://llm-mailroom-services.github.io/mailroom-issues/](https://llm-mailroom-services.github.io/mailroom-issues/).
+The interactive hub is [`reports/dashboard/mailroom-reports.html`](https://github.com/Exios66/local-mailroom-sandbox/blob/main/reports/dashboard/mailroom-reports.html) (tabs: Overview · Specialists · Serving · API models · Modal vs API · Classifier · ML diagnostics · Data quality). Cross-repo markdown + SVG copies are published from that hub into [mailroom-issues/reports](https://github.com/LLM-Mailroom-Services/mailroom-issues/tree/main/reports) and the static site [https://llm-mailroom-services.github.io/mailroom-issues/](https://llm-mailroom-services.github.io/mailroom-issues/).
 
 ## SAND-37 — specialist grid score and cost
 
@@ -14,14 +14,16 @@ Key findings from the master card:
 
 1. **2×L4 at C32 raises throughput +99% at +0.4% cost per document** on the same 250 documents (Experiment 2 → 3). Median latency rises ×1.4–1.8. GPU count and client concurrency changed together.
 2. **Larger runs cost less per document.** n = 100 vs n = 50 cuts GPU cost per document 19% on the four unchanged specialists (Experiment 3 → 4); 1 of 400 failed (0.25%).
-3. **Merger is the quality gap; the † settings narrow it.** MAUD accuracy 0.035 → 0.140 and coverage 23% → 69% on the same 50 agreements, at 4.5× GPU cost per agreement.
+3. **Merger is the quality gap; the † settings narrow it.** MAUD accuracy 0.035 → 0.140 and coverage 23% → 69% on the same 50 agreements (35 better, 1 worse), at 4.5× GPU cost per agreement.
 
-| Experiment | Posture        | GPUs | Concurrency |     Docs / class |
-| ---------- | -------------- | ---: | ----------: | ---------------: |
-| 1          | 1×L4 C8 n=20   |    1 |           8 |               20 |
-| 2          | 1×L4 C8 n=50   |    1 |           8 |               50 |
-| 3          | 2×L4 C32 n=50  |    2 |          32 |               50 |
-| 4          | 2×L4 C32 n=100 |    2 |          32 | 100 (merger 50†) |
+**SAND-040 (Experiment 4)** ran on one 32K-window deploy: correspondence, insurance claims and corporate records 100/100 ok, contracts 99/100, merger † 50/50. The † merger cell reads each whole agreement in chunks (47,000-character windows, 6,500 overlap) with the `merger_agreement_specialist_maud_v1` prompt, Qwen3 sampling (temperature 0.7, top_p 0.8, top_k 20, presence penalty 1.0) and a 6,144-token cap, so its p50 latency is about 1,044 s against 92 s for the head-and-tail read. The earlier 64K YaRN validation probes appear only as a matched-document appendix in the master appendix, never in the pooled columns.
+
+| Experiment | Board card | Posture        | GPUs | Concurrency |     Docs / class |
+| ---------- | ---------- | -------------- | ---: | ----------: | ---------------: |
+| 1          | SAND-037   | 1×L4 C8 n=20   |    1 |           8 |               20 |
+| 2          | SAND-039   | 1×L4 C8 n=50   |    1 |           8 |               50 |
+| 3          | SAND-037   | 2×L4 C32 n=50  |    2 |          32 |               50 |
+| 4          | SAND-040   | 2×L4 C32 n=100 |    2 |          32 | 100 (merger 50†) |
 
 Pooled serving efficiency:
 
@@ -39,6 +41,10 @@ Metered Modal session total across the four experiments: **$3.39** for 1,050 doc
 <figure><img src="https://raw.githubusercontent.com/Exios66/local-mailroom-sandbox/main/reports/SAND-37/figures/cmp-efficiency.png" alt="SAND-37 posture comparison: serving efficiency"><figcaption><p>SAND-37 efficiency comparison (throughput and GPU cost).</p></figcaption></figure>
 
 <figure><img src="https://raw.githubusercontent.com/Exios66/local-mailroom-sandbox/main/reports/SAND-37/figures/cmp-latency-cost.png" alt="SAND-37 latency versus cost"><figcaption><p>SAND-37 latency versus cost.</p></figcaption></figure>
+
+## SAND-045 — chunked ground-truth labeler
+
+A labeling job, not a benchmark: `Qwen/Qwen3-14B-AWQ` on two L4 replicas (app `sandbox-vllm-gt-labeler`, `mailroom_sandbox.gt_labeler`) fills unfinished ground-truth fields for Hub tag `v9.1` in chunks of 40 documents under a $2 projected cap. Golden CUAD and MAUD labels are never requested. The first live wave labeled the 91 SEC EDGAR EX-10 rows missing `cuad_clause_labels`: 78 accepted as verbatim CUAD maps, 13 left unaccepted below the quality floor. Journal: [`reports/gt-labeler/`](https://github.com/Exios66/local-mailroom-sandbox/tree/main/reports/gt-labeler).
 
 ## SAND-032 — Qwen3-8B-AWQ knob ladder on Modal L4
 
@@ -80,7 +86,8 @@ python reports/dashboard/build_hub.py --check   # fail if stale
 | [archive/RUN50-MODAL-HF-REPORT.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/reports/archive/RUN50-MODAL-HF-REPORT.md)   | Run-50 Hub report                                                |
 | [archive/QWEN-FLASH-COST-REPORT.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/reports/archive/QWEN-FLASH-COST-REPORT.md) | Qwen Flash cost note                                             |
 | [reports/SAND-32/](https://github.com/Exios66/local-mailroom-sandbox/tree/main/reports/SAND-32)                                            | Per-class SAND-032 run folders                                   |
-| [reports/modernbert/](https://github.com/Exios66/local-mailroom-sandbox/tree/main/reports/modernbert)                                      | Redirect — canonical ModernBERT reports live in eval-environment |
+| [reports/modernbert/](https://github.com/Exios66/local-mailroom-sandbox/tree/main/reports/modernbert)                                      | Redirect — canonical ModernBERT reports live in eval-environment (copies here may be stale) |
+| [reports/gt-labeler/](https://github.com/Exios66/local-mailroom-sandbox/tree/main/reports/gt-labeler)                                      | SAND-045 labeler journal and checkpoint                          |
 
 ## Related
 

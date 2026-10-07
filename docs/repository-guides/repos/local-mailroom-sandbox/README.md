@@ -41,7 +41,12 @@ sandbox pilot --local   # real local model
 | `sandbox matrix ...`                                                 | Provider by model by prompt matrices                                   |
 | `sandbox datasets pull / sample / prepare`                           | Pinned full Hub pull, offline per-class samples, cleaning              |
 | `sandbox run preflight / start / status / resume / cancel`           | Long runs from a run spec in `config/runs/`, locally or as a Modal job |
-| `sandbox watch [--web]`                                              | Mailroom-themed live view of a run                                     |
+| `sandbox watch [--web]`                                              | Mailroom-themed live view of a run (WATCHDOG panel: auth, stall, engine, spend, length alerts) |
+| `sandbox run card [--master]`                                        | Score-and-cost cards per cell, and the SAND-37 master card + appendix  |
+| `sandbox runbook list / show / check / write`                        | Operator runbooks generated from `config/runbooks/catalog.yaml`        |
+| `sandbox traces export / pack`                                       | Local span mirror: pack as Parquet, upload to a synced folder, verify, prune |
+| `sandbox metrics compare`, `sandbox modernbert status / eval`        | Serving metrics comparison; run the mailroom-ml ModernBERT eval        |
+| `sandbox subagents list / sync / doctor / propagate`                 | Family coding-subagent roster and harness health                       |
 | `sandbox cutover --profile <p> --model <m>`                          | Point agents at a local model                                          |
 
 A vLLM or Modal profile without `--local` warns instead of silently falling back to mock.
@@ -62,7 +67,7 @@ The layout contract, including which paths are frozen by tests, is [docs/setting
 On this site (nested under this guide in the table of contents):
 
 * [Documentation](local-mailroom-sandbox-docs.md) — every dedicated sandbox manual
-* [Run reports](local-mailroom-sandbox-reports.md) — SAND-37 grid, SAND-032 ladder, hub export
+* [Run reports](local-mailroom-sandbox-reports.md) — SAND-37/39/40 grid, SAND-045 labeler, SAND-032 ladder, hub export
 * [Visuals](local-mailroom-sandbox-visuals.md) — performance charts and `sandbox watch` stills
 
 ## Its documentation

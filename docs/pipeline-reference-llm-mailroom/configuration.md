@@ -309,6 +309,26 @@ See `.env.example` for the complete list:
 
 The-Mailroom (not this process) reads `MAILROOM_PIPELINE_URL`, `MAILROOM_PIPELINE_TOKEN`, and `MAILROOM_PIPELINE_API_PREFIX=/v1`. A Space Observatory must use the public producer Space URL — see [`deploy/space/PAIRING.md`](https://github.com/Exios66/llm-mailroom/tree/main/deploy/space/PAIRING.md).
 
+### Operational and tooling knobs
+
+Read by the code but not in the main table above (verified against llm-mailroom v0.8.0).
+
+| Variable | Default | Description |
+| -------- | ------- | ----------- |
+| `MAILROOM_BERT_DEBUG` | on | Kill switch for the ModernBERT lane's debug capture. `MAILROOM_BERT_INTAKE` stays the gate (off by default). |
+| `MAILROOM_WATCHDOG_POLL_SECONDS` | `20` | How often the watcher watchdog checks the heartbeat. |
+| `MAILROOM_WATCHDOG_STALE_SECONDS` | `30` | Heartbeat age after which the watcher counts as stale. |
+| `MAILROOM_WATCHDOG_REMIND_MINUTES` | `60` | Reminder cadence while the watcher stays down. Healthy-status emails are never sent. |
+| `MAILROOM_STATUS_EMAIL` | maintainer inbox | Recipient of watchdog and watcher status emails. Set it to your own address. |
+| `MAILROOM_WATCHER_STATUS` | `1` | `0` disables every status email and the watcher-side heartbeat enrichment (used by hermetic tests). |
+| `MAILROOM_PAUSE_TTL_SECONDS` | `3600` | How long the ops-monitor pause file (`ops_monitor_paused`) stays in effect. |
+| `MAILROOM_MEMORY_DIR` | `<MAILROOM_BASE_DIR>/memory` | Location of the append-only agent memory JSONL. |
+| `MAILROOM_HF_CACHE_DIR` | `<MAILROOM_BASE_DIR>/hf_cache/corpus` | Local cache for the pinned Hub corpus. |
+| `MAILROOM_HF_PILOT_DIR` | under the base dir | Output root for HF pilot reports. |
+| `MAILROOM_HF_PILOT_GAP_S` | `1.5` (`0` with `--mock`) | Pause between documents in the HF pilot. |
+| `MAILROOM_FIELD_SCORING_EMBEDDING` | `0` in the HF pilot | `1` turns on embedding-based clause scoring, which spends OpenRouter quota at corpus scale. Lexical scoring always runs. |
+| `MAILROOM_HF_SPACE` | — | Hugging Face Space id used by `publish_space.py`. |
+
 ### Gmail intake channel (HUB-037)
 
 The agent mailbox (`llmmailroom@gmail.com`) is a second intake route: an IMAP poller (running inside the watcher process) drops accepted attachments into the SAME inbox the watcher drains. The full operator guide — subject-line contract, upload best practices, every pathway a document takes from Gmail into the pipeline (free single-document triage lane, capability handoff, multi-document full pipeline), completion echoes, and troubleshooting — is [`docs/gmail-intake.md`](gmail-intake.md).
