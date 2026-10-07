@@ -1,5 +1,9 @@
 # Architecture
 
+{% hint style="info" %}
+**Pipeline reference** is the canonical lookup for `llm-mailroom`: architecture, agents, configuration, API, deployment, and operations. Use it to find one exact fact. To learn the pipeline from start to end, read [The pipeline in depth](../the-pipeline-in-depth/running.md) first.
+{% endhint %}
+
 ## Overview
 
 Mailroom is a multi-agent legal document processing pipeline built on LangGraph. It ingests legal documents, classifies them, routes them to specialist agents for structured extraction, compiles matter records, and archives everything with a full audit trail.
@@ -159,8 +163,19 @@ flowchart LR
 ### LangGraph Engine (`graph/build_graph.py`)
 
 * One graph execution per document
-* **13 nodes** forming a directed state machine: `intake` (ingest specialist), `classify`, `retry_classify`, `review_classify` (agent second opinion on exhausted medium-band classifications — KANBAN-062 Lane A), `extract`, `retry_extract`, `judge_verify` + `arbiter` (gated completeness verification + arbitration — KANBAN-063 Lane B), `human_review`, `boss_escalation`, `compile_report`, `catalog_write`, `archive`
-* Two auxiliary flows operate **outside** the graph: the Gmail triage lane (free model swarm for single-document emails, run by `pipeline/watcher.py:_run_triage_lane`, which archives or parks for review itself and never enters `classify`) and the relations clerk (association scanning, dispatched on a daemon thread from `archive`, `human_review`, `_finalize_aborted` and the triage lane). The full chart, with every edge, is in [Pipeline flowchart](../the-pipeline-in-depth/flowchart.md)
+* **13 nodes** forming a directed state machine:
+  * `intake` (ingest specialist);
+  * `classify`, `retry_classify`;
+  * `review_classify`: agent second opinion on exhausted medium-band classifications (KANBAN-062 Lane A);
+  * `extract`, `retry_extract`;
+  * `judge_verify` + `arbiter`: gated completeness verification + arbitration (KANBAN-063 Lane B);
+  * `human_review`, `boss_escalation`;
+  * `compile_report`, `catalog_write`, `archive`.
+* Two auxiliary flows operate **outside** the graph:
+  * The Gmail triage lane: a free model swarm for single-document emails, run by `pipeline/watcher.py:_run_triage_lane`. It archives or parks for review itself and never enters `classify`.
+  * The relations clerk: association scanning on a daemon thread. `archive`, `human_review`, `_finalize_aborted` and the triage lane dispatch it.
+
+  The full chart, with every edge, is in [Pipeline flowchart](../the-pipeline-in-depth/flowchart.md)
 * MemorySaver by default, held on a **process-level compiled graph** so `interrupt()` HITL can `Command(resume=...)` in the same process (the API embeds the watcher). The filesystem review bin remains the durable park across process restart; `resume_from_review` falls back to a fresh extract invoke when the checkpoint is gone. Opt into on-disk `SqliteSaver` (`data/checkpoints.db`) via `MAILROOM_CHECKPOINTER=sqlite`.
 
 ### LLM Client (`llm/client.py`, `llm/providers.py`, `llm/retry.py`, `llm/prompts.py`)
@@ -169,7 +184,7 @@ flowchart LR
 * Provider-agnostic: OpenRouter, Ollama, vLLM, or any OpenAI-compatible endpoint
 * Per-agent model selection from `config/taxonomy.yaml`
 * Global provider override via `DEFAULT_PROVIDER` env var
-* Every chat completion goes through `retry_chat_completion` (`llm/retry.py`): transient failures (connection errors, timeouts, 429, 5xx) are retried with exponential backoff + jitter from the `llm_retry:` config; 4xx client errors are never retried
+* Every chat completion goes through `retry_chat_completion` (`llm/retry.py`). Transient failures (connection errors, timeouts, 429, 5xx) are retried with exponential backoff + jitter from the `llm_retry:` config. 4xx client errors are never retried
 * Output generation is capped per agent by `max_tokens` in `taxonomy.yaml` (bounds runaway reasoning-token output)
 * Agent system prompts are **Langfuse-managed** (`llm/prompts.py`, `mailroom-<agent_name>`), fetched at runtime with the identical template shipped in code as fallback; `scripts/sync_prompts.py` pushes templates up
 * Structured calls (`_call_structured`) always send `response_format={"type": "json_object"}` and guarantee the literal token `json` in the messages — some providers (Qwen via Alibaba) reject requests without it
@@ -184,11 +199,17 @@ flowchart LR
 ### Observability (`observability/`)
 
 * Four interchangeable tracing backends: **Langfuse**, **Braintrust**, the local cost-free **Arize Phoenix**, and `none`
-* Selected via `OBSERVABILITY_PROVIDER` env (`auto` | `langfuse` | `braintrust` | `phoenix` | `none`); `auto` = Langfuse if key → Braintrust if key → local Phoenix → `none` (aligned with llm-entity-extraction's resolution chain — tracing never silently turns off)
+* Selected via `OBSERVABILITY_PROVIDER` env (`auto` | `langfuse` | `braintrust` | `phoenix` | `none`). `auto` = Langfuse if key → Braintrust if key → local Phoenix → `none`. This matches llm-entity-extraction's resolution chain; tracing never silently turns off
 * Every LLM call is auto-traced: `llm/client.py:get_llm` wraps the OpenAI client (`langfuse.openai` patch or `braintrust.wrap_openai`), capturing prompt, response, tokens, latency
-* One trace per document (`pipeline_trace`, root type **chain**), typed child observations via `traced_node` / `observation()` (agent / evaluator / retriever / span / generation — never a generic span when a more specific type fits), `session_id = matter_id` (or a run-scoped session for pilot runs), deterministic trace ids seeded from filenames, optional `MAILROOM_TRACE_USER_ID`
+* One trace per document (`pipeline_trace`, root type **chain**)
+* Typed child observations via `traced_node` / `observation()`: agent / evaluator / retriever / span / generation. Never a generic span when a more specific type fits
+* `session_id = matter_id`, or a run-scoped session for pilot runs
+* Deterministic trace ids seeded from filenames, and optional `MAILROOM_TRACE_USER_ID`
 * **Batching**: the Langfuse SDK queues events and a background exporter sends them (`LANGFUSE_FLUSH_AT` / `LANGFUSE_FLUSH_INTERVAL`, SDK defaults 512 / 5s). Long-running services rely on that exporter; short-lived scripts (`run_pilot.py`, `run_hf_pilot.py`, LegalBench, quality judges) call `ensure_process_tracing()` so atexit runs `flush()` then `shutdown()`. Every `run_pipeline` also flushes in `finally`. Do not set `LANGFUSE_FLUSH_AT=1` globally.
-* **Scores** (`observability/scores.py`): every run emits self-evident scores (`parse_error`, `schema_valid`, `stage_completed`, `success_rate` first-pass STP, confidences); pilot runs add ground-truth scores (class/stage correctness, calibration error, `expected_field_presence`); score configs auto-created via `ensure_score_configs()`
+* **Scores** (`observability/scores.py`):
+  * Every run emits self-evident scores: `parse_error`, `schema_valid`, `stage_completed`, `success_rate` (first-pass STP), and confidences.
+  * Pilot runs add ground-truth scores: class/stage correctness, calibration error, `expected_field_presence`.
+  * `ensure_score_configs()` auto-creates the score configs.
 * **Run-log mirroring** (`scripts/sync_langfuse_logs.py`): fetch traces (with observations + scores) into `data/langfuse_logs/<run>/` for offline analysis
 * Graceful noop fallback when no backend/keys are configured — pipeline runs unchanged
 
@@ -202,11 +223,18 @@ flowchart LR
 
 ### 1. Ingest
 
-Document lands in `/pipeline/inbox/`. Watcher detects it, claims it atomically to `/pipeline/processing/<worker_id>/`. Manifest is created with `PipelineStage.PROCESSING`. PDFs are transcribed by `PDFTranscriber` — text-based PDFs directly (no LLM), scanned/garbled PDFs via an LLM markdown pass (`pipeline.pdf_direct_chars_per_page` controls the threshold). When the input agents' models are vision-capable (`vision:` config in `taxonomy.yaml` — for example Qwen models), PDFs are also rendered page-by-page to image data-URIs (`llm/vision.py`) and sent to the sorter/specialist prompts as multimodal `image_url` content, capped by `vision.max_pages`; if the pipeline is vision-capable the expensive LLM transcription pass is skipped for scanned PDFs (the page images carry the content) while `doc_text` is still stored for text-only paths/audit.
+Document lands in `/pipeline/inbox/`. Watcher detects it, claims it atomically to `/pipeline/processing/<worker_id>/`. Manifest is created with `PipelineStage.PROCESSING`. `PDFTranscriber` transcribes PDFs:
+
+* Text-based PDFs are read directly (no LLM).
+* Scanned/garbled PDFs go through an LLM markdown pass. `pipeline.pdf_direct_chars_per_page` controls the threshold.
+
+The input agents' models can be vision-capable (`vision:` config in `taxonomy.yaml`, for example Qwen models). Then PDFs are also rendered page-by-page to image data-URIs (`llm/vision.py`). These go to the sorter/specialist prompts as multimodal `image_url` content, capped by `vision.max_pages`. If the pipeline is vision-capable, it skips the expensive LLM transcription pass for scanned PDFs, because the page images carry the content. `doc_text` is still stored for text-only paths and audit.
 
 ### 2. Classify (Sorter)
 
-LLM call: reads document text, determines `doc_type` and confidence. Live extractable classes are `contract`, `merger_agreement`, `corporate_record`, `correspondence`, `insurance_claim`. `compliance_filing` is retired (zero Hub rows). `merger_agreement` is the MAUD class (agreement and plan of merger); `contract` is the CUAD commercial-contract class — they are not interchangeable. The sorter schema also allows the routing token `unknown` (not a taxonomy class, not a specialist) for court opinions, due-diligence memos, and anything that does not fit a live class. `unknown` / retired / hallucinated labels are preserved — they are never remapped onto correspondence — and `after_classify` parks them for human review regardless of confidence. Parse-error is the only remaining correspondence default, and it is explicitly low-confidence (0.3) so the retry budget still fires.
+LLM call: reads document text, determines `doc_type` and confidence. Live extractable classes are `contract`, `merger_agreement`, `corporate_record`, `correspondence`, `insurance_claim`. `compliance_filing` is retired (zero Hub rows). `merger_agreement` is the MAUD class (agreement and plan of merger). `contract` is the CUAD commercial-contract class. The two are not interchangeable.
+
+The sorter schema also allows the routing token `unknown`. It is not a taxonomy class and not a specialist. It covers court opinions, due-diligence memos, and anything that does not fit a live class. `unknown` / retired / hallucinated labels are preserved and never remapped onto correspondence. `after_classify` parks them for human review regardless of confidence. Parse-error is the only remaining correspondence default. It is explicitly low-confidence (0.3), so the retry budget still fires.
 
 ### 3. Confidence Check
 
@@ -317,7 +345,9 @@ human_review ─┬─ interrupt() pause (file parked in review/)
 
 ## Checkpointing
 
-LangGraph checkpoints the full state after each node. The checkpointer is **MemorySaver by default**, held on a process-level compiled graph so `human_review_node` can pause with LangGraph `interrupt()` and resume with `Command(resume={"decision": "approved"})` without losing the thread. The filesystem review bin is still the durable park: after a process restart the MemorySaver is empty and `resume_from_review` re-invokes from extract using the manifest (this also keeps per-doc checkpoint growth bounded). Set `MAILROOM_CHECKPOINTER=sqlite` to opt into the on-disk SqliteSaver at `data/checkpoints.db` for debugging/resume-across-restart experiments.
+LangGraph checkpoints the full state after each node. The checkpointer is **MemorySaver by default**. It is held on a process-level compiled graph. So `human_review_node` can pause with LangGraph `interrupt()` and resume with `Command(resume={"decision": "approved"})` without losing the thread.
+
+The filesystem review bin is still the durable park. After a process restart the MemorySaver is empty, and `resume_from_review` re-invokes from extract using the manifest. This also keeps per-doc checkpoint growth bounded. For debugging or resume-across-restart experiments, set `MAILROOM_CHECKPOINTER=sqlite`. This opts into the on-disk SqliteSaver at `data/checkpoints.db`.
 
 ## Audit Trail
 
@@ -329,15 +359,39 @@ Every state transition writes an `AuditLogEntry` to the database. Each entry:
 * Is independent of Langfuse (the audit log is the compliance record)
 * Can be verified via the `/audit/{doc_id}` API endpoint or `schemas/audit.py:verify_chain()`
 
-**What the chain does and does not establish.** Because each hash covers the previous one, editing or deleting an entry in the middle of a chain is detectable: verification fails at that point. The hash is a plain SHA-256 with no secret key, so the chain makes tampering *evident*, not *impossible*. A party who can rewrite the table and recompute every later hash can produce a chain that verifies. Treat it as a detection control, and pair it with access control on the database and off-box backups (see [Postgres](deployment/postgres.md) and [Backup & Restore](deployment/README.md#backup-and-restore)) when the record must stand up to a hostile reader.
+**What the chain does and does not establish.** Each hash covers the previous one. So editing or deleting an entry in the middle of a chain is detectable: verification fails at that point. The hash is a plain SHA-256 with no secret key. So the chain makes tampering *evident*, not *impossible*. A party who can rewrite the table and recompute every later hash can produce a chain that verifies. Treat it as a detection control. When the record must stand up to a hostile reader, pair it with access control on the database and off-box backups. See [Postgres](deployment/postgres.md) and [Backup & Restore](deployment/README.md#backup-and-restore).
 
 ## Evaluators & Quality
 
 ### Deterministic field scoring (issues #4/#5)
 
-Before any LLM judge runs, grounded extractions are scored deterministically by the `field_scoring` module of the pinned [llm-dojo-scoring](https://github.com/Exios66/llm-dojo-scoring) library (v0.18.0, wired in through `observability/suite_scoring.py` and `observability/langfuse_field_scoring.py`) — a field-type-aware scorer that is cheap, reproducible, and costs no API calls. Each field is compared according to its type (`doc_classes[].field_types` in `taxonomy.yaml`): `id`/`money` are parsed and normalized then exact-matched (money within one cent); `date` gives partial credit (same date 1.0, same year and month or within 45 days 0.67, same year or month only 0.33, so a one-day-off date scores 0.67); `name` uses Jaro-Winkler + token-set ratio over normalized text (uppercase, punctuation/suffix-stripped); `free_text` uses SQuAD-style token F1; `entity_list` fields use optimal bipartite matching (scipy Hungarian) with precision/recall/F1, so reordered lists score correctly. An optional sentence-transformers embedding cosine similarity rescues lexically-distant-but-semantically-equal name/free-text fields below `embedding_rescue_below`.
+Before any LLM judge runs, grounded extractions are scored deterministically. The scorer is the `field_scoring` module of the pinned [llm-dojo-scoring](https://github.com/Exios66/llm-dojo-scoring) library (v0.18.0). It is wired in through `observability/suite_scoring.py` and `observability/langfuse_field_scoring.py`. It is field-type-aware, cheap, reproducible, and costs no API calls. Each field is compared according to its type (`doc_classes[].field_types` in `taxonomy.yaml`):
 
-`taxonomy.yaml` defines **per-field-type bands** (`field_scoring.type_bands`), calibrated by `scripts/calibrate_field_scoring.py` against labeled ground truth: date/id are `never` (decisive both ways), money/free\_text have calibrated numeric cutoffs, and name/entity-list trust only perfect scores (`[0.5, 1.0]`). In the pinned v0.18.0, however, `score_extraction` flags fields with the global `ambiguous_band` only; the type bands are read only by the library's `field_is_ambiguous`, which the pipeline does not call. Full rules: [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md). `observability/langfuse_field_scoring.py` attaches `extraction_field_score`, `extraction_overall_score`, `extraction_needs_judge_review`, `entity_list_precision`, `entity_list_recall`, and — when CUAD presence ground truth is available on the run — `extraction_category_presence` to the document trace. Presence expectations are derived from Hub `cuad_clause_labels` or flattened `expected_fields.cuad_clauses`; the score is omitted (not emitted as 0.0) when there is no CUAD presence GT. On grounded runs `graph/build_graph.py` suppresses the `pipeline-result` generation entirely when the verdict is unambiguous — saving both LLM-as-judge evaluator calls.
+| Type | How it is compared |
+| --- | --- |
+| `id`, `money` | Parsed, normalized, then exact-matched (money within one cent) |
+| `date` | Partial credit: same date 1.0; same year and month, or within 45 days, 0.67; same year or month only 0.33. A one-day-off date scores 0.67 |
+| `name` | Jaro-Winkler + token-set ratio over normalized text (uppercase, punctuation/suffix-stripped) |
+| `free_text` | SQuAD-style token F1 |
+| `entity_list` | Optimal bipartite matching (scipy Hungarian) with precision/recall/F1, so reordered lists score correctly |
+
+An optional sentence-transformers embedding cosine similarity rescues some name/free-text fields below `embedding_rescue_below`. These are fields that are lexically distant but semantically equal.
+
+`taxonomy.yaml` defines **per-field-type bands** (`field_scoring.type_bands`). `scripts/calibrate_field_scoring.py` calibrates them against labeled ground truth:
+
+* date/id are `never` (decisive both ways);
+* money/free\_text have calibrated numeric cutoffs;
+* name/entity-list trust only perfect scores (`[0.5, 1.0]`).
+
+In the pinned v0.18.0, however, `score_extraction` flags fields with the global `ambiguous_band` only. Only the library's `field_is_ambiguous` reads the type bands, and the pipeline does not call it. Full rules: [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md).
+
+`observability/langfuse_field_scoring.py` attaches these scores to the document trace:
+
+* `extraction_field_score`, `extraction_overall_score`, `extraction_needs_judge_review`;
+* `entity_list_precision`, `entity_list_recall`;
+* `extraction_category_presence`, when CUAD presence ground truth is available on the run.
+
+Presence expectations come from Hub `cuad_clause_labels` or flattened `expected_fields.cuad_clauses`. With no CUAD presence GT, the score is omitted, not emitted as 0.0. On grounded runs with an unambiguous verdict, `graph/build_graph.py` suppresses the `pipeline-result` generation entirely. This saves both LLM-as-judge evaluator calls.
 
 ### LLM-as-judge
 
@@ -349,11 +403,20 @@ The `judge` agent (`agents/judge.py`) audits pipeline output against the task sp
 | `completeness`   | Did the specialist capture every field the document states?                                  | `completeness`, `completeness_label`                     |
 | `correctness`    | Are extracted values factually accurate (no fabrication)?                                    | `extraction_correctness`, `extraction_correctness_label` |
 
-The same rubrics are configured as **two independent live LLM-as-a-Judge evaluators in the Langfuse project** (`scripts/sync_evaluators.py`): the pipeline emits a single `pipeline-result` generation per document trace, and two observation rules independently evaluate it. `mailroom-pipeline-judge` returns a **CORRECT/PARTIAL/MISS** verdict — PARTIAL for substantially correct runs with limited material gaps, MISS reserved for wrong class/stage, contradictions, failed runs, or broad omission; `mailroom-pipeline-quality` returns a proportional **0.0-1.0 quality score**, so partial-but-useful extractions are not flattened into MISS. The quality score never replaces or alters the run verdict. Grounded runs use a labeled, pretty-printed expected-fields input block and a cleaned schema-only output, cutting \~90% of judge tokens. Live runs without ground truth use visible source text. The script also ensures an LLM connection for the judge provider exists (OpenRouter key from `.env`) and prunes any stale mailroom evaluators/rules.
+The same rubrics are configured as **two independent live LLM-as-a-Judge evaluators in the Langfuse project** (`scripts/sync_evaluators.py`). The pipeline emits a single `pipeline-result` generation per document trace, and two observation rules independently evaluate it:
+
+* `mailroom-pipeline-judge` returns a **CORRECT/PARTIAL/MISS** verdict. PARTIAL is for substantially correct runs with limited material gaps. MISS is for wrong class/stage, contradictions, failed runs, or broad omission.
+* `mailroom-pipeline-quality` returns a proportional **0.0-1.0 quality score**, so partial-but-useful extractions are not flattened into MISS. The quality score never replaces or alters the run verdict.
+
+Grounded runs use a labeled, pretty-printed expected-fields input block and a cleaned schema-only output. This cuts \~90% of judge tokens. Live runs without ground truth use visible source text. The script also ensures an LLM connection exists for the judge provider (OpenRouter key from `.env`). It prunes any stale mailroom evaluators/rules.
 
 The pilot samples are mirrored into Langfuse datasets — one **per source corpus** (`scripts/sync_dataset.py`): `mailroom-pilot` (original samples), `mailroom-pilot-legalbench`, and `mailroom-pilot-atticus`. Pile of Law court opinions remain on disk but are no longer in the live manifest (`court_opinion` was retired). One item per sample with document text, ground truth (`expected_doc_class`, `expected_stage`, `expected_fields`) and manifest metadata — for experiments and judge calibration.
 
-Production runs additionally emit self-evident scores with no ground truth (`parse_error`, `schema_valid`, `stage_completed`, `success_rate`, `guardrail_triggered`, confidence values) from `observability/scores.py`. `success_rate` is the production straight-through-processing flag: 1 only when the document archived in one pass with no retry, Lane A, arbiter, boss, human review, guardrail, or transient reprocess. Incoming live documents are zero-shot — this flag does not consult `class_correct`, field GT, or the hosted LLM-judge CORRECT/PARTIAL/MISS overlay. Pilot runs still add ground-truth scores (`class_correct`, `stage_correct`, `confidence_calibration_error`, `expected_field_presence`) for eval. All score configs are auto-created in Langfuse by `ensure_score_configs()`. The-Mailroom metrics page tiles FIRST PASS from this score (with a routing-path fallback for older traces).
+Production runs also emit self-evident scores with no ground truth, from `observability/scores.py`: `parse_error`, `schema_valid`, `stage_completed`, `success_rate`, `guardrail_triggered`, and confidence values.
+
+`success_rate` is the production straight-through-processing flag. It is 1 only when the document archived in one pass with no retry, Lane A, arbiter, boss, human review, guardrail, or transient reprocess. Incoming live documents are zero-shot. This flag does not consult `class_correct`, field GT, or the hosted LLM-judge CORRECT/PARTIAL/MISS overlay.
+
+Pilot runs still add ground-truth scores for eval: `class_correct`, `stage_correct`, `confidence_calibration_error`, `expected_field_presence`. `ensure_score_configs()` auto-creates all score configs in Langfuse. The-Mailroom metrics page tiles FIRST PASS from this score, with a routing-path fallback for older traces.
 
 ## The-Mailroom floor (Hugging Face Observatory)
 
@@ -373,7 +436,12 @@ Observatory Space: [`Lucius-Morningstar/mailroom-observatory`](https://huggingfa
 
 ## Guardrails
 
-`pipeline/guards.py` validates agent output deterministically before routing: classification must be a taxonomy enum with a `[0,1]` confidence; extractions must JSON-parse and validate against their Pydantic schema. Violations clamp confidence below the `confidence.low` routing threshold so bad output goes to retry/review, are logged, recorded on state (`extraction_guardrail`), and scored (`guardrail_triggered`).
+`pipeline/guards.py` validates agent output deterministically before routing:
+
+* A classification must be a taxonomy enum with a `[0,1]` confidence.
+* An extraction must JSON-parse and validate against its Pydantic schema.
+
+A violation clamps confidence below the `confidence.low` routing threshold, so bad output goes to retry/review. The violation is also logged, recorded on state (`extraction_guardrail`), and scored (`guardrail_triggered`).
 
 ## Logging
 

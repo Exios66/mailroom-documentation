@@ -24,7 +24,7 @@
 
 ## Mailroom dataset
 
-* [Overview](mailroom-dataset/mailroom-dataset.md)
+* [Dataset overview](mailroom-dataset/mailroom-dataset.md)
 * [Classes and strata](mailroom-dataset/classes-and-strata.md)
 * [Configs](mailroom-dataset/configs.md)
 * [Source corpora](mailroom-dataset/source-corpora/README.md)
@@ -38,7 +38,7 @@
 
 ## Experiment reports
 
-* [Overview](experiment-reports/experiment-reports.md)
+* [Experiment reports](experiment-reports/experiment-reports.md)
 * [local-mailroom-sandbox reports](repository-guides/repos/local-mailroom-sandbox/local-mailroom-sandbox-reports.md)
   * [reports/ on GitHub](https://github.com/Exios66/local-mailroom-sandbox/tree/main/reports)
 * [eval-environment reports](experiment-reports/eval-environment-reports.md)

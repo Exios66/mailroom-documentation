@@ -1,4 +1,8 @@
-# Overview
+# Dataset overview
+
+{% hint style="info" %}
+**Mailroom dataset** describes the corpus on the Hugging Face Hub: its classes, configs, source corpora, and EDA. For measured model results on this corpus, go to [Experiment reports](../experiment-reports/experiment-reports.md).
+{% endhint %}
 
 [`Lucius-Morningstar/mailroom-dataset`](https://huggingface.co/datasets/Lucius-Morningstar/mailroom-dataset) is the corpus every Mailroom repository measures against. This section is the GitBook home for that dataset: composition, configs, source corpora, and the exploratory analysis published by [Mailroom-Corpus-EDA](../repository-guides/repos/mailroom-corpus-eda.md).
 

@@ -1,5 +1,9 @@
 # The constellation
 
+{% hint style="info" %}
+**How it fits together** covers the links between repositories: data, prompts, scores, traces, and team workflow. It does not describe the inside of one repository. For that, go to the [Repository guides](../repository-guides/repos/).
+{% endhint %}
+
 This page explains what flows between the repositories. For the inside of the pipeline itself (nodes, routing, thresholds), see [Pipeline architecture](../pipeline-reference-llm-mailroom/architecture.md).
 
 ## The big picture
@@ -60,9 +64,9 @@ All of these packages also live together in the [Digital-Mailroom](../repository
 
 ### Data: from raw corpora to a pinned dataset
 
-1. **Corpus feeds build class-specific samples.** Enron-Evaluation-Environment makes a stratified, de-duplicated `correspondence` sample from 517K Enron emails. claims-data-eda renders CMS Medicare claim events into plain-text EOB documents with ground truth for `insurance_claim`. Contracts (CUAD), merger agreements (MAUD) and corporate records (EDGAR S-1 exhibits) come from public legal corpora.
+1. **Corpus feeds build class-specific samples.** Enron-Evaluation-Environment makes a stratified, de-duplicated `correspondence` sample from 517K Enron emails. claims-data-eda renders CMS Medicare claim events into plain-text EOB documents. These carry ground truth for `insurance_claim`. Contracts (CUAD), merger agreements (MAUD) and corporate records (EDGAR S-1 exhibits) come from public legal corpora.
 2. **Everything is published to one dataset.** The canonical corpus is [`Lucius-Morningstar/mailroom-dataset`](https://huggingface.co/datasets/Lucius-Morningstar/mailroom-dataset): 3,302 documents, five classes, 55 class-by-subclass strata. Mailroom-Corpus-EDA profiles it (phases P0 to P6) and owns the upload helpers. GitBook embeds those figures on [Mailroom dataset](../mailroom-dataset/mailroom-dataset.md) ([visualizations](../mailroom-dataset/visualizations.md)).
-3. **Consumers pin a revision, never a live tip.** Every consumer pins a Hub revision. The published pin is `670e8bc6` (tag v9.2). As of 2026-10-07, four consumers still read the predecessor tag v9.1 (commit `bc9eab28`, data commit `ed7576b6`): eval-environment, mailroom-ml, llm-mailroom 0.8.0 and the sandbox. The labels sit in a separate `ground_truth` config joined to the blind `default` config on `filename`, so a model under test never sees its answers.
+3. **Consumers pin a revision, never a live tip.** Every consumer pins a Hub revision. The published pin is `670e8bc6` (tag v9.2). As of 2026-10-07, four consumers still read the predecessor tag v9.1 (commit `bc9eab28`, data commit `ed7576b6`). They are eval-environment, mailroom-ml, llm-mailroom 0.8.0 and the sandbox. The labels sit in a separate `ground_truth` config, joined to the blind `default` config on `filename`. So a model under test never sees its answers.
 
 Details: [Data and corpora](data-and-corpora.md). Full dataset section: [Mailroom dataset](../mailroom-dataset/mailroom-dataset.md).
 

@@ -29,11 +29,15 @@ Each class is defined twice in the code. You need to know both.
 | Pydantic model (for example `ContractExtraction`) | [`src/schemas/documents.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/schemas/documents.py), registry `EXTRACTION_SCHEMAS`                                   | Validation. The extraction guardrail calls `model_validate` on the extraction (`observability/scores.py:validate_extraction`). The Gmail triage lane also clamps its key-entity output to these models. |
 | JSON schema (for example `CONTRACTS_SCHEMA`)      | [`src/langchain_agents/specialist_agents.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/langchain_agents/specialist_agents.py), registry `SPECIALIST_SCHEMAS` | Sent to the model. `_call_structured` embeds it in the user message and asks for a `json_object` response. It also drives `normalize_extraction`.                                                       |
 
-The split is deliberate: **ask for everything, accept less.** The model is shown a strict contract so it is prompted to address every field, including the ones where the honest answer is `null`. The validator is lenient so that a partly filled answer degrades into a lower-confidence extraction that the routing rules can retry or send to review, rather than crashing the run.
+The split is deliberate: **ask for everything, accept less.** The model sees a strict contract, so it is prompted to address every field, including fields where the honest answer is `null`. The validator is lenient. A partly filled answer degrades into a lower-confidence extraction instead of crashing the run. The routing rules can then retry it or send it to review.
 
 The JSON schemas are built with `build_structured_schema`, which marks **every property as required** and sets `additionalProperties: false`. So the model is always asked for every key. The Pydantic models give **every field a default**, so validation accepts a payload with keys missing. In the field tables below, "Default" is the Pydantic default.
 
-The two definitions agree on field **types**: every money field is a nullable number in both. The remaining asymmetry is `confidence`, and it points in both directions — it is in the contract and merger **JSON schemas** but absent from `ContractExtraction`, while `CorrespondenceExtraction` and `InsuranceClaimExtraction` carry a `float` default that their JSON schemas never ask for. `CorporateRecordExtraction` has no `confidence` in either.
+The two definitions agree on field **types**: every money field is a nullable number in both. The remaining asymmetry is `confidence`, and it points in both directions:
+
+* It is in the contract and merger **JSON schemas** but absent from `ContractExtraction`.
+* `CorrespondenceExtraction` and `InsuranceClaimExtraction` carry a `float` default that their JSON schemas never ask for.
+* `CorporateRecordExtraction` has no `confidence` in either.
 
 ## Taxonomy overview
 
@@ -190,7 +194,7 @@ Letters, emails, memos, notices, demand letters, press releases and meeting requ
 | `keywords`              | `list[str]` (\[])       | array of string        | `entity_list:name` | Up to 8 salient grounded terms.                                                                                                            |
 | `confidence`            | `float` (0.0)           | not in the JSON schema | not scored         | Asked for by the prompt only.                                                                                                              |
 
-`demand_amount` is a nullable number in both the JSON schema and the Pydantic model, so the model is asked for a number and the guardrail validates it without a type disagreement. An unstated amount stays `null` — it is never coerced into a stated `0`.
+`demand_amount` is a nullable number in both the JSON schema and the Pydantic model. So the model is asked for a number, and the guardrail validates it without a type disagreement. An unstated amount stays `null`. It is never coerced into a stated `0`.
 
 ```json
 {
@@ -362,15 +366,29 @@ After the specialist returns, the extract node calls `langchain_agents/doc_inven
 | `correspondence`   | Maps `communication_type` (or the subclass) with `normalize_communication_type`. Canonicalizes `intent` with `normalize_intent`.                                                                                                                                                                                              |
 | `insurance_claim`  | Maps `claim_type` (or the subclass) with `normalize_claim_type`. Canonicalizes `intent` with `normalize_intent`.                                                                                                                                                                                                              |
 
-The token mappers compact the value to lowercase letters and digits, then try an exact key, an exact alias, a long-alias prefix or substring match, and finally a key prefix or substring match. Unmapped values leave the field unchanged. Examples of aliases from the code: `poa` to `powers_of_attorney`, `memorandum` to `memo`, `workerscompensation` to `workers_comp`, `partd` to `pde`.
+The token mappers compact the value to lowercase letters and digits. Then they try these matches, in order:
 
-`normalize_intent` is the one mapper with a stricter contract. It maps a free-text `intent` onto the class's controlled vocabulary (`INTENT_LABELS`) and its result is **always a member of that class's own vocabulary** — an alias can no longer leak another class's token. Legacy labels map to their current names: `demand_payment` to `payment_demand`, `coverage_denial` to `coverage_determination`, `record_governance` to `governance_rules`, `notice_of_loss` to `claim_filing`. It covers the three classes that have a Hub vocabulary at all — `corporate_record`, `correspondence` and `insurance_claim`; `contract` and `merger_agreement` keep their own `intent` tokens (`effect_merger`, `amend_merger`, `plan_of_merger`) and are not touched.
+1. an exact key;
+2. an exact alias;
+3. a long-alias prefix or substring match;
+4. a key prefix or substring match.
+
+Unmapped values leave the field unchanged. Examples of aliases from the code: `poa` to `powers_of_attorney`, `memorandum` to `memo`, `workerscompensation` to `workers_comp`, `partd` to `pde`.
+
+`normalize_intent` is the one mapper with a stricter contract. It maps a free-text `intent` onto the class's controlled vocabulary (`INTENT_LABELS`). Its result is **always a member of that class's own vocabulary**, so an alias can no longer leak another class's token. Legacy labels map to their current names:
+
+* `demand_payment` to `payment_demand`;
+* `coverage_denial` to `coverage_determination`;
+* `record_governance` to `governance_rules`;
+* `notice_of_loss` to `claim_filing`.
+
+It covers the three classes that have a Hub vocabulary: `corporate_record`, `correspondence` and `insurance_claim`. It does not touch `contract` and `merger_agreement`. They keep their own `intent` tokens (`effect_merger`, `amend_merger`, `plan_of_merger`).
 
 {% hint style="warning" %}
-A label that does not map into the class's vocabulary is **left exactly as the model returned it** — the extract path overwrites `intent` only on a successful mapping. Because `payment_demand` is not a member of the insurance-claim vocabulary, an insurance specialist that still emits `demand_payment` keeps `demand_payment`. The prompt is the real defence here: `intent`'s schema description now enumerates the exact tokens for that class, so the model is no longer *offered* a label from another class's vocabulary in the first place.
+A label that does not map into the class's vocabulary is **left exactly as the model returned it**. The extract path overwrites `intent` only on a successful mapping. `payment_demand` is not a member of the insurance-claim vocabulary. So an insurance specialist that still emits `demand_payment` keeps `demand_payment`. The prompt is the real defence here. The schema description of `intent` now enumerates the exact tokens for that class. So the model is no longer *offered* a label from another class's vocabulary.
 {% endhint %}
 
-The extract call also gets a matching instruction block in its handoff context (`specialist_handoff`), which lists the allowed tokens for the class, so the model is told the vocabulary before enrichment runs.
+The extract call also gets a matching instruction block in its handoff context (`specialist_handoff`). The block lists the allowed tokens for the class, so the model knows the vocabulary before enrichment runs.
 
 ### 4. Guardrail
 
@@ -385,15 +403,24 @@ These follow from the code as written. They are listed so a reader is not surpri
 {% endhint %}
 
 * **Open — `insurance_claim` null strings.** `normalize_extraction` sets missing or null string fields to `null`, but `insurer`, `insured_party`, `claim_type`, `damages_description` and `coverage_determination` are non-nullable `str` in the Pydantic model. An extraction that leaves any of them null (and that the regex fill does not cover) fails validation, and the guard records `extraction_schema_invalid`. Re-verified on 2026-10-06: `normalize_specialist_extraction("insurance_claim", {"claim_number": "X"})` followed by `InsuranceClaimExtraction.model_validate` still raises exactly 5 errors, one per field.
-* **Open — `corporate_record` null strings.** `entity_name` and `record_type` are non-nullable `str` in the Pydantic model, while the JSON schema allows null and no normalization step runs for this class. A null `entity_name`, or a null `record_type` that enrichment cannot fill from the subclass, fails validation. Re-verified on 2026-10-06: the same round trip raises 2 errors. The root cause is shared with the gap above — the `else` branch of `normalize_extraction` still writes `None` into any absent string field, and only `correspondence` has a per-class `""` fallback that avoids it.
+* **Open — `corporate_record` null strings.** `entity_name` and `record_type` are non-nullable `str` in the Pydantic model. The JSON schema allows null, and no normalization step runs for this class. A null `entity_name` fails validation. So does a null `record_type` that enrichment cannot fill from the subclass. Re-verified on 2026-10-06: the same round trip raises 2 errors. The root cause is shared with the gap above. The `else` branch of `normalize_extraction` still writes `None` into any absent string field. Only `correspondence` has a per-class `""` fallback that avoids it.
 
 #### Patched gaps since 2026-10-06
 
-Three previously listed gaps are resolved. All three changes are in the llm-mailroom working tree and **not yet committed to `main`**, so the `blob/main/` links above do not yet show them; the prose describes the patched code.
+Three previously listed gaps are resolved. All three changes are in the llm-mailroom working tree and **not yet committed to `main`**. So the `blob/main/` links above do not show them yet. The prose describes the patched code.
 
-* **Money-field type mismatch — fixed.** `demand_amount` and `claimed_amount` are now `["number", "null"]` in the request schemas, matching the Pydantic `float | None`, via a new `_nullable_number` helper. `normalize_extraction` learned to distinguish nullable from non-nullable numbers: an unstated amount now stays `null` instead of being coerced to a stated `0.0`, while `confidence` keeps its `0.0` default.
-* **Prompt-doctrine drift — fixed.** The "Registered schema fields" lines in `llm/prompt_doctrine.py` now name the fields that actually exist. `CONTRACTS` drops `termination_clauses` and `key_obligations` and adds `reasoning`, `cuad_family`, `merger_consideration`, `cuad_clauses`, `maud_clauses` and `confidence`; `CORPORATE_RECORDS` drops `key_provisions` and adds `intent`, `subject_matter`, `keywords`; `CORRESPONDENCE` drops `key_points` and `referenced_communications` and adds the same three; `INSURANCE_CLAIMS` adds `intent`, `subject_matter`, `keywords` and `claim_checklist`.
-* **`intent` label vocabulary — fixed at the prompt, hardened in code.** `intent`'s schema description is now generated from `INTENT_DESCRIPTIONS` and enumerates that class's exact tokens, so no class is offered another's labels any more. `normalize_intent` gained a class-membership guard (it returns `""` rather than a token from another class) plus the aliases `demandpayment`, `requestinformation`, `schedulemeeting` and `noticeofloss`, and `enrich_extraction` now calls it on the extract path — previously it was reached only from `scripts/sync_hf_ground_truth.py` and tests. The residual caveat is the hint under [Inventory enrichment](#id-3.-inventory-enrichment): an unmapped label is left as the model returned it. The scorer also canonicalizes `intent` on both sides through `normalize_intent`, because the field type is `label` (llm-dojo-scoring v0.20.0 and later). Only `merger_agreement` keeps `intent: name`.
+* **Money-field type mismatch — fixed.** `demand_amount` and `claimed_amount` are now `["number", "null"]` in the request schemas, via a new `_nullable_number` helper. This matches the Pydantic `float | None`. `normalize_extraction` now tells nullable numbers from non-nullable ones. An unstated amount stays `null` instead of being coerced to a stated `0.0`. `confidence` keeps its `0.0` default.
+* **Prompt-doctrine drift — fixed.** The "Registered schema fields" lines in `llm/prompt_doctrine.py` now name the fields that actually exist:
+  * `CONTRACTS` drops `termination_clauses` and `key_obligations`. It adds `reasoning`, `cuad_family`, `merger_consideration`, `cuad_clauses`, `maud_clauses` and `confidence`.
+  * `CORPORATE_RECORDS` drops `key_provisions` and adds `intent`, `subject_matter`, `keywords`.
+  * `CORRESPONDENCE` drops `key_points` and `referenced_communications` and adds the same three.
+  * `INSURANCE_CLAIMS` adds `intent`, `subject_matter`, `keywords` and `claim_checklist`.
+* **`intent` label vocabulary — fixed at the prompt, hardened in code.**
+  * The schema description of `intent` is now generated from `INTENT_DESCRIPTIONS`. It enumerates that class's exact tokens, so no class is offered another's labels any more.
+  * `normalize_intent` gained a class-membership guard: it returns `""` rather than a token from another class. It also gained the aliases `demandpayment`, `requestinformation`, `schedulemeeting` and `noticeofloss`.
+  * `enrich_extraction` now calls it on the extract path. Before, only `scripts/sync_hf_ground_truth.py` and tests reached it.
+  * The residual caveat is the hint under [Inventory enrichment](#id-3.-inventory-enrichment): an unmapped label is left as the model returned it.
+  * The scorer also canonicalizes `intent` on both sides through `normalize_intent`, because the field type is `label` (llm-dojo-scoring v0.20.0 and later). Only `merger_agreement` keeps `intent: name`.
 
 ## Subclass inventories
 
@@ -411,7 +438,7 @@ The sorter catalog for `corporate_record` is wider than the extraction set. Its 
 
 ## CUAD and MAUD label sets
 
-The contract and merger-agreement schemas flatten the Hub label sets of `Lucius-Morningstar/mailroom-dataset` (config `ground_truth`) into string lines, so chunk merging, field scoring and the ground-truth join share one shape.
+The contract and merger-agreement schemas flatten the Hub label sets of `Lucius-Morningstar/mailroom-dataset` (config `ground_truth`) into string lines. So chunk merging, field scoring and the ground-truth join share one shape.
 
 | Hub ground-truth column         | Shape in the Hub                                                                 | Pipeline field                                            | Flattened by                 |
 | ------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------------------------- |
@@ -420,15 +447,89 @@ The contract and merger-agreement schemas flatten the Hub label sets of `Lucius-
 | `cuad_clause_labels`            | JSON object: 41 categories to `[{start, text}, ...]`; empty list means absent    | `cuad_clauses` as `"<Category>: <text>"`, present only    | `flatten_cuad_clause_labels` |
 | `maud_clause_labels`            | JSON object: question to `{answer, category, excerpt_chars, valid_classes, ...}` | `maud_clauses` as `"<Question>: <answer>"`, answered only | `flatten_maud_clause_labels` |
 
-**CUAD categories (41, Atticus CUAD v1 names):** Document Name, Parties, Agreement Date, Effective Date, Expiration Date, Renewal Term, Notice Period To Terminate Renewal, Governing Law, Most Favored Nation, Competitive Restriction Exception, Non-Compete, Exclusivity, No-Solicit Of Customers, No-Solicit Of Employees, Non-Disparagement, Termination For Convenience, Rofr/Rofo/Rofn, Change Of Control, Anti-Assignment, Revenue/Profit Sharing, Price Restrictions, Minimum Commitment, Volume Restriction, Ip Ownership Assignment, Joint Ip Ownership, License Grant, Non-Transferable License, Affiliate License-Licensor, Affiliate License-Licensee, Unlimited/All-You-Can-Eat-License, Irrevocable Or Perpetual License, Source Code Escrow, Post-Termination Services, Audit Rights, Uncapped Liability, Cap On Liability, Liquidated Damages, Warranty Duration, Insurance, Covenant Not To Sue, Third Party Beneficiary.
+**CUAD categories (41, Atticus CUAD v1 names):**
 
-**MAUD questions (22, LegalBench MAUD v1 names):** Absence of Litigation Closing Condition; Accuracy of Target R\&W Closing Condition; Agreement provides for matching rights in connection with COR; Agreement provides for matching rights in connection with FTR; Breach of Meeting Covenant; Breach of No Shop; Compliance with Covenant Closing Condition; FTR Triggers; Fiduciary exception to COR covenant; Fiduciary exception: Board determination (no-shop); General Antitrust Efforts Standard; Intervening Event Definition; Knowledge Definition; Limitations on FTR Exercise; MAE Definition; Negative interim operating covenant; No-Shop; Ordinary course covenant; Specific Performance; Superior Offer Definition; Tail Period & Acquisition Proposal Details; Type of Consideration.
+* Document Name
+* Parties
+* Agreement Date
+* Effective Date
+* Expiration Date
+* Renewal Term
+* Notice Period To Terminate Renewal
+* Governing Law
+* Most Favored Nation
+* Competitive Restriction Exception
+* Non-Compete
+* Exclusivity
+* No-Solicit Of Customers
+* No-Solicit Of Employees
+* Non-Disparagement
+* Termination For Convenience
+* Rofr/Rofo/Rofn
+* Change Of Control
+* Anti-Assignment
+* Revenue/Profit Sharing
+* Price Restrictions
+* Minimum Commitment
+* Volume Restriction
+* Ip Ownership Assignment
+* Joint Ip Ownership
+* License Grant
+* Non-Transferable License
+* Affiliate License-Licensor
+* Affiliate License-Licensee
+* Unlimited/All-You-Can-Eat-License
+* Irrevocable Or Perpetual License
+* Source Code Escrow
+* Post-Termination Services
+* Audit Rights
+* Uncapped Liability
+* Cap On Liability
+* Liquidated Damages
+* Warranty Duration
+* Insurance
+* Covenant Not To Sue
+* Third Party Beneficiary
 
-The MAUD answer must be the Hub `valid_class`, not a paraphrase. The handoff gives these mappings for consideration: All Cash to `all_cash`, All Stock to `all_stock`, Mixed Cash/Stock to `mixed_cash_stock`, Mixed Cash/Stock: Election to `mixed_cash_stock_election`.
+**MAUD questions (22, LegalBench MAUD v1 names):**
 
-For contracts, the handoff tells the model to scan all 41 categories even when the CUAD family is known ("family-characteristic clauses are required, not exclusive"), and to keep `maud_clauses` empty unless the document is a merger agreement.
+* Absence of Litigation Closing Condition
+* Accuracy of Target R\&W Closing Condition
+* Agreement provides for matching rights in connection with COR
+* Agreement provides for matching rights in connection with FTR
+* Breach of Meeting Covenant
+* Breach of No Shop
+* Compliance with Covenant Closing Condition
+* FTR Triggers
+* Fiduciary exception to COR covenant
+* Fiduciary exception: Board determination (no-shop)
+* General Antitrust Efforts Standard
+* Intervening Event Definition
+* Knowledge Definition
+* Limitations on FTR Exercise
+* MAE Definition
+* Negative interim operating covenant
+* No-Shop
+* Ordinary course covenant
+* Specific Performance
+* Superior Offer Definition
+* Tail Period & Acquisition Proposal Details
+* Type of Consideration
 
-The inventory fields (`cuad_family`, `merger_consideration`, `cuad_clauses`, `maud_clauses`), plus `reasoning`, `confidence` and `document_name`, are skipped by the Boss's same-class conflict check, as are `record_type`, `communication_type` and `claim_type` (`skip_conflict_field`).
+The MAUD answer must be the Hub `valid_class`, not a paraphrase. The handoff gives these mappings for consideration:
+
+* All Cash to `all_cash`;
+* All Stock to `all_stock`;
+* Mixed Cash/Stock to `mixed_cash_stock`;
+* Mixed Cash/Stock: Election to `mixed_cash_stock_election`.
+
+For contracts, the handoff tells the model to scan all 41 categories even when the CUAD family is known ("family-characteristic clauses are required, not exclusive"). It also tells the model to keep `maud_clauses` empty unless the document is a merger agreement.
+
+The Boss's same-class conflict check skips these fields (`skip_conflict_field`):
+
+* the inventory fields: `cuad_family`, `merger_consideration`, `cuad_clauses`, `maud_clauses`;
+* `reasoning`, `confidence` and `document_name`;
+* `record_type`, `communication_type` and `claim_type`.
 
 ## Where the schemas come from
 
@@ -444,4 +545,4 @@ The inventory fields (`cuad_family`, `merger_consideration`, `cuad_clauses`, `ma
 * [`src/graph/build_graph.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/graph/build_graph.py) (`extract_node`, `_run_chunked_extraction`, `_enrich_contract_result`, `compile_report_node`)
 * [`src/llm/prompt_doctrine.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/llm/prompt_doctrine.py), [`src/observability/scores.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/scores.py), [`src/observability/posthoc_gt.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/posthoc_gt.py)
 * [`src/langchain_agents/specialist_agents.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/langchain_agents/specialist_agents.py) (`_nullable_number`, `normalize_extraction`), [`src/langchain_agents/doc_inventories.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/langchain_agents/doc_inventories.py) (`INTENT_LABELS`, `INTENT_DESCRIPTIONS`, `normalize_intent`, `enrich_extraction`) — the patched money-field and `intent` behaviour
-* Uncommitted working-tree changes were verified locally on 2026-10-06; the file links above track `main`, so they can differ from the described behaviour until the patches are committed and released.
+* Uncommitted working-tree changes were verified locally on 2026-10-06. The file links above track `main`. So they can differ from the described behaviour until the patches are committed and released.
