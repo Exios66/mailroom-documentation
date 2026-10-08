@@ -1,3 +1,8 @@
+---
+description: "The five licensed sources of the dataset."
+icon: folder-tree
+---
+
 # Source corpora
 
 Five independently licensed sources make up `mailroom-dataset`. Each has a dataset card in Mailroom-Corpus-EDA (`docs/dataset-cards/`). The pages under this heading summarize those cards for GitBook; the cards remain canonical.

@@ -1,3 +1,8 @@
+---
+description: "Run on Ollama, vLLM or llama.cpp."
+icon: laptop-code
+---
+
 # Local models
 
 Mailroom does not depend on one LLM provider. OpenRouter is the default provider. A change to local models (Ollama, llamafile, vLLM) is a configuration change, not a code change.

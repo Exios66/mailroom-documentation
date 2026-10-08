@@ -1,3 +1,7 @@
+---
+icon: person-walking
+---
+
 # agent-mailroom
 
 **The Mailroom pipeline on a walking office floor: a self-contained sibling implementation.**

@@ -1,3 +1,8 @@
+---
+description: "Tests, gates and affected-test runs."
+icon: vial
+---
+
 # Testing
 
 The unit suite runs with **no network and no API key**. A shared fixture replaces every LLM client with a mock. Thus a green suite proves that the routing, the schemas, the file moves and the audit chain are correct. A green suite does **not** prove that a model classifies or extracts well. To measure model quality, run a pilot with real calls.

@@ -1,3 +1,8 @@
+---
+description: "The fields extracted for each document class."
+icon: table-list
+---
+
 # Extraction schemas
 
 This page lists exactly what the pipeline extracts from each document class, taken from the code. It covers:

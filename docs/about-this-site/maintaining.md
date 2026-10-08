@@ -1,3 +1,8 @@
+---
+description: "How to publish a change to this site."
+icon: wrench
+---
+
 # Maintaining this site
 
 {% hint style="info" %}

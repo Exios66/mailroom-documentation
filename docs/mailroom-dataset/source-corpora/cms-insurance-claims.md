@@ -1,3 +1,8 @@
+---
+description: "Insurance claim rows from CMS data."
+icon: file-medical
+---
+
 # CMS insurance claims
 
 `insurance_claim` · **1,100 rows** (33.3%) · 6 strata · train 986 / test 114 · mixed **Apache-2.0 / MIT / CC BY 4.0** plus CMS public-use (synthetic, no real PHI).

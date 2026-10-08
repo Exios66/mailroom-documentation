@@ -1,3 +1,8 @@
+---
+description: "Contract rows from CUAD."
+icon: file-contract
+---
+
 # CUAD contracts
 
 `contract` · **600 rows** (18.2%) · 26 strata · train 540 / test 60 · **CC BY 4.0** (CUAD) plus US public domain (91 EDGAR EX-10).

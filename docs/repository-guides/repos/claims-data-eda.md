@@ -1,3 +1,7 @@
+---
+icon: file-medical
+---
+
 # claims-data-eda
 
 **Turns CMS Medicare synthetic claims into plain-text EOB documents for the `insurance_claim` class.**

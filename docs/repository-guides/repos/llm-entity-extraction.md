@@ -1,3 +1,7 @@
+---
+icon: dna
+---
+
 # llm-entity-extraction
 
 **The prompt experiment loop: where sorter and specialist prompts are bred and measured.**

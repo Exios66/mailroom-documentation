@@ -1,3 +1,8 @@
+---
+description: "vLLM on a rented Modal GPU."
+icon: microchip
+---
+
 # Modal + vLLM
 
 Modal runs vLLM on a rented GPU and gives the pipeline an OpenAI-compatible `/v1` endpoint. The Modal app name is **`mailroom-vllm`**. Do not confuse it with the sandbox app `sandbox-vllm`. Source: [`deploy/modal_vllm.py`](https://github.com/Exios66/llm-mailroom/blob/main/deploy/modal_vllm.py).

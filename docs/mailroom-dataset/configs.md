@@ -1,3 +1,8 @@
+---
+description: "The five Hugging Face configs."
+icon: sliders
+---
+
 # Configs
 
 `mailroom-dataset` ships five Hugging Face configs. The first two are the evaluation contract that every repository uses. The other three simulate how documents arrive.

@@ -1,3 +1,8 @@
+---
+description: "Per-node evaluation and calibration reports."
+icon: clipboard-check
+---
+
 # eval-environment reports
 
 Curated index of [`LLM-Mailroom-Services/eval-environment/reports/`](https://github.com/LLM-Mailroom-Services/eval-environment/tree/main/reports) — the hosted-API leg of the cost/quality comparison whose self-hosted half lives in the sandbox report tree. For the two-report-root overview and the ownership boundary, see [Experiment reports](experiment-reports.md).

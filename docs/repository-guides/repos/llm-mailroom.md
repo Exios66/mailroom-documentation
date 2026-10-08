@@ -1,3 +1,7 @@
+---
+icon: envelopes-bulk
+---
+
 # llm-mailroom
 
 **The document pipeline at the center of the constellation. This site documents its pipeline.**

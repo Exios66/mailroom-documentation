@@ -1,3 +1,8 @@
+---
+description: "The specification for every agent."
+icon: robot
+---
+
 # Agents
 
 This page is the specification for every agent in the pipeline. For each agent it gives the trigger, the input, the output, and the design rule it enforces. Read the roster below first to find your agent. Each section after the roster stands alone.

@@ -1,3 +1,8 @@
+---
+description: "One gateway for every LLM call."
+icon: route
+---
+
 # LiteLLM gateway
 
 In **Mode G**, every LLM call goes to one OpenAI-compatible endpoint: the LiteLLM gateway. The gateway sends each request to a [Modal](modal-vllm.md) GPU tier or, for agents on the `api` tier, to OpenRouter.

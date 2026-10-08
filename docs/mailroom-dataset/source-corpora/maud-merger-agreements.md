@@ -1,3 +1,8 @@
+---
+description: "Merger agreement rows from MAUD."
+icon: handshake
+---
+
 # MAUD merger agreements
 
 `merger_agreement` · **152 rows** (4.6%) · 5 strata · train 135 / test 17 · **CC BY 4.0**.

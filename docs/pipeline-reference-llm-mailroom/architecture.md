@@ -1,3 +1,8 @@
+---
+description: "How the pipeline is built."
+icon: building-columns
+---
+
 # Architecture
 
 {% hint style="info" %}

@@ -1,3 +1,8 @@
+---
+description: "Correspondence rows from the Enron corpus."
+icon: envelope
+---
+
 # Enron correspondence
 
 `correspondence` · **1,000 rows** (30.3%) · 8 strata · train 915 / test 85 · **research use** (CMU Enron Email Dataset; real names).

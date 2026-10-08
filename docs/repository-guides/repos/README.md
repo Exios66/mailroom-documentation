@@ -1,3 +1,8 @@
+---
+description: "One guide for each repository."
+icon: books
+---
+
 # All repositories
 
 {% hint style="info" %}
@@ -8,16 +13,16 @@ One page per repository: what it does, where it fits, how to start, and where it
 
 ## Start here by task
 
-| If you want to... | Start with |
-| --- | --- |
-| Run or change the document pipeline | [llm-mailroom](llm-mailroom.md) |
-| Change how a field is scored | [llm-dojo-scoring](llm-dojo-scoring.md) |
-| Test a new prompt before it goes to production | [llm-entity-extraction](llm-entity-extraction.md), then [eval-environment](eval-environment.md) |
-| Run the pipeline offline or on Modal with no setup | [local-mailroom-sandbox](local-mailroom-sandbox/) |
-| See what the pipeline did to a document | [The-Mailroom](the-mailroom.md) |
-| Add or fix documents in the dataset | [Mailroom-Corpus-EDA](mailroom-corpus-eda.md) and the corpus feed for the class |
-| Make a change across two or more packages | [Digital-Mailroom](digital-mailroom.md) |
-| File or find a cross-repo issue | [mailroom-issues](mailroom-issues.md) |
+<table data-view="cards"><thead><tr><th></th><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th></tr></thead><tbody>
+<tr><td><h3><i class="fa-envelopes-bulk" style="color:$primary;">:envelopes-bulk:</i></h3></td><td><strong>Run or change the pipeline</strong></td><td>llm-mailroom</td><td><a href="llm-mailroom.md">llm-mailroom</a></td></tr>
+<tr><td><h3><i class="fa-bullseye" style="color:$primary;">:bullseye:</i></h3></td><td><strong>Change how a field is scored</strong></td><td>llm-dojo-scoring</td><td><a href="llm-dojo-scoring.md">llm-dojo-scoring</a></td></tr>
+<tr><td><h3><i class="fa-dna" style="color:$primary;">:dna:</i></h3></td><td><strong>Test a prompt before production</strong></td><td>llm-entity-extraction, then eval-environment</td><td><a href="llm-entity-extraction.md">llm-entity-extraction</a></td></tr>
+<tr><td><h3><i class="fa-laptop" style="color:$primary;">:laptop:</i></h3></td><td><strong>Run offline or on Modal</strong></td><td>local-mailroom-sandbox</td><td><a href="local-mailroom-sandbox/README.md">README</a></td></tr>
+<tr><td><h3><i class="fa-film" style="color:$primary;">:film:</i></h3></td><td><strong>See what the pipeline did</strong></td><td>The-Mailroom</td><td><a href="the-mailroom.md">the-mailroom</a></td></tr>
+<tr><td><h3><i class="fa-chart-simple" style="color:$primary;">:chart-simple:</i></h3></td><td><strong>Add or fix dataset documents</strong></td><td>Mailroom-Corpus-EDA and the class feed</td><td><a href="mailroom-corpus-eda.md">mailroom-corpus-eda</a></td></tr>
+<tr><td><h3><i class="fa-warehouse" style="color:$primary;">:warehouse:</i></h3></td><td><strong>Change two or more packages</strong></td><td>Digital-Mailroom</td><td><a href="digital-mailroom.md">digital-mailroom</a></td></tr>
+<tr><td><h3><i class="fa-circle-exclamation" style="color:$primary;">:circle-exclamation:</i></h3></td><td><strong>File or find a cross-repo issue</strong></td><td>mailroom-issues</td><td><a href="mailroom-issues.md">mailroom-issues</a></td></tr>
+</tbody></table>
 
 ## Hub and coordination
 

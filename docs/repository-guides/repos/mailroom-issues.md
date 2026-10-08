@@ -1,3 +1,7 @@
+---
+icon: circle-exclamation
+---
+
 # mailroom-issues
 
 **The constellation-wide issue hub. No code; only coordination.**
