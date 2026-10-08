@@ -100,7 +100,7 @@ The API reference section (`docs/api-reference/`) renders GitBook OpenAPI blocks
    ```
 
    The `src` is the `raw.githubusercontent.com` URL of the committed spec file on `main`, so GitBook fetches the version-controlled spec. Validate the YAML before you push (`python3` with `pyyaml`: `safe_load`, 16 operations, 7 tags).
-4. When a route is added or removed, update the group table in `docs/api-reference/README.md`, the matching narrative in [API](../pipeline-reference-llm-mailroom/api.md), and the `operationId` list above.
+4. When routes change, update their `paths` entries and operation-level `operationId` values in `docs/api-reference/mailroom-openapi.yaml`. Update the group table in `docs/api-reference/README.md` and the matching narrative in [API](../pipeline-reference-llm-mailroom/api.md).
 5. Optional GitBook UI step: upload the same file under the space's OpenAPI specifications to enable the in-page Test-it runner against your own producer URL. The committed file stays the source of truth either way.
 
 ## Changelog

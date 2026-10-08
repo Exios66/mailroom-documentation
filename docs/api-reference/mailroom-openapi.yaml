@@ -203,6 +203,34 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ResolveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision:
+                  type: string
+                  enum: [approved, rejected]
+                notes:
+                  type: string
+                disposition:
+                  type: string
+                  enum: [resume, record, requeue, complete]
+                  default: resume
+                doc_type:
+                  type: string
+                  description: Reroute classification. Alias of override_doc_type.
+                override_doc_type:
+                  type: string
+                contract_subtype:
+                  type: string
+                doc_subclass:
+                  type: string
+                extracted_data:
+                  type: string
+                  description: >-
+                    JSON-encoded human-finished payload. Required for complete
+                    when no manifest payload is parked.
       responses:
         '200':
           description: Resolution result. Shape varies by disposition.
@@ -241,6 +269,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DocumentSourceResponse'
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+                description: >-
+                  Original file bytes when download=1. The server uses the
+                  file's detected media type, with application/octet-stream
+                  as the fallback.
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
