@@ -48,6 +48,10 @@ Pooled serving efficiency:
 
 Metered Modal session total across the four experiments: **$3.39** for 1,050 documents (busy-window GPU $1.81, 53% busy share). Per-cell cards: [SAND37\_L4\_cost\_cards.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/reports/SAND-37/SAND37_L4_cost_cards.md) · record: [SAND37\_L4\_cost\_record.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/reports/SAND-37/SAND37_L4_cost_record.md) · reader pack: [READER-REPORT.md](https://github.com/Exios66/local-mailroom-sandbox/blob/main/reports/SAND-37/READER-REPORT.md).
 
+Cost against quality, one panel per posture (from the record set):
+
+<figure><img src="https://raw.githubusercontent.com/Exios66/local-mailroom-sandbox/main/reports/SAND-37/figures/record/cost-vs-score.png" alt="SAND-37 record: GPU cost versus extraction score by posture"><figcaption><p>Cost versus extraction score by posture (record set).</p></figcaption></figure>
+
 <figure><img src="https://raw.githubusercontent.com/Exios66/local-mailroom-sandbox/main/reports/SAND-37/figures/cmp-quality.png" alt="SAND-37 posture comparison: extraction quality by specialist"><figcaption><p>SAND-37 quality comparison across 1×L4 and 2×L4 postures (from the master appendix).</p></figcaption></figure>
 
 <figure><img src="https://raw.githubusercontent.com/Exios66/local-mailroom-sandbox/main/reports/SAND-37/figures/cmp-efficiency.png" alt="SAND-37 posture comparison: serving efficiency"><figcaption><p>SAND-37 efficiency comparison (throughput and GPU cost).</p></figcaption></figure>
