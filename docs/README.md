@@ -1,22 +1,30 @@
+---
+description: "One place to learn the Mailroom: the pipeline and every repository around it."
+icon: house
+layout:
+  width: default
+  tableOfContents:
+    visible: true
+---
+
 # LLM-MAILROOM
 
 This site is the one place to learn the Mailroom: the `llm-mailroom` pipeline and every repository built around it.
 
 The Mailroom reads legal and business documents. It identifies the type of each document and extracts the important fields. Then it files the document in an archive with a tamper-evident audit trail. A team of specialist LLM agents does the work, one LangGraph state machine per document. More than a dozen repositories support the pipeline. They include a scoring library, an evaluation harness, corpus builders, and a local sandbox. They also include visualizers, an ML classifier, and the monorepo that connects them.
 
-| If you want to…                                              | Read                                                                          |
-| ------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| Understand what the Mailroom is and which repo does what     | [Overview](start-here/overview.md)                                            |
-| Get something running in ten minutes                         | [Getting started](start-here/getting-started.md)                              |
-| Run, evaluate, or audit the pipeline                         | [Running the pipeline](the-pipeline-in-depth/running.md)                      |
-| See every node and routing condition                         | [Pipeline flowchart](the-pipeline-in-depth/flowchart.md)                      |
-| Look up a config key, an agent, or an endpoint               | [Pipeline reference](pipeline-reference-llm-mailroom/architecture.md)         |
-| Deploy with Docker, Modal, or Railway                        | [Deployment](pipeline-reference-llm-mailroom/deployment/)                     |
-| See how data, prompts, scores and traces move between repos  | [The constellation](how-it-fits-together/architecture.md)                     |
-| Read the dataset, EDA reports, and figures                   | [Mailroom dataset](mailroom-dataset/mailroom-dataset.md)                      |
-| Work on a specific repository                                | [Repository guides](repository-guides/repos/)                                 |
-| Look up a term like "Lane A", "STP" or "virtual member"      | [Glossary](start-here/glossary.md)                                            |
-| See what changed in each release                             | [Changelog](changelog/README.md)                                              |
+<table data-view="cards"><thead><tr><th></th><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th></tr></thead><tbody>
+<tr><td><h3><i class="fa-compass" style="color:$primary;">:compass:</i></h3></td><td><strong>Understand the Mailroom</strong></td><td>What it is and which repository does what.</td><td><a href="start-here/overview.md">overview</a></td></tr>
+<tr><td><h3><i class="fa-rocket" style="color:$primary;">:rocket:</i></h3></td><td><strong>Get running in ten minutes</strong></td><td>Seven paths. Each works without paid keys.</td><td><a href="start-here/getting-started.md">getting-started</a></td></tr>
+<tr><td><h3><i class="fa-play" style="color:$primary;">:play:</i></h3></td><td><strong>Run, evaluate or audit</strong></td><td>Push documents through the pipeline.</td><td><a href="the-pipeline-in-depth/running.md">running</a></td></tr>
+<tr><td><h3><i class="fa-diagram-project" style="color:$primary;">:diagram-project:</i></h3></td><td><strong>See every node</strong></td><td>The full flowchart with routing conditions.</td><td><a href="the-pipeline-in-depth/flowchart.md">flowchart</a></td></tr>
+<tr><td><h3><i class="fa-book" style="color:$primary;">:book:</i></h3></td><td><strong>Look up a key, agent or route</strong></td><td>The pipeline reference.</td><td><a href="pipeline-reference-llm-mailroom/architecture.md">architecture</a></td></tr>
+<tr><td><h3><i class="fa-server" style="color:$primary;">:server:</i></h3></td><td><strong>Deploy</strong></td><td>Docker, Modal, Railway and more.</td><td><a href="pipeline-reference-llm-mailroom/deployment/README.md">README</a></td></tr>
+<tr><td><h3><i class="fa-sitemap" style="color:$primary;">:sitemap:</i></h3></td><td><strong>See how repositories connect</strong></td><td>Data, prompts, scores and traces.</td><td><a href="how-it-fits-together/architecture.md">architecture</a></td></tr>
+<tr><td><h3><i class="fa-layer-group" style="color:$primary;">:layer-group:</i></h3></td><td><strong>Read the dataset</strong></td><td>Classes, strata, EDA reports and figures.</td><td><a href="mailroom-dataset/mailroom-dataset.md">mailroom-dataset</a></td></tr>
+<tr><td><h3><i class="fa-books" style="color:$primary;">:books:</i></h3></td><td><strong>Work on one repository</strong></td><td>One guide for each repository.</td><td><a href="repository-guides/repos/README.md">README</a></td></tr>
+<tr><td><h3><i class="fa-clock-rotate-left" style="color:$primary;">:clock-rotate-left:</i></h3></td><td><strong>See what changed</strong></td><td>Release notes, by version.</td><td><a href="changelog/README.md">README</a></td></tr>
+</tbody></table>
 
 Install the pipeline (release v0.8.0, as of 2026-10-07). The last command starts the API, which embeds the inbox watcher:
 
@@ -43,12 +51,12 @@ The happy path costs two LLM generations. Everything else is procedural, gated, 
 
 ## What ships with it
 
-|                           |                                                                                                                      |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **Five document classes** | Contracts, merger agreements, corporate records, correspondence, and insurance claims, each with its own specialist. |
-| **Any model provider**    | OpenRouter, Ollama, or vLLM. Agents ask for a role; `taxonomy.yaml` decides the model.                               |
-| **Traced end to end**     | Langfuse, Braintrust, or a local Arize Phoenix. The pipeline runs fine with none of them.                            |
-| **Evaluation built in**   | A 23-sample pilot with ground truth, deterministic field scoring, LLM judges, and a LegalBench harness.              |
+<table data-view="cards"><thead><tr><th></th><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th></tr></thead><tbody>
+<tr><td><h3><i class="fa-file-contract" style="color:$primary;">:file-contract:</i></h3></td><td><strong>Five document classes</strong></td><td>Contracts, merger agreements, corporate records, correspondence and insurance claims. Each has its own specialist.</td><td><a href="mailroom-dataset/classes-and-strata.md">classes-and-strata</a></td></tr>
+<tr><td><h3><i class="fa-plug" style="color:$primary;">:plug:</i></h3></td><td><strong>Any model provider</strong></td><td>OpenRouter, Ollama or vLLM. Agents ask for a role. `taxonomy.yaml` picks the model.</td><td><a href="pipeline-reference-llm-mailroom/local-models.md">local-models</a></td></tr>
+<tr><td><h3><i class="fa-eye" style="color:$primary;">:eye:</i></h3></td><td><strong>Traced end to end</strong></td><td>Langfuse, Braintrust or a local Arize Phoenix. The pipeline runs with none of them.</td><td><a href="pipeline-reference-llm-mailroom/deployment/langfuse.md">langfuse</a></td></tr>
+<tr><td><h3><i class="fa-chart-line" style="color:$primary;">:chart-line:</i></h3></td><td><strong>Evaluation built in</strong></td><td>A 23-sample pilot, deterministic field scoring, LLM judges and a LegalBench harness.</td><td><a href="the-pipeline-in-depth/scoring-and-metrics.md">scoring-and-metrics</a></td></tr>
+</tbody></table>
 
 ## Meet Fumi
 

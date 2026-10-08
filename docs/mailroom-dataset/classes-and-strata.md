@@ -1,3 +1,8 @@
+---
+description: "Five document classes and 55 strata."
+icon: tags
+---
+
 # Classes and strata
 
 The canonical surface is **five document classes** and **55 class-by-subclass strata**. Subclasses are second-level gold (`expected_subclass`); they are not extra top-level classes. Counts below are from Mailroom-Corpus-EDA `reports/tables/strata_counts.csv` and `imbalance_metrics.json` (P2, 2026-09-13), matching Hub `mailroom-dataset` v1 / corpus-family v9.

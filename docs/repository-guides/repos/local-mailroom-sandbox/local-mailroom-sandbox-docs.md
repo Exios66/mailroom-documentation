@@ -1,3 +1,8 @@
+---
+description: "Operator manuals for the offline sandbox."
+icon: book
+---
+
 # Documentation
 
 Dedicated operator manuals for the offline sandbox ([Exios66/local-mailroom-sandbox](https://github.com/Exios66/local-mailroom-sandbox)). Canonical files live in that repository's `docs/`; this page is the GitBook map so every dedicated sandbox doc is on the site TOC. Run results: [Run reports](local-mailroom-sandbox-reports.md). Charts and `sandbox watch` stills: [Visuals](local-mailroom-sandbox-visuals.md). Pipeline GPU serve (this repo): [Modal + vLLM](../../../pipeline-reference-llm-mailroom/deployment/modal-vllm.md).

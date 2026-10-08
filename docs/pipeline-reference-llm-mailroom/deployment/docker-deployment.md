@@ -1,3 +1,8 @@
+---
+description: "Docker Compose setups."
+icon: docker
+---
+
 # Docker
 
 This page covers every Docker Compose setup for llm-mailroom. All setups use one image. The *mode* selects where the LLM calls go. The compose files are in [`deploy/`](https://github.com/Exios66/llm-mailroom/tree/main/deploy/README.md).

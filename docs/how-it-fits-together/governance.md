@@ -1,3 +1,8 @@
+---
+description: "The shared rules for people and AI agents."
+icon: scale-balanced
+---
+
 # Governance and workflow
 
 The constellation runs on a small set of shared rules. With these rules, several people and AI agents can work in parallel. They do not overwrite each other, and they do not report unfinished work as done.

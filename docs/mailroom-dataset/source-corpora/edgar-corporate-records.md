@@ -1,3 +1,8 @@
+---
+description: "Corporate record rows from SEC filings."
+icon: building
+---
+
 # SEC corporate records
 
 `corporate_record` · **450 rows** (13.6%) · 10 strata · train 403 / test 47 · **US public domain**.

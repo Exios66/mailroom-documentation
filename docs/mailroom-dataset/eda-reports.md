@@ -1,3 +1,8 @@
+---
+description: "Exploratory analysis of the corpus."
+icon: magnifying-glass-chart
+---
+
 # EDA reports
 
 Mailroom-Corpus-EDA profiles the 3,302-document corpus with `run_all.py` (phases P0–P6). This page is the GitBook narrative of that run. Canonical write-up: [`reports/SUMMARY_REPORT.md`](https://github.com/Exios66/Mailroom-Corpus-EDA/blob/main/reports/SUMMARY_REPORT.md) (generated 2026-09-13). Charts: [Visualizations](visualizations.md). Repo guide: [Mailroom-Corpus-EDA](../repository-guides/repos/mailroom-corpus-eda.md). Live gallery: [exios66.github.io/Mailroom-Corpus-EDA](https://exios66.github.io/Mailroom-Corpus-EDA/).

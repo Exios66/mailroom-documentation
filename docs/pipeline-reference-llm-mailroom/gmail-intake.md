@@ -1,3 +1,8 @@
+---
+description: "The second intake route, through a mailbox."
+icon: inbox
+---
+
 # Gmail intake
 
 The mailroom's agent mailbox — `llmmailroom@gmail.com` — is a full second intake route alongside the API `POST /v1/upload` and the filesystem inbox. Email a document to the mailbox and the mailroom sweeps it in, processes it, archives it in the auditable hash archive, and reports the outcome **on the same email thread**.

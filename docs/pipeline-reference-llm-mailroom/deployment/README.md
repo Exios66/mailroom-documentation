@@ -1,3 +1,8 @@
+---
+description: "Install, run and deploy the pipeline."
+icon: server
+---
+
 # Deployment
 
 This page covers the laptop install, production process management, the producer for The-Mailroom, Railway, Hugging Face Spaces, backup and restore, and log handling.

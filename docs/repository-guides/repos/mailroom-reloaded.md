@@ -1,3 +1,7 @@
+---
+icon: rotate
+---
+
 # mailroom-reloaded
 
 **The compressed Digital Mailroom: a design for a smaller pipeline that runs locally on CrewAI Flows.**

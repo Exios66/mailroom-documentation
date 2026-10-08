@@ -1,3 +1,8 @@
+---
+description: "Every node and routing condition in one chart."
+icon: diagram-project
+---
+
 # Pipeline flowchart
 
 This page draws the whole llm-mailroom document pipeline as one flowchart, built directly from the code. It shows:

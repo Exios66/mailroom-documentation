@@ -1,3 +1,7 @@
+---
+icon: chart-simple
+---
+
 # Mailroom-Corpus-EDA
 
 **Full-corpus analysis of the canonical `mailroom-dataset`, its dataset cards, and the central Hugging Face upload helpers.**

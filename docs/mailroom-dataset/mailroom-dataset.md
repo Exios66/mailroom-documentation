@@ -1,3 +1,8 @@
+---
+description: "The canonical dataset: classes, strata and splits."
+icon: layer-group
+---
+
 # Dataset overview
 
 {% hint style="info" %}

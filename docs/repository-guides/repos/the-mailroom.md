@@ -1,3 +1,7 @@
+---
+icon: film
+---
+
 # The-Mailroom
 
 **A pixel-art visual engine that draws every pipeline run as envelopes on a conveyor, driven only by Langfuse traces.**

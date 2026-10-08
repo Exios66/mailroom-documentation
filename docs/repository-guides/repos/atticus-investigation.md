@@ -1,3 +1,7 @@
+---
+icon: gavel
+---
+
 # atticus-investigation
 
 **A LegalBench classification prompt-engineering pipeline. Adjacent to the Mailroom, using the same methodology.**

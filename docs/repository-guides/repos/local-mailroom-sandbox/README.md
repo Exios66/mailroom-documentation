@@ -1,3 +1,7 @@
+---
+icon: laptop
+---
+
 # local-mailroom-sandbox
 
 **Run the full pipeline offline on local models, and run GPU serving studies on Modal.**

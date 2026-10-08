@@ -1,3 +1,8 @@
+---
+description: "Run, evaluate and audit the pipeline."
+icon: play
+---
+
 # Running the pipeline
 
 {% hint style="info" %}

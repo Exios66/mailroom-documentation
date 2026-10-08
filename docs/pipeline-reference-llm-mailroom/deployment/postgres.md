@@ -1,3 +1,8 @@
+---
+description: "Optional Postgres storage."
+icon: database
+---
+
 # Postgres
 
 Postgres is **optional**. By default, the catalog, the audit log and the relations table are SQLite files. The pipeline runs with no database server.

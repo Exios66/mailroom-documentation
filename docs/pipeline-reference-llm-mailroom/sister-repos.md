@@ -1,3 +1,8 @@
+---
+description: "The repositories around the pipeline."
+icon: people-group
+---
+
 # Sister repositories
 
 llm-mailroom does not fly alone. It is the pipeline at the center of a small constellation of governed repositories, plus derived artifacts hosted elsewhere. Each repository has its own repo, board discipline, and release train.

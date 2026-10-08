@@ -1,3 +1,8 @@
+---
+description: "Every repository, with the place to make a change."
+icon: list
+---
+
 # Repository index
 
 This page lists every repository connected to the Mailroom, including copies and earlier attempts. For each repository, it tells you where to make a change.

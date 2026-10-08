@@ -1,3 +1,8 @@
+---
+description: "Charts and stills from the sandbox."
+icon: image
+---
+
 # Visuals
 
 Charts and `sandbox watch` stills from [Exios66/local-mailroom-sandbox](https://github.com/Exios66/local-mailroom-sandbox). Images are the tracked files in that repo (GitHub `main`); this page is the GitBook gallery. Narrative and tables: [Run reports](local-mailroom-sandbox-reports.md). Manuals: [Documentation](local-mailroom-sandbox-docs.md).

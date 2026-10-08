@@ -1,3 +1,7 @@
+---
+icon: envelope
+---
+
 # Enron-Evaluation-Environment
 
 **Turns the CMU Enron email corpus into the pipeline's `correspondence` dataset.**

@@ -1,3 +1,8 @@
+---
+description: "Static and interactive charts of the corpus."
+icon: chart-pie
+---
+
 # Visualizations
 
 Static PNGs and interactive Plotly charts from [Exios66/Mailroom-Corpus-EDA](https://github.com/Exios66/Mailroom-Corpus-EDA). Images are the tracked files on that repo's `main`; this page is the GitBook gallery. Narrative and tables: [EDA reports](eda-reports.md). Dataset overview: [Mailroom dataset](mailroom-dataset.md).

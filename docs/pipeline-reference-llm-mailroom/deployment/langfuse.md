@@ -1,3 +1,8 @@
+---
+description: "The default tracing backend."
+icon: eye
+---
+
 # Langfuse
 
 Langfuse is the pipeline's **default tracing backend**. It is the first backend in the `auto` resolution chain. It is also the only backend that records one span for each graph node, not only the LLM calls. Tracing is optional: the pipeline runs identically with tracing off.

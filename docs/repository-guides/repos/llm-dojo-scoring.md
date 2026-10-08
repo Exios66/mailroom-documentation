@@ -1,3 +1,7 @@
+---
+icon: bullseye
+---
+
 # llm-dojo-scoring
 
 **The shared scoring library. The one place the constellation defines what "correct" means.**

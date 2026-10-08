@@ -1,3 +1,8 @@
+---
+description: "How the pipeline scores extraction and where it performs."
+icon: chart-line
+---
+
 # Scoring and performance
 
 This page explains two things:

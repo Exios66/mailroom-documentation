@@ -1,3 +1,7 @@
+---
+icon: circle-nodes
+---
+
 # llm-mailroom-graph
 
 **An interactive knowledge graph of the pipeline's code, for answering "what calls what" questions.**

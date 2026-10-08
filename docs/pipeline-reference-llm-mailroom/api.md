@@ -1,3 +1,8 @@
+---
+description: "The FastAPI producer routes."
+icon: plug
+---
+
 # API
 
 Mailroom exposes a FastAPI server on port 8000 by default. The API is the producer side of the pipeline: it accepts documents, reports where each one is, lets a person resolve held documents, and exposes operator controls. It embeds the inbox watcher, so starting it also starts processing.

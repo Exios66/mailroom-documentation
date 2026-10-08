@@ -1,3 +1,8 @@
+---
+description: "The operator procedure."
+icon: clipboard-list
+---
+
 # Operational procedure
 
 This page is the operator procedure for the Mailroom pipeline. Use it when you run the pipeline, resolve human reviews, or hand over a shift.

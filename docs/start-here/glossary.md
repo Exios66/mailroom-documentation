@@ -1,3 +1,8 @@
+---
+description: "Plain definitions for terms used across the constellation."
+icon: book-open
+---
+
 # Glossary
 
 Terms that appear across the constellation's code, docs and commit messages.

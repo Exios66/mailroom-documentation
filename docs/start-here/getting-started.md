@@ -1,3 +1,8 @@
+---
+description: "Seven paths to a first run. Each works without paid keys."
+icon: rocket
+---
+
 # Getting started
 
 Pick the path that matches what you came to do. Every path below can run without paid API keys first (mock mode), so you can see the machinery work before spending anything.

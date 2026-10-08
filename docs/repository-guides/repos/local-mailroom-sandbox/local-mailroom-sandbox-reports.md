@@ -1,3 +1,8 @@
+---
+description: "GPU and specialist-grid results."
+icon: gauge-high
+---
+
 # Run reports
 
 Measured GPU and specialist-grid results from [Exios66/local-mailroom-sandbox](https://github.com/Exios66/local-mailroom-sandbox). Canonical write-ups, cards, and serving JSON live in that repo's `reports/`. Figures from those runs are on [Visuals](local-mailroom-sandbox-visuals.md). Snapshot as of the sandbox `main` tip used to build this page (2026-10).

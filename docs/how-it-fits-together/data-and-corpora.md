@@ -1,3 +1,8 @@
+---
+description: "The dataset family behind every evaluation and training run."
+icon: database
+---
+
 # Data and corpora
 
 Every evaluation, training run and pilot in the constellation draws from one dataset family on Hugging Face, published under the [`Lucius-Morningstar`](https://huggingface.co/Lucius-Morningstar) organization. This page is the constellation-wide rules summary.

@@ -1,3 +1,8 @@
+---
+description: "The local, no-cost tracing fallback."
+icon: fire
+---
+
 # Apache Phoenix
 
 Arize Phoenix is the **local, no-cost fallback** in the tracing chain. If no cloud backend has a key, `auto` selects Phoenix. Tracing does not stop, and Phoenix adds no cost to the API calls.

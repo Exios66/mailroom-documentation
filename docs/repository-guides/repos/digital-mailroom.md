@@ -1,3 +1,7 @@
+---
+icon: warehouse
+---
+
 # Digital-Mailroom
 
 **The monorepo: every constellation package in one checkout and one virtualenv.**

@@ -1,3 +1,8 @@
+---
+description: "Every configuration key and environment variable."
+icon: gear
+---
+
 # Configuration
 
 ## `config/taxonomy.yaml`

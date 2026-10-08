@@ -1,3 +1,7 @@
+---
+icon: brain
+---
+
 # mailroom-ml
 
 **The ModernBERT intake fast-path classifier: training, calibration, evaluation and ONNX serving.**

@@ -1,3 +1,8 @@
+---
+description: "Single-file local LLM servers."
+icon: file-code
+---
+
 # Llamafiles
 
 A [llamafile](https://docs.mozilla.ai/llamafile) is an LLM server in one executable file, from Mozilla. The file runs on **linux amd64 and aarch64** and serves an OpenAI-compatible `/v1` API. Mode A uses a llamafile as a sidecar container for a fully offline LLM. It needs no API key, makes no network calls and costs nothing per document.
