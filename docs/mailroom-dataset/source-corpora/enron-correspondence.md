@@ -33,7 +33,7 @@ Intent is **100% hydrated** (1,000/1,000). `intent_source` records the path; the
 | `heuristic`     |  105 |
 | `manual`        |   96 |
 
-Source: the `intent_source` column of Hub `mailroom-dataset` `ground_truth`, cross-checked against Mailroom-Corpus-EDA's P2 metrics (2026-09-13). The 25 review-flagged rows come from the same `intent_status` pass.
+Source: the `intent_source` column of Hub `mailroom-dataset` `ground_truth`, cross-checked against Mailroom-Corpus-EDA's P2 metrics (2026-09-13). The 25 review-flagged rows come from the same `intent_status` pass. Upstream subject-line source: [`Yale-LILY/aeslc`](https://huggingface.co/datasets/Yale-LILY/aeslc).
 
 v9 added the `heuristic` path for subject-line-hydrated draws (`intent_status = auto_labeled`). 25 rows are flagged for review. Every canonical intent class appears in the 10% test split. AESLC mirrors (`snoop2head/enron_aeslc_emails`, `Yale-LILY/aeslc`) supply provenance and recovered subject lines only — they carry **no** intent annotations.
 

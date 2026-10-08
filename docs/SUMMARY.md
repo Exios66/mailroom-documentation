@@ -27,6 +27,7 @@
 * [Dataset overview](mailroom-dataset/mailroom-dataset.md)
 * [Classes and strata](mailroom-dataset/classes-and-strata.md)
 * [Configs](mailroom-dataset/configs.md)
+* [Hub resources](mailroom-dataset/hub-resources.md)
 * [Source corpora](mailroom-dataset/source-corpora/README.md)
   * [CUAD contracts](mailroom-dataset/source-corpora/cuad-contracts.md)
   * [MAUD merger agreements](mailroom-dataset/source-corpora/maud-merger-agreements.md)
@@ -85,6 +86,17 @@
 * [Local models](pipeline-reference-llm-mailroom/local-models.md)
 * [Testing](pipeline-reference-llm-mailroom/testing.md)
 * [Sister repositories](pipeline-reference-llm-mailroom/sister-repos.md)
+
+## API reference
+
+* [API reference](api-reference/README.md)
+* [Health](api-reference/health.md)
+* [Ingest](api-reference/ingest.md)
+* [Review desk](api-reference/review.md)
+* [Documents and matters](api-reference/documents.md)
+* [Audit](api-reference/audit.md)
+* [Operations](api-reference/ops.md)
+* [Relations mode](api-reference/relations.md)
 
 ## Changelog
 

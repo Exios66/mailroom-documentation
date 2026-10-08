@@ -55,8 +55,9 @@ mailroom-documentation/
     ├── mailroom-dataset/      # ├─ Section folders → the site's sidebar sections
     ├── experiment-reports/    # │
     ├── repository-guides/     # │
-    ├── pipeline-reference-llm-mailroom/
-    ├── changelog/             # generated release notes (regenerate, never hand-edit)
+     ├── pipeline-reference-llm-mailroom/
+     ├── api-reference/         # OpenAPI spec + per-group endpoint pages
+     ├── changelog/             # generated release notes (regenerate, never hand-edit)
     └── about-this-site/       # ┘  maintaining.md = the deep runbook for this site
 ```
 

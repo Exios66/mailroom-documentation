@@ -22,7 +22,7 @@ Mailroom exposes a FastAPI server on port 8000 by default. The API is the produc
 | Run maintenance | `POST /ops/sweep`, `POST /ops/resume` | Operator actions |
 | Switch the relations clerk between modes | `GET` / `POST /api/relations/mode` | See [Agents](agents.md) |
 
-Every route is also mounted under `/v1`, and `/v1` is the current interface. Management routes other than health need a bearer token. Details of each call follow.
+Every route except `GET` / `POST /api/relations/mode` is also mounted under `/v1`, and `/v1` is the current interface. Management routes other than health need a bearer token. Details of each call follow. Interactive endpoint blocks: [API reference](../api-reference/).
 
 ## Starting the API
 
@@ -45,7 +45,7 @@ Full compose matrix: [Docker deployment](https://github.com/Exios66/llm-mailroom
 
 ## Endpoints
 
-Each route below is also mounted under `/v1` (for example `GET /health` and `GET /v1/health` share the same handler). Prefer the `/v1` prefix. Management routes except health require a bearer token (`MAILROOM_API_TOKEN`, or a comma-separated `MAILROOM_API_TOKENS` set). Revoke a rotated key with `MAILROOM_API_TOKEN_REVOKED` without restarting a second process.
+Each route below except the relations endpoints is also mounted under `/v1` (for example `GET /health` and `GET /v1/health` share the same handler). Prefer the `/v1` prefix. Management routes except health require a bearer token (`MAILROOM_API_TOKEN`, or a comma-separated `MAILROOM_API_TOKENS` set). Revoke a rotated key with `MAILROOM_API_TOKEN_REVOKED` without restarting a second process.
 
 ### Health Check
 

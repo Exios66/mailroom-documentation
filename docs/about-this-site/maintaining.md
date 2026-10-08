@@ -85,6 +85,24 @@ To change a charted value:
 
 Do not hand-edit an SVG file. The palette in the script passed the colorblind and contrast checks for both themes.
 
+## API reference
+
+The API reference section (`docs/api-reference/`) renders GitBook OpenAPI blocks from a checked-in spec. The spec is hand-written, not generated.
+
+1. Read the routes from `llm-mailroom` `src/api/main.py` at the `main` commit you mirror. Never check out, edit, or commit in another repository's checkout. Use `git -C <llm-mailroom checkout> show <sha>:src/api/main.py`.
+2. Update `docs/api-reference/mailroom-openapi.yaml`: paths, methods, parameters, request bodies, responses, and the `info.description` ref. Keep `/v1` paths canonical. The two `/api/relations/mode` routes have no `/v1` alias.
+3. Update the tag page that owns each changed operation (`health.md`, `ingest.md`, `review.md`, `documents.md`, `audit.md`, `ops.md`, `relations.md`). One page per tag. Each block repeats the spec URL inside the tag:
+
+   ```text
+   {% openapi src="<raw-github-yaml-url>" path="/v1/health" method="get" %}
+   <raw-github-yaml-url>
+   {% endopenapi %}
+   ```
+
+   The `src` is the `raw.githubusercontent.com` URL of the committed spec file on `main`, so GitBook fetches the version-controlled spec. Validate the YAML before you push (`python3` with `pyyaml`: `safe_load`, 16 operations, 7 tags).
+4. When routes change, update their `paths` entries and operation-level `operationId` values in `docs/api-reference/mailroom-openapi.yaml`. Update the group table in `docs/api-reference/README.md` and the matching narrative in [API](../pipeline-reference-llm-mailroom/api.md).
+5. Optional GitBook UI step: upload the same file under the space's OpenAPI specifications to enable the in-page Test-it runner against your own producer URL. The committed file stays the source of truth either way.
+
 ## Changelog
 
 This site has a Changelog section under `docs/changelog/`. It is a generated copy of [`CHANGELOG.md`](https://github.com/Exios66/llm-mailroom/blob/main/CHANGELOG.md) in `llm-mailroom`. Do not hand-edit it. Regenerate it as follows.
@@ -161,8 +179,10 @@ GitBook's published favicon is the site icon in **Customize** ([icons, colors, a
 | A release changes versions or pins | [Overview](../start-here/overview.md) version table, the repo's guide, the [dependency table](../how-it-fits-together/architecture.md#dependency-summary) |
 | Dataset revision changes | [Mailroom dataset](../mailroom-dataset/mailroom-dataset.md) first (counts, strata, EDA figures), then [Data and corpora](../how-it-fits-together/data-and-corpora.md) |
 | Pipeline nodes or classes change | The pipeline reference pages first; then [Architecture](../how-it-fits-together/architecture.md) and [Glossary](../start-here/glossary.md) if terms changed |
+| Producer API routes change | `docs/api-reference/mailroom-openapi.yaml` first, then the owning tag page and [API](../pipeline-reference-llm-mailroom/api.md) (see [API reference](#api-reference)) |
 | Compose matrix, Mode G, or Modal vLLM knobs change | [Docker](../pipeline-reference-llm-mailroom/deployment/docker-deployment.md) and [Modal + vLLM](../pipeline-reference-llm-mailroom/deployment/modal-vllm.md) first; keep `deploy/README.md` as an index that links those pages |
 | Sandbox run reports or figures change | [Run reports](../repository-guides/repos/local-mailroom-sandbox/local-mailroom-sandbox-reports.md) and [Visuals](../repository-guides/repos/local-mailroom-sandbox/local-mailroom-sandbox-visuals.md); keep image URLs on `Exios66/local-mailroom-sandbox` `main` |
+| eval-environment or mailroom-ml figures change | [eval-environment reports](../experiment-reports/eval-environment-reports.md) and [Experiment reports](../experiment-reports/experiment-reports.md); keep SVG URLs on the owning repo `main` (`eval-environment` charts live under `web/data/charts/`, not `reports/charts/`) |
 | Mailroom-Corpus-EDA figures or SUMMARY\_REPORT change | [EDA reports](../mailroom-dataset/eda-reports.md) and [Visualizations](../mailroom-dataset/visualizations.md); keep PNG URLs on `Exios66/Mailroom-Corpus-EDA` `main` and iframe URLs on `exios66.github.io/Mailroom-Corpus-EDA` |
 | Fumi's or Hermes's artwork changes | The full mascot set is built in the `llm-mailroom` repository (`src/scripts/build_mascot.py`, from `source/fumi-base.png`) and mirrored here under `docs/assets/mascot/` — plus `docs/assets/banner.png` and `docs/assets/fumi/fumi.gif`. Refresh the GitBook-referenced copies in `docs/.gitbook/assets/` (`banner.png`, `fumi.gif`, `hoot-icon.png`) to match. GitBook strips scripts and may not animate SVG, so the GIF is the one to use on this page. The GitBook home header is **LLM-MAILROOM** only; Fumi appears twice as `fumi.gif` after the masthead (Postal Worker Fumi (文, "letter") on duty, then Meet Fumi). The owl banner, title, and badges stay the masthead. Re-upload `hoot-icon.png` in GitBook Customize if the Hermes sprite changes. |
 | `llm-mailroom` `CHANGELOG.md` changes | Regenerate the Changelog section (see [Changelog](#changelog)). Update a quoted version on another page only if that page states it. |

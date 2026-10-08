@@ -24,6 +24,8 @@ The Mailroom reads legal and business documents. It identifies the type of each 
 <tr><td><h3><i class="fa-layer-group" style="color:$primary;">:layer-group:</i></h3></td><td><strong>Read the dataset</strong></td><td>Classes, strata, EDA reports and figures.</td><td><a href="mailroom-dataset/mailroom-dataset.md">mailroom-dataset</a></td></tr>
 <tr><td><h3><i class="fa-books" style="color:$primary;">:books:</i></h3></td><td><strong>Work on one repository</strong></td><td>One guide for each repository.</td><td><a href="repository-guides/repos/README.md">README</a></td></tr>
 <tr><td><h3><i class="fa-clock-rotate-left" style="color:$primary;">:clock-rotate-left:</i></h3></td><td><strong>See what changed</strong></td><td>Release notes, by version.</td><td><a href="changelog/README.md">README</a></td></tr>
+<tr><td><h3><i class="fa-brackets-curly" style="color:$primary;">:brackets-curly:</i></h3></td><td><strong>Call the API</strong></td><td>Interactive endpoint reference, rendered from OpenAPI.</td><td><a href="api-reference/README.md">README</a></td></tr>
+<tr><td><h3><i class="fa-flask" style="color:$primary;">:flask:</i></h3></td><td><strong>Read the results</strong></td><td>Measured GPU, API and classifier results, with figures.</td><td><a href="experiment-reports/experiment-reports.md">experiment-reports</a></td></tr>
 </tbody></table>
 
 Install the pipeline (release v0.8.0, as of 2026-10-07). The last command starts the API, which embeds the inbox watcher:

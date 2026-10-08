@@ -41,7 +41,9 @@ Table: [`maud_task_stats.csv`](https://github.com/Exios66/Mailroom-Corpus-EDA/bl
 
 ## Attribution
 
-Wang, Steven H., et al. “MAUD: An Expert-Annotated Legal NLP Dataset for Merger Agreement Understanding.” _EMNLP 2023_. [https://arxiv.org/abs/2301.00876](https://arxiv.org/abs/2301.00876) · Zenodo DOI `10.5281/zenodo.7500064`.
+Wang, Steven H., et al. “MAUD: An Expert-Annotated Legal NLP Dataset for Merger Agreement Understanding.” _EMNLP 2023_. [https://arxiv.org/abs/2301.00876](https://arxiv.org/abs/2301.00876) · Zenodo DOI [10.5281/zenodo.7500064](https://doi.org/10.5281/zenodo.7500064). License deed: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
+No family mirror repository exists for MAUD. The 152 agreements live inside [`mailroom-dataset`](https://huggingface.co/datasets/Lucius-Morningstar/mailroom-dataset) itself.
 
 ## Caveats
 

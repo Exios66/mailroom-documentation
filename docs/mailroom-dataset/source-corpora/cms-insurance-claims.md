@@ -59,7 +59,7 @@ The three sibling line-of-business sources are separately licensed synthetic cor
 | ------ | ---------: | ---------------- | ------- | ---------------- |
 | GNOTHEIA | 200 | `property` (FNOL documents, stratified by loss event) | Apache-2.0 | [`gratex/GNOTHEIA-synthetic-insurance-dataset`](https://huggingface.co/datasets/gratex/GNOTHEIA-synthetic-insurance-dataset) (Gratex International a.s., InnovAIte) |
 | BDR | 300 | `auto` (motor-claims decision letters: `APPROVE` / `REVIEW` / `REJECT`) | MIT | [`bdr-ai-org/insurance-motor-claims-decision-v1`](https://huggingface.co/datasets/bdr-ai-org/insurance-motor-claims-decision-v1) |
-| INSURBIAS | 150 (v9 addition) | `auto` (claim narratives) | see dataset card | [`feihuangfh/INSURBIAS`](https://huggingface.co/datasets/feihuangfh/INSURBIAS) — Huang & Shamim, "Gender Bias in AI-Assisted Insurance Claim Processing: A Counterfactual Audit of Large Language Models", SSRN 6324800 |
+| INSURBIAS | 150 (v9 addition) | `auto` (claim narratives) | see dataset card | [`feihuangfh/INSURBIAS`](https://huggingface.co/datasets/feihuangfh/INSURBIAS) — Fei Huang and Md Mushahidul Islam Shamim, "Gender Bias in AI-Assisted Insurance Claim Processing: A Counterfactual Audit of Large Language Models", [SSRN 6324800](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6324800) |
 
 All three are fully synthetic with no real PII. `coverage_determination` is **pending** for GNOTHEIA property rows (the source carries no adjudication) — see the honest-gap note in [Agents](../../pipeline-reference-llm-mailroom/agents.md).
 
