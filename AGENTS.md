@@ -229,6 +229,7 @@ Two machine-readable views exist on the live site:
 | Experiment reports | `docs/experiment-reports/` | Report indexes (the sandbox reports page lives under `repository-guides/`) |
 | Repository guides | `docs/repository-guides/repos/` | One guide per repository |
 | Pipeline reference (llm-mailroom) | `docs/pipeline-reference-llm-mailroom/` | Canonical pipeline reference: architecture, agents, configuration, API, Gmail, deployment, operations |
+| API reference | `docs/api-reference/` | Interactive endpoint reference: `mailroom-openapi.yaml` plus one page per tag |
 | Changelog | `docs/changelog/` | **Generated** release notes. Never hand-edit (§10.7). |
 | About this site | `docs/about-this-site/` | `maintaining.md`, the published runbook |
 
@@ -437,7 +438,7 @@ These are the facts that move most often. When one moves, update **every** file 
 
 | Fact | Current value | Files that state it |
 | --- | --- | --- |
-| llm-mailroom release | `v0.8.0`; `main` carries unreleased work (site swept against `main` `578db29`) | `docs/README.md`, `docs/start-here/overview.md`, `docs/repository-guides/repos/llm-mailroom.md`, `docs/pipeline-reference-llm-mailroom/configuration.md`, `docs/pipeline-reference-llm-mailroom/gmail-intake.md`, `docs/SUMMARY.md` (Changelog block) |
+| llm-mailroom release | `v0.8.0`; `main` carries unreleased work (site swept against `main` `c6476f7`) | `docs/README.md`, `docs/start-here/overview.md`, `docs/repository-guides/repos/llm-mailroom.md`, `docs/pipeline-reference-llm-mailroom/configuration.md`, `docs/pipeline-reference-llm-mailroom/gmail-intake.md`, `docs/SUMMARY.md` (Changelog block) |
 | llm-dojo-scoring pin | `v0.21.0` (latest tag; llm-mailroom `pyproject.toml` pins it) | `docs/start-here/overview.md`, `docs/start-here/getting-started.md`, `docs/start-here/glossary.md`, `docs/how-it-fits-together/architecture.md`, `docs/the-pipeline-in-depth/running.md`, `docs/the-pipeline-in-depth/scoring-and-metrics.md`, `docs/pipeline-reference-llm-mailroom/agents.md`, `docs/pipeline-reference-llm-mailroom/configuration.md`, `docs/pipeline-reference-llm-mailroom/operational-procedure.md`, `docs/pipeline-reference-llm-mailroom/sister-repos.md`, `docs/repository-guides/repos/llm-dojo-scoring.md` |
 | Dataset pin (site) | Hub tag `v9.2` → commit `670e8bc6` | `docs/start-here/overview.md`, `docs/mailroom-dataset/mailroom-dataset.md`, `docs/mailroom-dataset/configs.md`, `docs/how-it-fits-together/architecture.md`, `docs/how-it-fits-together/data-and-corpora.md`, `docs/experiment-reports/experiment-reports.md`, `docs/pipeline-reference-llm-mailroom/sister-repos.md`, `docs/repository-guides/repos/mailroom-corpus-eda.md` |
 | Dataset pin (code) | `llm-mailroom` `FULL_CORPUS_REVISION` and the sandbox `FAMILY_HF_TAG` still read `v9.1` (tag commit `bc9eab28`, data commit `ed7576b6`). SAND-37/40 results were measured on `v9.1`. Say so wherever such a result is quoted. | The `v9.2` files above, plus `docs/repository-guides/repos/eval-environment.md`, `docs/repository-guides/repos/mailroom-ml.md`, `docs/repository-guides/repos/local-mailroom-sandbox/local-mailroom-sandbox-reports.md` |

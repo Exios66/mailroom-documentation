@@ -87,6 +87,17 @@
 * [Testing](pipeline-reference-llm-mailroom/testing.md)
 * [Sister repositories](pipeline-reference-llm-mailroom/sister-repos.md)
 
+## API reference
+
+* [API reference](api-reference/README.md)
+* [Health](api-reference/health.md)
+* [Ingest](api-reference/ingest.md)
+* [Review desk](api-reference/review.md)
+* [Documents and matters](api-reference/documents.md)
+* [Audit](api-reference/audit.md)
+* [Operations](api-reference/ops.md)
+* [Relations mode](api-reference/relations.md)
+
 ## Changelog
 
 * [Changelog](changelog/README.md)
