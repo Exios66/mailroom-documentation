@@ -97,6 +97,44 @@ Startup is healthcheck-gated: `langfuse-server` waits on `postgres` **and** `cli
 Use `src/config/docker/docker-compose.yml`, not the Mode G stack. The Mode G [`deploy/docker-compose.full.yml`](https://github.com/Exios66/llm-mailroom/blob/main/deploy/docker-compose.full.yml) does **not** run Langfuse — it wires `LANGFUSE_*` keys for Langfuse **Cloud**, and offers local [Phoenix](phoenix.md) behind a compose profile instead.
 {% endhint %}
 
+## Trace privacy, prompt cache and score configs
+
+*Unreleased on llm-mailroom `main` (after v0.8.0, as of 2026-10-08). The `langfuse>=4.9,<5` floor applies from the same change.*
+
+* **E-mail masking.** [`observability/masking.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/masking.py) registers `mask_otel_spans`. It replaces every e-mail address in an exported span with `[email]`.
+* **Body redaction.** Set `MAILROOM_TRACE_REDACT=1` to drop generation prompt and completion bodies as well. The default is `0`. The `pipeline-result` generation is the judge target, so neither layer touches it.
+* **Prompt cache.** Managed prompts stay in the cache for `MAILROOM_PROMPT_CACHE_TTL` seconds (default `60`). A failed fetch is never cached. A miss is retried after 30 seconds.
+* **Score configs.** Score emission now attaches the Langfuse score-config id by default.
+* **Gmail triage trace.** The trace carries the `mailroom` tag and the environment tag. Its input holds file metadata only. The allowlisted `intake_meta` keeps the source, the route and a hashed message id, and never the sender or the subject. The pipeline flushes the trace in a `finally` block.
+
+## Experiment regression gate
+
+*Unreleased on llm-mailroom `main` (after v0.8.0, as of 2026-10-08).*
+
+[`src/scripts/run_experiment.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/scripts/run_experiment.py) pushes each dataset item through the pipeline, scores the items, and compares the totals with an approved baseline.
+
+```bash
+# Hermetic gate: no API key, no Langfuse
+PYTHONPATH=src python src/scripts/run_experiment.py --dataset mailroom-fixtures --mock \
+  --baseline docs/superpowers/baselines/experiment-baseline.json
+# Approve a new baseline
+PYTHONPATH=src python src/scripts/run_experiment.py --dataset mailroom-fixtures --mock \
+  --write-baseline docs/superpowers/baselines/experiment-baseline.json
+```
+
+| Flag | Meaning |
+| ---- | ------- |
+| `--dataset` | Required. `mailroom-fixtures` is hermetic. `mailroom-pilot` needs the sample documents from the monorepo |
+| `--mock` / `--real` | Fake LLM, or a real LLM (needs `OPENROUTER_API_KEY`) |
+| `--baseline` / `--write-baseline` | Gate against a baseline file, or write one |
+| `--tolerance` | Allowed drop per metric (default `0.02`) |
+| `--max-items` | Limit the run |
+| `--langfuse` | Use the hosted SDK experiment runner, so the run appears under Experiments. Needs `LANGFUSE_*` |
+
+The gate **fails closed**. An empty dataset, a task error or a missing metric never passes. The approved baseline covers 9 fixture items, with `class_accuracy`, `macro_class_accuracy` and `macro_f1` all at `1.0`. [`experiments/mailroom_gate.py`](https://github.com/Exios66/llm-mailroom/blob/main/experiments/mailroom_gate.py) is the `experiment(context)` entry point for `langfuse/experiment-action`. The repository ships no CI workflow for it.
+
+`sync_dataset.py --source hf` builds the Langfuse dataset from the Hugging Face mailroom corpus at its pinned revision. Add `--hf-live` to load the pinned Hub revision.
+
 ## Scores in Langfuse
 
 Trace wiring pushes results as well as calls: [`langfuse_field_scoring.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/langfuse_field_scoring.py) and [`scores.py`](https://github.com/Exios66/llm-mailroom/blob/main/src/observability/scores.py) write per-field and per-document scores onto the active trace. Definitions live in [Scoring and performance](../../the-pipeline-in-depth/scoring-and-metrics.md).

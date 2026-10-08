@@ -4,7 +4,7 @@
 **Experiment reports** indexes the measured results. The results themselves live in the sandbox and eval-environment repositories. For how scores are computed, go to [Scoring and performance](../the-pipeline-in-depth/scoring-and-metrics.md).
 {% endhint %}
 
-Measured results do not live on this site. They live in two repositories, and this section indexes both report roots **separated by source**, because they answer different questions and have an explicit ownership boundary between them.
+Measured results do not live on this site. They live in two repositories, and this section indexes both report roots **separated by source**, because they answer different questions and have an explicit ownership boundary between them. A third repository, [mailroom-ml](#mailroom-ml-training-and-held-out-reports), keeps its own classifier reports.
 
 | Source | Report root | What it measures | Owns the write-ups |
 | ------ | ----------- | ---------------- | ------------------- |
@@ -24,6 +24,12 @@ The split is deliberate, not accidental. eval-environment's own [`reports/api-co
 {% hint style="warning" %}
 Both report roots are live `main` branches that move as experiments land. Directory inventories and counts on these pages were read on **2026-10-06** against the tips current that day. The authoritative state is the repository, not this index — follow the root link rather than trusting a number here.
 {% endhint %}
+
+## mailroom-ml: training and held-out reports
+
+[`LLM-Mailroom-Services/mailroom-ml`](https://github.com/LLM-Mailroom-Services/mailroom-ml/tree/main/reports) generates its own ModernBERT reports with `training/write_eval_report.py`. Every metric comes from a recorded `eval_*.json`, not from hand edits. As of 2026-10-08 the root holds the M9a and M9b run reports, paired comparisons under `reports/memos/`, and SVG chart galleries under `reports/charts/`.
+
+The latest run, M9b (2026-10-06), reaches 0.9505 doc_type accuracy and 0.6287 conditional subclass accuracy on the 323-document held-out test. [mailroom-ml](../repository-guides/repos/mailroom-ml.md#results) lists the full figures. These reports overlap in subject with the ModernBERT reports in eval-environment (see [ModernBERT ownership boundary](eval-environment-reports.md#modernbert-ownership-boundary)). Check which repository a ModernBERT figure came from before you quote it.
 
 ## Before you compare two numbers
 
@@ -62,3 +68,4 @@ The site also has a fourth measured-output surface outside both report roots: th
 ## In this section
 
 * [eval-environment reports](eval-environment-reports.md) — the hosted API leg, GEPA, ModernBERT and the experiment log.
+* [mailroom-ml results](../repository-guides/repos/mailroom-ml.md#results) — the ModernBERT M9a and M9b runs, generated in the mailroom-ml repository.

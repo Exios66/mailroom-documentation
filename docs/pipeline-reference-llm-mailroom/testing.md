@@ -10,6 +10,8 @@ The unit suite runs with **no network and no API key**. A shared fixture replace
 | Measure real model accuracy | `PYTHONPATH=src python src/scripts/run_pilot.py --real` | LLM provider; costs money |
 | Compare two pilot runs | Add `--baseline <earlier report>.json` to `run_pilot.py` | As the run |
 | Evaluate one agent outside the graph | `PYTHONPATH=src python src/scripts/run_agent_eval.py` | LLM provider |
+| Run only the tests a change can affect | `PYTHONPATH=src python src/scripts/affected_tests.py --run -- -q` (default base `origin/main`) | None |
+| Gate a change against a saved regression gate (unreleased on `main`, as of 2026-10-08) | `PYTHONPATH=src python src/scripts/run_experiment.py --dataset mailroom-fixtures --mock` with `--baseline` | None. See [Langfuse](deployment/langfuse.md#experiment-regression-gate) |
 
 The test environment is hermetic. The autouse fixture `_set_test_env` in `conftest.py` sets `OBSERVABILITY_PROVIDER=none`, sets `MAILROOM_GMAIL_ENABLED=0` and `MAILROOM_DOCCLASS_PROMPTS=0`, and stops a late reload of `.env`. A key in your local `.env` does not change a test result.
 
