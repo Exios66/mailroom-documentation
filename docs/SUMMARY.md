@@ -27,6 +27,7 @@
 * [Dataset overview](mailroom-dataset/mailroom-dataset.md)
 * [Classes and strata](mailroom-dataset/classes-and-strata.md)
 * [Configs](mailroom-dataset/configs.md)
+* [Hub resources](mailroom-dataset/hub-resources.md)
 * [Source corpora](mailroom-dataset/source-corpora/README.md)
   * [CUAD contracts](mailroom-dataset/source-corpora/cuad-contracts.md)
   * [MAUD merger agreements](mailroom-dataset/source-corpora/maud-merger-agreements.md)

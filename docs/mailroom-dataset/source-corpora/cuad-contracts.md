@@ -49,6 +49,8 @@ Tables: [`cuad_clause_stats.csv`](https://github.com/Exios66/Mailroom-Corpus-EDA
 
 Hendrycks, Dan, Collin Burns, Anya Chen, and Spencer Ball. “CUAD: An Expert-Annotated NLP Dataset for Legal Contract Review.” _NeurIPS Datasets and Benchmarks_, 2021. [https://arxiv.org/abs/2103.06268](https://arxiv.org/abs/2103.06268)
 
+Upstream Hub copy: [`theatticusproject/cuad`](https://huggingface.co/datasets/theatticusproject/cuad). License deed: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
 ## Caveats
 
 * English US commercial contracts only; 26 of 28 CUAD groups appear.

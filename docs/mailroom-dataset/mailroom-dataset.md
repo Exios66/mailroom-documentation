@@ -121,6 +121,7 @@ Full write-up: [EDA reports](eda-reports.md). Charts: [Visualizations](visualiza
 | ------------------------------------------- | --------------------------------------------------------------------- |
 | [Classes and strata](classes-and-strata.md) | All 55 class × subclass cells, imbalance, zero-test strata            |
 | [Configs](configs.md)                       | Blind vs ground-truth columns, bundles, streams, fixtures             |
+| [Hub resources](hub-resources.md)           | Every family Hub repo: datasets, the ModernBERT model, the Space      |
 | [Source corpora](source-corpora/)           | CUAD, MAUD, EDGAR, Enron, CMS — licenses and purpose                  |
 | [EDA reports](eda-reports.md)               | P0–P6 findings, tables, ML-readiness notes                            |
 | [Visualizations](visualizations.md)         | Live dashboard, all 30 static figures, and 18 Plotly charts (iframes) |

@@ -21,7 +21,7 @@ Five independently licensed sources make up `mailroom-dataset`. Each has a datas
 
 Redistributing or training on the **joined** corpus must honor the strictest applicable term:
 
-* **CC BY 4.0** — CUAD and MAUD require attribution (Hendrycks et al. 2021; Wang et al. 2023).
+* **CC BY 4.0** — CUAD and MAUD require attribution (Hendrycks et al. 2021; Wang et al. 2023). License deed: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 * **US public domain** — SEC EDGAR exhibits and the 91 EX-10 contracts. Cite EDGAR; do not present copies as official SEC records.
 * **Research use + real PII** — Enron correspondence. Conservative handling; no production/consumer reuse of raw names.
 * **Synthetic public-use** — CMS DE-SynPUF has no real PHI. Sibling LOBs (GNOTHEIA, BDR, INSURBIAS) carry Apache-2.0 / MIT / CC BY 4.0.

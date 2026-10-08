@@ -98,7 +98,9 @@ Eval-environment's subset grammar (`src/evals/cases.py`) samples this same pin. 
 
 ## Family datasets
 
-| Dataset                                                                                                             | Role                                                       |
+The full index with models, the Space, and the collection: [Hub resources](hub-resources.md).
+
+| Dataset | Role |
 | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | [`mailroom-dataset`](https://huggingface.co/datasets/Lucius-Morningstar/mailroom-dataset)                           | This corpus                                                |
 | [`mailroom-corpus`](https://huggingface.co/datasets/Lucius-Morningstar/mailroom-corpus)                             | Frozen v8 parent (2,000 rows, `eafe1ab4`)                  |
@@ -106,7 +108,10 @@ Eval-environment's subset grammar (`src/evals/cases.py`) samples this same pin. 
 | [`enron-correspondence-dedup`](https://huggingface.co/datasets/Lucius-Morningstar/enron-correspondence-dedup)       | 247,523-row Enron pool                                     |
 | [`mailroom-cuad-contracts-full`](https://huggingface.co/datasets/Lucius-Morningstar/mailroom-cuad-contracts-full)   | Byte-verified CUAD mirror                                  |
 | [`cms-desynpuf-insurance-claims`](https://huggingface.co/datasets/Lucius-Morningstar/cms-desynpuf-insurance-claims) | Rendered CMS EOB documents                                 |
-| `mailroom-finetune`, `mailroom-modernbert-training`                                                                 | Training copies for mailroom-ml                            |
-| `legalbench-full`                                                                                                   | LegalBench task pack (not a pipeline-ingest corpus)        |
+| [`mailroom-cuad-contracts`](https://huggingface.co/datasets/Lucius-Morningstar/mailroom-cuad-contracts)                       | 50-row CUAD mirror (eval staging)                          |
+| [`mailroom-sorter-handoff`](https://huggingface.co/datasets/Lucius-Morningstar/mailroom-sorter-handoff)                   | Sorter-handoff gold staging                                |
+| [`mailroom-modernbert-training`](https://huggingface.co/datasets/Lucius-Morningstar/mailroom-modernbert-training)         | Training surface for the ModernBERT classifier             |
+| [`legalbench-full`](https://huggingface.co/datasets/Lucius-Morningstar/legalbench-full)                                   | LegalBench task pack (not a pipeline-ingest corpus)        |
+| `mailroom-finetune` (private)                                                                                             | Private eval-corpus working copy                           |
 
 Collection: [Mailroom Corpus Family](https://huggingface.co/collections/Lucius-Morningstar/mailroom-corpus-family-6aa715cce29d415b0db92473).
