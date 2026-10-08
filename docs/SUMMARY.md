@@ -54,6 +54,7 @@
   * [llm-entity-extraction](repository-guides/repos/llm-entity-extraction.md)
   * [eval-environment](repository-guides/repos/eval-environment.md)
   * [mailroom-ml](repository-guides/repos/mailroom-ml.md)
+  * [mailroom-reloaded](repository-guides/repos/mailroom-reloaded.md)
   * [local-mailroom-sandbox](repository-guides/repos/local-mailroom-sandbox/README.md)
     * [Documentation](repository-guides/repos/local-mailroom-sandbox/local-mailroom-sandbox-docs.md)
     * [Visuals](repository-guides/repos/local-mailroom-sandbox/local-mailroom-sandbox-visuals.md)

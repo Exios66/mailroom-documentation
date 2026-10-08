@@ -350,11 +350,13 @@ The-Mailroom (not this process) reads `MAILROOM_PIPELINE_URL`, `MAILROOM_PIPELIN
 
 ### Operational and tooling knobs
 
-Read by the code but not in the main table above (verified against llm-mailroom v0.8.0). Rows marked unreleased come from llm-mailroom `main` at `578db29`, after v0.8.0, as of 2026-10-07.
+Read by the code but not in the main table above (verified against llm-mailroom v0.8.0). Rows marked unreleased come from llm-mailroom `main` (`c6476f7`), after v0.8.0, as of 2026-10-08.
 
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
 | `MAILROOM_BERT_DEBUG` | on | Kill switch for the ModernBERT lane's debug capture. `MAILROOM_BERT_INTAKE` stays the gate (off by default). |
+| `MAILROOM_TRACE_REDACT` | `0` | Unreleased on `main`. `1` drops generation prompt and completion bodies from exported spans. E-mail addresses are always masked. See [Langfuse](deployment/langfuse.md#trace-privacy-prompt-cache-and-score-configs). |
+| `MAILROOM_PROMPT_CACHE_TTL` | `60` | Unreleased on `main`. Seconds a managed prompt stays cached. A failed fetch is never cached. |
 | `MAILROOM_WATCHDOG_POLL_SECONDS` | `20` | How often the watcher watchdog checks the heartbeat. |
 | `MAILROOM_WATCHDOG_STALE_SECONDS` | `30` | Heartbeat age after which the watcher counts as stale. |
 | `MAILROOM_WATCHDOG_REMIND_MINUTES` | `60` | Reminder cadence while the watcher stays down. Healthy-status emails are never sent. |

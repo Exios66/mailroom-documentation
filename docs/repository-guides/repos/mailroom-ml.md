@@ -19,6 +19,25 @@ Most documents are easy to classify. mailroom-ml trains a ModernBERT encoder tha
 * **Routing.** A document takes the fast path only when calibrated probability, window agreement and margin together clear the gate. Everything else, including catch-all `other`, goes to the LLM.
 * **Serving.** ONNX on CPU is the primary path; a Modal app is the fallback.
 
+## Training and serving details
+
+* **Input construction.** `v1` (title, blank line, body) is the default and matches the published training revision. `v2` adds tagged `[FILE_NAME]`, `[TITLE]` and `[WINDOW_INDEX]` prefixes (`--input-construction v2`). Never mix v2 windows into the v1 Hub pin.
+* **Subclass logit adjustment.** The trainer can apply a log-prior adjustment to subclass logits (`subclass_logit_adjust`). Inference applies the matching adjustment at decode time (`apply_subclass_decode_logit_adjust`), so training and serving stay consistent. Added in `de992dd` (2026-10-06).
+* **Subclass loss.** `subclass_loss_norm: count` normalizes the subclass loss by label count. The doc_type head takes `--label-smoothing`. The subclass head takes `--subclass-label-smoothing` (default `0.0`).
+* **Sidecar files.** `routing_thresholds.json` holds the selective-risk threshold from evaluation. `ood_probe.json` holds the energy probe, written from validation logits and never from the held-out test. A missing probe means "no probe", not "in distribution".
+* **Reports.** `training/write_eval_report.py` generates every report from recorded `eval_*.json` files. See [Results](#results).
+
+## Results
+
+Latest run: **M9b** (`20261006-021245`), measured 2026-10-06 on the 323-document held-out test at 8,192 tokens. Values come from [`reports/M9a-REPORT-20261006-021245.md`](https://github.com/LLM-Mailroom-Services/mailroom-ml/blob/main/reports/M9a-REPORT-20261006-021245.md) and the paired comparison [`reports/memos/M9b-COMPARE-vs-ArmB-20261006-021245.md`](https://github.com/LLM-Mailroom-Services/mailroom-ml/blob/main/reports/memos/M9b-COMPARE-vs-ArmB-20261006-021245.md).
+
+| Metric | Arm B (2026-09-27) | M9b (2026-10-06) |
+| ------ | ------------------ | ---------------- |
+| doc_type accuracy | 0.9505 (307/323) | 0.9505 (307/323) |
+| Subclass accuracy, conditional | 0.5831 (179/307) | 0.6287 (193/307) |
+
+M9b trained for 4 epochs with `loss_lambda_dt` 0.65, `subclass_logit_adjust` 1.0 and `subclass_loss_norm` `count`. Every head is marked excluded from the fast path in the report (`merger_agreement` has the highest calibrated ECE, 0.2134). Treat these figures as classifier results on this test split. They are not pipeline results. The other ModernBERT reports are in [eval-environment reports](../../experiment-reports/eval-environment-reports.md#modernbert-ownership-boundary).
+
 ## How it connects to the pipeline
 
 llm-mailroom's intake node can call it through `agents/bert_intake.py`. The integration is fail-open: with `MAILROOM_BERT_INTAKE` off (the default), the package missing, the model missing, or any error, intake carries on with the deterministic clerk. The result is always recorded as an `intake_handoff` so downstream steps can rely on it being present.
@@ -46,4 +65,6 @@ Extras: `train` (torch, transformers), `serve` (onnxruntime, fastapi), `deploy` 
 * [AGENTS.md](https://github.com/LLM-Mailroom-Services/mailroom-ml/blob/main/AGENTS.md)
 * [docs/mailroom-modernbert-classifier-model-card.md](https://github.com/LLM-Mailroom-Services/mailroom-ml/blob/main/docs/mailroom-modernbert-classifier-model-card.md) — model card
 * [docs/intake-classifier-combined-plan.md](https://github.com/LLM-Mailroom-Services/mailroom-ml/blob/main/docs/intake-classifier-combined-plan.md) — the plan
+* [docs/plan-amendment.md](https://github.com/LLM-Mailroom-Services/mailroom-ml/blob/main/docs/plan-amendment.md) — amendments to the plan (data governance, leak-free splits, calibrated abstention)
+* [reports/README.md](https://github.com/LLM-Mailroom-Services/mailroom-ml/blob/main/reports/README.md) — report generator and chart galleries
 * [docs/enrichment-publish-runbook.md](https://github.com/LLM-Mailroom-Services/mailroom-ml/blob/main/docs/enrichment-publish-runbook.md) — enrichment tiers and publishing

@@ -31,6 +31,7 @@ One page per repository: what it does, where it fits, how to start, and where it
 * [llm-entity-extraction](llm-entity-extraction.md) — the prompt experiment loop
 * [eval-environment](eval-environment.md) — per-node evals and calibration
 * [mailroom-ml](mailroom-ml.md) — the ModernBERT intake classifier
+* [mailroom-reloaded](mailroom-reloaded.md) — the compressed pipeline (design only, as of 2026-10-08)
 
 ## Surfaces
 
